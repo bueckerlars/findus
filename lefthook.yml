@@ -1,0 +1,12 @@
+# Git hooks managed by Lefthook (https://lefthook.dev). Install once: `make hooks-install`
+pre-commit:
+  # gofmt must finish before lint reads the tree
+  parallel: false
+  commands:
+    gofmt:
+      glob: "*.go"
+      stage_fixed: true
+      run: gofmt -w {staged_files}
+    lint-go:
+      glob: "*.go"
+      run: make lint

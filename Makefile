@@ -1,7 +1,11 @@
-.PHONY: tidy build test run dev css docker-build db-reset
+.PHONY: tidy build test run dev css docker-build db-reset lint hooks-install hooks-uninstall
 
 # Pinned for reproducible `make dev` (hot reload via Air).
 AIR := go run github.com/air-verse/air@v1.65.1
+
+# Pre-commit / local checks (pin versions for reproducible installs via `go run`).
+LEFTHOOK := go run github.com/evilmartians/lefthook@v1.13.6
+GOLANGCI_LINT := go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
 
 FINDUS_DATA_DIR ?= ./data
 
@@ -21,6 +25,21 @@ build: css
 
 test:
 	go test ./...
+
+lint:
+	go vet ./...
+	$(GOLANGCI_LINT) run ./...
+
+hooks-install:
+	@command -v lefthook >/dev/null 2>&1 || { \
+		echo "Installing lefthook to $$(go env GOPATH)/bin ..."; \
+		GOBIN="$$(go env GOPATH)/bin" go install github.com/evilmartians/lefthook@v1.13.6; \
+		echo "Ensure $$(go env GOPATH)/bin is on your PATH for git hooks to run."; \
+	}
+	$(LEFTHOOK) install
+
+hooks-uninstall:
+	$(LEFTHOOK) uninstall
 
 run:
 	go run ./cmd/findus
