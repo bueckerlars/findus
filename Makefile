@@ -50,4 +50,4 @@ dev:
 	FINDUS_LOG_LEVEL=debug $(AIR) -c .air.toml
 
 docker-build:
-	docker build -t findus:latest .
+	docker build -t findus:dev .

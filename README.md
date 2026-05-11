@@ -20,8 +20,19 @@
 
 You need [Docker](https://docs.docker.com/get-docker/) with Compose.
 
+Pre-built images are published to **GitHub Container Registry** on each [git tag](https://docs.github.com/en/repositories/releasing-a-project-on-github/managing-releases-in-a-repository). Image reference: `ghcr.io/<github-owner>/<repo>:<tag>` (repository name is lowercased in the registry).
+
 ```bash
-docker compose up --build
+cp .env.example .env
+# Set FINDUS_GHCR_IMAGE to your owner/repo (e.g. myorg/findus) and FINDUS_IMAGE_TAG to a release tag or latest
+docker compose pull
+docker compose up -d
+```
+
+For **local development** with a container built from this checkout, use the dev override file:
+
+```bash
+docker compose -f docker-compose.yml.dev up --build
 ```
 
 Open **http://localhost:8080**, create the **first account** — that user becomes the **admin**. After that you can add locations, items, and photos from the web UI.
@@ -34,10 +45,12 @@ Data is stored in a Docker volume (`findus_data` by default), mapped inside the 
 
 ## Configure for your environment
 
-Set environment variables (or use a `.env` file next to `docker-compose.yml`). The most important one behind a reverse proxy or HTTPS is **`FINDUS_BASE_URL`** — it must match the URL people use in the browser, because QR codes embed that host.
+Set environment variables (or use a `.env` file next to `docker-compose.yml`). For the default Compose file you must set **`FINDUS_GHCR_IMAGE`** (and optionally **`FINDUS_IMAGE_TAG`**) so Docker can pull `ghcr.io/<owner>/<repo>:<tag>`. The most important app setting behind a reverse proxy or HTTPS is **`FINDUS_BASE_URL`** — it must match the URL people use in the browser, because QR codes embed that host.
 
 | Variable | Typical local value | Purpose |
 |----------|---------------------|---------|
+| `FINDUS_GHCR_IMAGE` | *(required for default Compose)* | GitHub Container Registry path `owner/repo` (lowercase), e.g. `myorg/findus` |
+| `FINDUS_IMAGE_TAG` | `latest` or e.g. `v1.2.0` | Image tag to pull (matches the git tag used for releases) |
 | `FINDUS_PORT` | `8080` | HTTP port (host mapping in Compose) |
 | `FINDUS_DATA_DIR` | *(Docker: `/data`)* | Where the database and `images/` live |
 | `FINDUS_BASE_URL` | `http://localhost:8080` | Public URL prefix for QR links |

@@ -25,4 +25,6 @@ QR payloads point at `{FINDUS_BASE_URL}/q/{token}`. If `FINDUS_BASE_URL` is wron
 
 ## Docker Compose
 
-The sample `docker-compose.yml` sets `FINDUS_BASE_URL` and mounts a named volume at `/data` inside the container (`FINDUS_DATA_DIR=/data` in the image). Adjust published ports and environment to match your deployment.
+**Published image** (`docker-compose.yml`): pulls from **GitHub Container Registry** (`ghcr.io`). Set `FINDUS_GHCR_IMAGE` to `owner/repo` in lowercase (same path as on GitHub, without the `ghcr.io/` prefix) and `FINDUS_IMAGE_TAG` to a release tag (the git tag used when publishing the image) or `latest`. The file sets `FINDUS_BASE_URL` and mounts a named volume at `/data` (`FINDUS_DATA_DIR=/data` in the image). Adjust published ports and environment to match your deployment.
+
+**Local build** (`docker-compose.yml.dev`): builds the image from the repository `Dockerfile` (useful for contributors or pre-release testing). Run with `docker compose -f docker-compose.yml.dev up --build`.

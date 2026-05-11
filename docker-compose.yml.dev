@@ -1,0 +1,17 @@
+# Local development: build the image from the Dockerfile in this repo.
+# Usage: docker compose -f docker-compose.yml.dev up --build
+services:
+  findus:
+    build: .
+    image: findus:dev
+    ports:
+      - "8080:8080"
+    environment:
+      FINDUS_BASE_URL: http://localhost:8080
+      FINDUS_COOKIE_SECURE: "false"
+      FINDUS_LOG_LEVEL: info
+    volumes:
+      - findus_data:/data
+
+volumes:
+  findus_data:

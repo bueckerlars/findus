@@ -7,7 +7,7 @@ User-facing product behavior is summarized in the [root README](../README.md). T
 | Page | Description |
 |------|-------------|
 | [Architecture](architecture.md) | Layers, dependencies, storage, security building blocks |
-| [Configuration](configuration.md) | Environment variables, HTTPS, JWT secret handling |
+| [Configuration](configuration.md) | Environment variables, HTTPS, JWT secret handling, Docker Compose (GHCR vs dev build) |
 | [Development](development.md) | Local toolchain, Makefile, CSS build, hot reload, tests |
 | [Routes](routes.md) | HTTP routes overview (public, authenticated, admin) |
 | [Backup & restore](backup-restore.md) | ZIP backup contents and restore procedure |

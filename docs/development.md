@@ -19,7 +19,7 @@ The [Makefile](../Makefile) wraps the usual tasks:
 | `make dev` | Debug log level + [Air](https://github.com/air-verse/air) hot reload (rebuild on Go/HTML/CSS/SQL changes; see `.air.toml`) |
 | `make build` | Build CSS then compile static binary to `./bin/findus` |
 | `make test` | `go test ./...` |
-| `make docker-build` | Build container image `findus:latest` |
+| `make docker-build` | Build container image `findus:dev` (same tag as `docker-compose.yml.dev`) |
 | `make db-reset` | **Destructive**: remove local `findus.db*` and `images/` under `FINDUS_DATA_DIR` (default `./data`) |
 
 ## First-time local setup
@@ -56,5 +56,10 @@ go fmt ./...
 | `internal/transport/http` | HTTP server, handlers, middleware |
 | `web/templates` | HTML templates |
 | `web/static` | CSS and static files |
+
+## Docker from this repo
+
+- **Dev stack (build):** `docker compose -f docker-compose.yml.dev up --build` — same env/volume layout as production Compose, image built locally as `findus:dev`.
+- **Released image:** use root `docker-compose.yml` with `FINDUS_GHCR_IMAGE` / `FINDUS_IMAGE_TAG` (see [Configuration](configuration.md)).
 
 See [Architecture](architecture.md) for a deeper overview.

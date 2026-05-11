@@ -1,7 +1,8 @@
+# Production-style stack: pull a pre-built image from GitHub Container Registry.
+# Set FINDUS_GHCR_IMAGE (owner/repo, lowercase) and FINDUS_IMAGE_TAG in .env — see README and .env.example.
 services:
   findus:
-    build: .
-    image: findus:latest
+    image: ghcr.io/${FINDUS_GHCR_IMAGE:?Set FINDUS_GHCR_IMAGE in .env (owner/repo lowercase). See .env.example}:${FINDUS_IMAGE_TAG:-latest}
     ports:
       - "8080:8080"
     environment:
