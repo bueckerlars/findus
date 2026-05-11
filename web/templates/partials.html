@@ -1,0 +1,178 @@
+{{define "head"}}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="csrf" content="{{.CSRF}}"/>
+<meta name="color-scheme" content="light"/>
+<title>{{.Title}} · Findus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/output.css"/>
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<script>
+document.addEventListener('htmx:configRequest', (e) => {
+  const m = document.querySelector('meta[name="csrf"]');
+  if (m) e.detail.headers['X-CSRF-Token'] = m.content;
+});
+</script>
+<script>
+(function () {
+  var LEGACY_KEY = 'findus_items_view';
+  function storageKey(scopeEl) {
+    var k = scopeEl.getAttribute('data-items-view-key');
+    return 'findus_items_view::' + (k && k.length ? k : 'default');
+  }
+  function storedMode(scopeEl) {
+    var sk = storageKey(scopeEl);
+    try {
+      var v = localStorage.getItem(sk);
+      if (v === 'gallery' || v === 'list') return v;
+      if (sk === 'findus_items_view::page_items') {
+        var leg = localStorage.getItem(LEGACY_KEY);
+        if (leg === 'gallery' || leg === 'list') return leg;
+      }
+      return 'list';
+    } catch (e) {
+      return 'list';
+    }
+  }
+  function syncAria(scopeEl) {
+    var m = scopeEl.getAttribute('data-items-view') || 'list';
+    scopeEl.querySelectorAll('[data-items-view-mode]').forEach(function (btn) {
+      var on = btn.getAttribute('data-items-view-mode') === m;
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  function applyScope(scopeEl) {
+    var mode = storedMode(scopeEl);
+    scopeEl.setAttribute('data-items-view', mode);
+    syncAria(scopeEl);
+  }
+  function applyAll() {
+    document.querySelectorAll('.items-view-scope').forEach(applyScope);
+  }
+  document.addEventListener('DOMContentLoaded', applyAll);
+  document.addEventListener('htmx:afterSwap', function (e) {
+    if (e.detail && e.detail.target && e.detail.target.id === 'results') {
+      var scope = e.detail.target.closest && e.detail.target.closest('.items-view-scope');
+      if (scope) syncAria(scope);
+      else applyAll();
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest && e.target.closest('[data-items-view-mode]');
+    if (!btn) return;
+    var scopeEl = btn.closest('.items-view-scope');
+    if (!scopeEl) return;
+    var mode = btn.getAttribute('data-items-view-mode');
+    if (mode !== 'list' && mode !== 'gallery') return;
+    try {
+      localStorage.setItem(storageKey(scopeEl), mode);
+    } catch (err) {}
+    scopeEl.setAttribute('data-items-view', mode);
+    syncAria(scopeEl);
+  });
+})();
+</script>
+{{end}}
+
+{{define "nav"}}
+<header class="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/90 shadow-sm backdrop-blur-md">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-5">
+    <a href="/" class="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 text-zinc-900 transition hover:text-sky-700">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-bold text-white shadow-sm">F</span>
+      <span class="font-semibold tracking-tight">Findus</span>
+    </a>
+    {{if .User}}
+    <nav class="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto sm:justify-center sm:gap-2" aria-label="Main">
+      <a class="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" href="/locations">Locations</a>
+      <a class="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" href="/items">Items</a>
+      <a class="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-sky-700 hover:bg-sky-50" href="/search">Search</a>
+      {{if isAdmin .User}}
+      <a class="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900" href="/admin">Admin</a>
+      {{end}}
+    </nav>
+    <div class="flex shrink-0 items-center gap-2">
+      <span class="hidden max-w-[8rem] truncate text-xs text-zinc-500 sm:inline" title="{{.User.Username}}">{{.User.Username}}</span>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{.CSRF}}"/>
+        <button type="submit" class="fx-btn-secondary min-h-0 rounded-full px-3 py-2 text-xs font-medium">Logout</button>
+      </form>
+    </div>
+    {{else}}
+    <a href="/login" class="fx-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm">Sign in</a>
+    {{end}}
+  </div>
+</header>
+{{end}}
+
+{{define "nav_guest"}}
+<header class="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/90 shadow-sm backdrop-blur-md">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-5">
+    <a href="/" class="flex shrink-0 items-center gap-2 rounded-lg py-1 pr-2 text-zinc-900 transition hover:text-sky-700">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-bold text-white shadow-sm">F</span>
+      <span class="font-semibold tracking-tight">Findus</span>
+    </a>
+    <nav class="flex shrink-0 items-center gap-2" aria-label="Account">
+      {{if ne .Path "/login"}}
+      <a href="/login" class="fx-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm">Sign in</a>
+      {{end}}
+      {{if ne .Path "/register"}}
+      <a href="/register" class="fx-btn-secondary min-h-0 rounded-full px-4 py-2 text-sm">Register</a>
+      {{end}}
+    </nav>
+  </div>
+</header>
+{{end}}
+
+{{define "sidebar"}}
+<aside class="sticky top-0 z-40 flex h-[100dvh] w-56 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 shadow-[4px_0_24px_-12px_rgba(15,23,42,0.12)] backdrop-blur-md" aria-label="Main navigation">
+  <div class="flex shrink-0 items-center gap-3 border-b border-zinc-100/90 px-5 py-5">
+    <a href="/" class="flex min-w-0 items-center gap-3 rounded-xl py-0.5 text-zinc-900 outline-offset-2 transition hover:text-sky-800">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-bold text-white shadow-md shadow-sky-900/20 ring-1 ring-white/20">F</span>
+      <span class="truncate text-base font-semibold tracking-tight">Findus</span>
+    </a>
+  </div>
+  {{if and .User .IsAdmin}}
+  <div class="shrink-0 border-b border-zinc-100 px-4 py-4">
+    <details class="group relative">
+      <summary class="fx-btn-primary flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold shadow-md [&::-webkit-details-marker]:hidden">
+        {{template "icon_plus" .}} Add
+        {{template "icon_chevron_down" .}}
+      </summary>
+      <div class="absolute left-4 right-4 z-30 mt-2 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/95 py-1.5 shadow-xl shadow-zinc-900/10 ring-1 ring-zinc-950/5 backdrop-blur-md">
+        <a href="/items/new" class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900">New item</a>
+        <a href="/locations/new" class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900">New location</a>
+        <a href="/labels/new" class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900">New label</a>
+      </div>
+    </details>
+  </div>
+  {{end}}
+  <nav class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-5" aria-label="Sections">
+    <a href="/" class="fx-sidebar-link {{if navActive .Path "/"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_home" .}}</span> Home</a>
+    <a href="/locations" class="fx-sidebar-link {{if navActive .Path "/locations"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_map_pin" .}}</span> Locations</a>
+    <a href="/items" class="fx-sidebar-link {{if navActive .Path "/items"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_cube" .}}</span> Items</a>
+    <a href="/labels" class="fx-sidebar-link {{if navActive .Path "/labels"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_tag" .}}</span> Labels</a>
+    <a href="/search" class="fx-sidebar-link {{if navActive .Path "/search"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_magnifying_glass" .}}</span> Search</a>
+    {{if isAdmin .User}}
+    <a href="/admin" class="fx-sidebar-link mt-3 {{if navActive .Path "/admin"}}fx-sidebar-link-active{{end}}"><span class="fx-sidebar-link-icon">{{template "icon_gear" .}}</span> Admin</a>
+    {{end}}
+  </nav>
+  {{if .User}}
+  <footer class="shrink-0 border-t border-zinc-200/90 bg-gradient-to-b from-zinc-50/90 to-zinc-100/50 px-5 py-5">
+    <a href="/profile" class="flex min-w-0 items-center gap-3 rounded-xl px-1 py-1 outline-offset-2 ring-1 ring-transparent transition hover:bg-white hover:shadow-sm hover:ring-zinc-200/80" title="Profile">
+      {{if .User.AvatarPath}}
+      <img src="/profile/photo" alt="" class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-zinc-200/80 shadow-sm"/>
+      {{else}}
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-semibold text-white shadow-md ring-2 ring-white">{{initial .User.Username}}</span>
+      {{end}}
+      <span class="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900">{{.User.Username}}</span>
+    </a>
+    <form method="post" action="/logout" class="mt-4">
+      <input type="hidden" name="csrf_token" value="{{.CSRF}}"/>
+      <button type="submit" class="w-full rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 hover:shadow">Logout</button>
+    </form>
+  </footer>
+  {{end}}
+</aside>
+{{end}}

@@ -1,0 +1,30 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+
+# Go
+coverage.out
+
+# Air (hot reload)
+tmp/
+
+# Data (local dev)
+/data/*
+!/data/.gitkeep
+
+# Env
+.env
+.env.local
+
+# Node (Tailwind build)
+node_modules/
+package-lock.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store

@@ -1,0 +1,157 @@
+{{define "page_labels"}}
+<!doctype html>
+<html lang="en" class="h-full bg-zinc-50 font-sans text-zinc-900 antialiased">
+<head>{{template "head" .}}</head>
+<body class="flex min-h-screen items-stretch fx-page-shell antialiased">
+{{template "sidebar" .}}
+<main class="min-w-0 flex-1 overflow-y-auto px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+<div class="mx-auto max-w-3xl">
+  <a href="/" class="text-sm font-medium text-sky-600 hover:text-sky-700">← Home</a>
+  <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Labels</h1>
+      <p class="mt-1 text-sm text-zinc-500">Use labels on items to organize and suggest default templates.</p>
+    </div>
+    {{if .IsAdmin}}
+    <a href="/labels/new" class="fx-btn-primary inline-flex shrink-0 items-center gap-2 self-start text-sm shadow-md">{{template "icon_plus" .}}New label</a>
+    {{end}}
+  </div>
+
+  {{if .IsAdmin}}
+  <section class="mt-6 fx-card divide-y divide-zinc-100 overflow-hidden p-0">
+    <div class="px-5 py-4">
+      <h2 class="text-base font-semibold text-zinc-900">Manage</h2>
+      <p class="mt-1 text-xs text-zinc-500">Edit or remove labels (removes links from items).</p>
+    </div>
+    <ul>
+      {{range .LabelRows}}
+      <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-200" style="background-color: {{.LB.Color}}"></span>
+          <div class="min-w-0">
+            <div class="font-medium text-zinc-900">{{.LB.Name}}</div>
+            <div class="mt-0.5 text-xs text-zinc-500">
+              {{if .DefaultTemplateTitle}}Default template: {{.DefaultTemplateTitle}}{{else}}No default template{{end}}
+            </div>
+          </div>
+        </div>
+        <div class="flex shrink-0 gap-2">
+          <a href="/labels/{{.LB.ID}}/edit" class="fx-btn-secondary text-sm">Edit</a>
+          <form method="post" action="/labels/{{.LB.ID}}/delete" onsubmit="return confirm('Remove this label from all items and delete it?');">
+            <input type="hidden" name="csrf_token" value="{{$.CSRF}}"/>
+            <button type="submit" class="fx-btn-danger text-sm">Delete</button>
+          </form>
+        </div>
+      </li>
+      {{else}}
+      <li class="px-5 py-8 text-center text-sm text-zinc-500">No labels in the database.</li>
+      {{end}}
+    </ul>
+  </section>
+  {{else}}
+  <section class="mt-6 fx-card p-6 sm:p-8">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Available labels</h2>
+    {{if gt (len .LabelRows) 0}}
+    <ul class="mt-4 divide-y divide-zinc-100">
+      {{range .LabelRows}}
+      <li class="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+        <span class="h-3 w-3 shrink-0 rounded-full ring-1 ring-zinc-200" style="background-color: {{.LB.Color}}"></span>
+        <a href="{{.ChipHref}}" class="font-medium text-sky-600 hover:text-sky-700 hover:underline">{{.LB.Name}}</a>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p class="mt-4 text-sm text-zinc-500">No labels yet.</p>
+    {{end}}
+  </section>
+  {{end}}
+</div>
+</main>
+</body></html>
+{{end}}
+
+{{define "page_label_new"}}
+<!doctype html>
+<html lang="en" class="h-full bg-zinc-50 font-sans text-zinc-900 antialiased">
+<head>{{template "head" .}}</head>
+<body class="flex min-h-screen items-stretch fx-page-shell antialiased">
+{{template "sidebar" .}}
+<main class="min-w-0 flex-1 overflow-y-auto px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+<div class="mx-auto max-w-lg">
+  <a href="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">← Labels</a>
+  <div class="mt-6 fx-card p-6 sm:p-8">
+    <h1 class="text-xl font-semibold tracking-tight">New label</h1>
+    <p class="mt-1 text-sm text-zinc-500">Pick a color and optional default item template.</p>
+    {{if .Error}}<p class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{.Error}}</p>{{end}}
+    <form method="post" action="/labels" class="mt-6 space-y-5">
+      <input type="hidden" name="csrf_token" value="{{.CSRF}}"/>
+      <div>
+        <label class="fx-label" for="ln-name">Name</label>
+        <input id="ln-name" name="name" class="fx-input" required placeholder="e.g. Warranty, Holiday box"/>
+      </div>
+      <div>
+        <label class="fx-label" for="ln-color">Color</label>
+        <input id="ln-color" name="color" type="color" value="#64748b" class="h-11 w-full max-w-[8rem] cursor-pointer rounded-lg border border-zinc-200 bg-white p-1"/>
+      </div>
+      <div>
+        <label class="fx-label" for="ln-tpl">Default template <span class="font-normal text-zinc-400">(optional)</span></label>
+        <select id="ln-tpl" name="default_template_type" class="fx-input">
+          <option value="">— None —</option>
+          {{range .Templates}}
+          <option value="{{.ID}}">{{.DisplayName}}</option>
+          {{end}}
+        </select>
+        <p class="mt-1 text-xs text-zinc-500">When creating an item, checking this label can auto-select this template.</p>
+      </div>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit" class="fx-btn-primary">Create label</button>
+        <a href="/labels" class="fx-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+</body></html>
+{{end}}
+
+{{define "page_label_edit"}}
+<!doctype html>
+<html lang="en" class="h-full bg-zinc-50 font-sans text-zinc-900 antialiased">
+<head>{{template "head" .}}</head>
+<body class="flex min-h-screen items-stretch fx-page-shell antialiased">
+{{template "sidebar" .}}
+<main class="min-w-0 flex-1 overflow-y-auto px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+<div class="mx-auto max-w-lg">
+  <a href="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">← Labels</a>
+  <div class="mt-6 fx-card p-6 sm:p-8">
+    <h1 class="text-xl font-semibold tracking-tight">Edit label</h1>
+    {{if .Error}}<p class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{.Error}}</p>{{end}}
+    <form method="post" action="/labels/{{.Label.ID}}" class="mt-6 space-y-5">
+      <input type="hidden" name="csrf_token" value="{{.CSRF}}"/>
+      <div>
+        <label class="fx-label" for="le-name">Name</label>
+        <input id="le-name" name="name" value="{{.Label.Name}}" class="fx-input" required/>
+      </div>
+      <div>
+        <label class="fx-label" for="le-color">Color</label>
+        <input id="le-color" name="color" type="color" value="{{.Label.Color}}" class="h-11 w-full max-w-[8rem] cursor-pointer rounded-lg border border-zinc-200 bg-white p-1"/>
+      </div>
+      <div>
+        <label class="fx-label" for="le-tpl">Default template</label>
+        <select id="le-tpl" name="default_template_type" class="fx-input">
+          <option value="" {{if eq .SelectedTemplate ""}}selected{{end}}>— None —</option>
+          {{range .Templates}}
+          <option value="{{.ID}}" {{if eq $.SelectedTemplate .ID}}selected{{end}}>{{.DisplayName}}</option>
+          {{end}}
+        </select>
+      </div>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <button type="submit" class="fx-btn-primary">Save</button>
+        <a href="/labels" class="fx-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+</body></html>
+{{end}}
