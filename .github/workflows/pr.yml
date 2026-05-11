@@ -1,0 +1,27 @@
+# Run the same Lefthook pre-commit checks as locally, then Go tests, on every PR update.
+name: Pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Lefthook (pre-commit)
+        run: go run github.com/evilmartians/lefthook@v1.13.6 run pre-commit --all-files --fail-on-changes --no-tty
+
+      - name: Tests
+        run: make test

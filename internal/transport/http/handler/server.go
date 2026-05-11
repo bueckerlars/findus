@@ -59,9 +59,9 @@ type labelRow struct {
 
 // homeRecentItem is used on the dashboard for recently changed items.
 type homeRecentItem struct {
-	Item           domain.Item
-	LocationName   string
-	RecentlyAdded  bool
+	Item          domain.Item
+	LocationName  string
+	RecentlyAdded bool
 }
 
 // homeLocationRow is used on the dashboard for the locations list/gallery.
@@ -359,7 +359,7 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 		}
 		itemRows = append(itemRows, homeRecentItem{
 			Item:          it,
-			LocationName: name,
+			LocationName:  name,
 			RecentlyAdded: recentlyCreated(it.CreatedAt, it.UpdatedAt),
 		})
 	}
@@ -379,22 +379,22 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		shell
-		User            *domain.User
-		ItemCount       int64
-		LocationCount   int64
-		LabelCount      int64
-		RecentItems     []homeRecentItem
-		HomeLocations   []homeLocationRow
-		AllLabels       []domain.Label
+		User          *domain.User
+		ItemCount     int64
+		LocationCount int64
+		LabelCount    int64
+		RecentItems   []homeRecentItem
+		HomeLocations []homeLocationRow
+		AllLabels     []domain.Label
 	}{
-		shell:           sh,
-		User:            u,
-		ItemCount:       itemCount,
-		LocationCount:   locCount,
-		LabelCount:      labelCount,
-		RecentItems:     itemRows,
-		HomeLocations:   locRows,
-		AllLabels:       allLabels,
+		shell:         sh,
+		User:          u,
+		ItemCount:     itemCount,
+		LocationCount: locCount,
+		LabelCount:    labelCount,
+		RecentItems:   itemRows,
+		HomeLocations: locRows,
+		AllLabels:     allLabels,
 	}
 	s.render(w, http.StatusOK, "page_home", data)
 }
@@ -797,17 +797,17 @@ type itemDetailSystemRow struct {
 
 type itemDetailPageData struct {
 	shell
-	Item            *domain.Item
-	Labels          []domain.Label
-	PhotoURL        string
-	LocationPath    []domain.LocationPathElement
-	EditMode        bool
-	Error           string
-	AttrRows        []service.ItemPropertyDetailRow
-	SystemRows      []itemDetailSystemRow
-	Locations       []locOpt
-	AllLabels       []domain.Label
-	SelectedLabels  map[string]bool
+	Item           *domain.Item
+	Labels         []domain.Label
+	PhotoURL       string
+	LocationPath   []domain.LocationPathElement
+	EditMode       bool
+	Error          string
+	AttrRows       []service.ItemPropertyDetailRow
+	SystemRows     []itemDetailSystemRow
+	Locations      []locOpt
+	AllLabels      []domain.Label
+	SelectedLabels map[string]bool
 }
 
 func additionalFieldPairs(raw json.RawMessage) []additionalKV {
@@ -969,7 +969,7 @@ func (s *Server) buildItemDetailPageData(r *http.Request, sh shell, it *domain.I
 	return itemDetailPageData{
 		shell: sh, Item: it, Labels: labels, PhotoURL: photo,
 		LocationPath: locPath,
-		EditMode: editMode, Error: formErr,
+		EditMode:     editMode, Error: formErr,
 		AttrRows: attrRows, SystemRows: systemRows,
 		Locations: opts, AllLabels: allLabels, SelectedLabels: selectedLabels,
 	}
