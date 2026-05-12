@@ -19,6 +19,8 @@ let debounceTimer: ReturnType<typeof setTimeout>;
 let fetchAbort: AbortController | null = null;
 let lastFocus: Element | null = null;
 
+const COMMAND_CLOSE_FALLBACK_MS = 320;
+
 const isMac = computed(() => {
   const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
   const ua = nav.userAgentData;
@@ -147,6 +149,7 @@ function scheduleSearch() {
 
 function openPalette() {
   if (dialog.value?.open) return;
+  dialog.value?.classList.remove("fx-command-dialog--closing");
   lastFocus = document.activeElement;
   dialog.value?.showModal();
   triggerBtn.value?.setAttribute("aria-expanded", "true");
@@ -163,9 +166,39 @@ function openPalette() {
 }
 
 function closePalette() {
-  if (!dialog.value?.open) return;
+  const d = dialog.value;
+  if (!d?.open) return;
+  if (d.classList.contains("fx-command-dialog--closing")) return;
+
   triggerBtn.value?.setAttribute("aria-expanded", "false");
-  dialog.value.close();
+
+  const panel = d.querySelector(".fx-command-panel");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!panel || reduce) {
+    d.close();
+    return;
+  }
+
+  d.classList.add("fx-command-dialog--closing");
+  void d.offsetHeight;
+
+  let finished = false;
+  const cleanup = () => {
+    if (finished) return;
+    finished = true;
+    panel.removeEventListener("transitionend", onTransitionEnd);
+    d.classList.remove("fx-command-dialog--closing");
+    if (d.open) d.close();
+  };
+
+  const onTransitionEnd = (e: TransitionEvent) => {
+    if (e.target !== panel) return;
+    if (e.propertyName !== "opacity") return;
+    cleanup();
+  };
+
+  panel.addEventListener("transitionend", onTransitionEnd);
+  window.setTimeout(cleanup, COMMAND_CLOSE_FALLBACK_MS);
 }
 
 function goHref(href: string) {
