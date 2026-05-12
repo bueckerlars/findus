@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import GuestNav from "../components/GuestNav.vue";
 import { api, postJson } from "../api";
@@ -14,6 +15,7 @@ type Bootstrap = {
 const route = useRoute();
 const router = useRouter();
 const { refresh } = useSession();
+const { t } = useI18n();
 
 const username = ref("");
 const email = ref("");
@@ -29,10 +31,10 @@ const boot = ref<Bootstrap | null>(null);
 const help = computed(() => {
   const b = boot.value;
   if (!b) return "";
-  if (b.user_count === 0) return "You are creating the first admin account.";
-  if (b.has_registration_mode && b.registration_mode === "invite") return "Register using your invite link.";
-  if (b.has_registration_mode && b.registration_mode === "open") return "Open registration is enabled.";
-  return "Create your Findus account.";
+  if (b.user_count === 0) return t("auth.register.helpFirstAdmin");
+  if (b.has_registration_mode && b.registration_mode === "invite") return t("auth.register.helpInvite");
+  if (b.has_registration_mode && b.registration_mode === "open") return t("auth.register.helpOpen");
+  return t("auth.register.helpDefault");
 });
 
 onMounted(async () => {
@@ -55,7 +57,7 @@ async function submit() {
     await refresh();
     await router.push(r.next || "/");
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Registration failed";
+    err.value = e instanceof Error ? e.message : t("common.registrationFailed");
   }
 }
 </script>
@@ -65,25 +67,25 @@ async function submit() {
     <GuestNav />
     <main class="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-4 py-10 sm:px-6">
       <div class="fx-auth-card">
-        <h1 class="text-center text-2xl font-semibold tracking-tight">Create account</h1>
+        <h1 class="text-center text-2xl font-semibold tracking-tight">{{ $t("auth.register.title") }}</h1>
         <p class="mt-2 text-center text-sm leading-relaxed text-zinc-500">{{ help }}</p>
         <p v-if="err" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
           {{ err }}
         </p>
         <form class="mt-8 space-y-5" @submit.prevent="submit">
           <div>
-            <label class="fx-label" for="reg-user">Username</label>
-            <input id="reg-user" v-model="username" class="fx-input" required placeholder="Choose a username" />
+            <label class="fx-label" for="reg-user">{{ $t("auth.register.username") }}</label>
+            <input id="reg-user" v-model="username" class="fx-input" required :placeholder="$t('auth.register.usernamePlaceholder')" />
           </div>
           <div>
-            <label class="fx-label" for="reg-email">Email</label>
-            <input id="reg-email" v-model="email" type="email" class="fx-input" required placeholder="you@example.com" />
+            <label class="fx-label" for="reg-email">{{ $t("auth.register.email") }}</label>
+            <input id="reg-email" v-model="email" type="email" class="fx-input" required :placeholder="$t('auth.register.emailPlaceholder')" />
           </div>
           <div>
-            <label class="fx-label" for="reg-pass">Password</label>
-            <input id="reg-pass" v-model="password" type="password" class="fx-input" required placeholder="At least 10 characters" />
+            <label class="fx-label" for="reg-pass">{{ $t("auth.register.password") }}</label>
+            <input id="reg-pass" v-model="password" type="password" class="fx-input" required :placeholder="$t('auth.register.passwordPlaceholder')" />
           </div>
-          <button type="submit" class="fx-btn-primary w-full">Create account</button>
+          <button type="submit" class="fx-btn-primary w-full">{{ $t("auth.register.submit") }}</button>
         </form>
       </div>
     </main>

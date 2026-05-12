@@ -2,9 +2,17 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { api, patchJson, postJson } from "../api";
 import type { User } from "../api";
+import { useI18n } from "vue-i18n";
 import { toast } from "../composables/useToast";
 import { useSession } from "../session";
 import { FX_THEMES, normalizeFxThemeId } from "../themes";
+import {
+  bcp47ForUiLocale,
+  isSupportedLocale,
+  localeMenuLabel,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "../locale/constants";
 import { usernameInitial } from "../utils/initial";
 import FxSvg from "../components/FxSvg.vue";
 
@@ -21,6 +29,7 @@ const saving = ref(false);
 const themeSaving = ref<string | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const { refresh } = useSession();
+const { t, locale } = useI18n();
 
 onMounted(async () => {
   const r = await api<{ user: User }>("/api/profile");
@@ -60,7 +69,14 @@ const avatarImgSrc = computed(() => {
   return "";
 });
 
-const roleLabel = computed(() => (u.value?.role === "admin" ? "Administrator" : "Member"));
+const roleLabel = computed(() => (u.value?.role === "admin" ? t("role.administrator") : t("role.member")));
+
+const localeSelectOptions = computed(() =>
+  SUPPORTED_LOCALES.map((code) => ({
+    code,
+    label: localeMenuLabel(code),
+  })),
+);
 
 const activeThemeId = computed(() => normalizeFxThemeId(u.value?.theme));
 
@@ -71,19 +87,30 @@ async function selectTheme(themeId: string) {
     const r = await patchJson<{ user: User }>("/api/profile/theme", { theme: themeId });
     u.value = r.user;
     await refresh();
-    toast.success("Theme updated.");
+    toast.success(t("profile.themeUpdated"));
   } catch (e) {
-    toast.error(e instanceof Error ? e.message : "Could not update theme");
+    toast.error(e instanceof Error ? e.message : t("profile.themeUpdateFailed"));
   } finally {
     themeSaving.value = null;
   }
 }
 
 function formatProfileDate(iso: string | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return t("common.emDash");
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  if (Number.isNaN(d.getTime())) return t("common.emDash");
+  return d.toLocaleDateString(bcp47ForUiLocale(locale.value as SupportedLocale), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function onLocaleChange(e: Event) {
+  const v = (e.target as HTMLSelectElement).value;
+  if (isSupportedLocale(v)) {
+    locale.value = v;
+  }
 }
 
 function pickImageFile(f: File | undefined) {
@@ -141,9 +168,9 @@ async function save() {
     removeAvatar.value = false;
     avatar.value = null;
     if (fileInputRef.value) fileInputRef.value.value = "";
-    toast.success("Your profile was updated.");
+    toast.success(t("profile.updated"));
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Could not save";
+    err.value = e instanceof Error ? e.message : t("common.couldNotSave");
   } finally {
     saving.value = false;
   }
@@ -151,11 +178,11 @@ async function save() {
 </script>
 
 <template>
-  <div v-if="!u" class="mx-auto max-w-4xl text-zinc-500">Loading…</div>
+  <div v-if="!u" class="mx-auto max-w-4xl text-zinc-500">{{ $t("common.loading") }}</div>
   <div v-else class="mx-auto max-w-4xl space-y-8">
     <header class="mb-2">
-      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">Profile</h1>
-      <p class="mt-2 max-w-2xl text-zinc-500">Your account details and sign-in settings.</p>
+      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("profile.title") }}</h1>
+      <p class="mt-2 max-w-2xl text-zinc-500">{{ $t("profile.subtitle") }}</p>
     </header>
 
     <p
@@ -209,7 +236,7 @@ async function save() {
                 v-if="removeAvatar && u.avatar_path && !avatarPreviewUrl"
                 class="absolute inset-0 flex items-center justify-center bg-zinc-900/55 text-center text-xs font-semibold uppercase tracking-wide text-white backdrop-blur-[2px]"
               >
-                Removed on save
+                {{ $t("profile.removedOnSave") }}
               </span>
             </div>
             <div class="mt-4 flex w-full flex-col gap-2">
@@ -218,7 +245,7 @@ async function save() {
                 class="fx-btn-secondary w-full justify-center py-2 text-xs font-semibold"
                 @click="triggerFilePick"
               >
-                Change photo
+                {{ $t("profile.changePhoto") }}
               </button>
               <button
                 v-if="avatar"
@@ -226,7 +253,7 @@ async function save() {
                 class="fx-btn-secondary w-full justify-center border-dashed py-2 text-xs font-medium text-zinc-600"
                 @click="clearPendingAvatar"
               >
-                Clear new photo
+                {{ $t("profile.clearNewPhoto") }}
               </button>
               <label
                 v-if="u.avatar_path || avatarPreviewUrl"
@@ -234,8 +261,8 @@ async function save() {
               >
                 <input v-model="removeAvatar" type="checkbox" class="mt-0.5 shrink-0 rounded border-zinc-300 text-sky-600 focus:ring-sky-500" />
                 <span class="min-w-0 text-xs leading-snug text-zinc-600">
-                  <span class="font-medium text-zinc-800">Remove photo</span>
-                  <span class="mt-0.5 block text-[11px] text-zinc-500">Uses your initial until you add a new image.</span>
+                  <span class="font-medium text-zinc-800">{{ $t("profile.removePhoto") }}</span>
+                  <span class="mt-0.5 block text-[11px] text-zinc-500">{{ $t("profile.removePhotoHelp") }}</span>
                 </span>
               </label>
             </div>
@@ -255,17 +282,17 @@ async function save() {
                 class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200/80"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                Active
+                {{ $t("common.active") }}
               </span>
               <span
                 v-else
                 class="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200/80"
-                >Inactive</span
+                >{{ $t("common.inactive") }}</span
               >
             </div>
             <dl class="mx-auto mt-6 max-w-md text-left text-sm sm:mx-0">
               <div class="rounded-xl border border-zinc-200/60 bg-white/60 px-3 py-2.5 backdrop-blur-sm">
-                <dt class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Member since</dt>
+                <dt class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("profile.memberSince") }}</dt>
                 <dd class="mt-0.5 text-zinc-800">{{ formatProfileDate(u.created_at) }}</dd>
               </div>
             </dl>
@@ -278,19 +305,41 @@ async function save() {
         <div class="flex items-center gap-3 border-b border-zinc-100 px-5 py-4">
           <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="pencilSquare" class="fx-icon" /></span>
           <div>
-            <h2 id="profile-account-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Account</h2>
-            <p class="text-xs text-zinc-400">Username and email used across Findus.</p>
+            <h2 id="profile-account-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("profile.account") }}</h2>
+            <p class="text-xs text-zinc-400">{{ $t("profile.accountHelp") }}</p>
           </div>
         </div>
         <div class="space-y-4 p-5 sm:p-6">
           <div>
-            <label class="fx-label" for="pu">Username</label>
+            <label class="fx-label" for="pu">{{ $t("auth.login.username") }}</label>
             <input id="pu" v-model="username" class="fx-input" required autocomplete="username" />
           </div>
           <div>
-            <label class="fx-label" for="pe">Email</label>
+            <label class="fx-label" for="pe">{{ $t("auth.register.email") }}</label>
             <input id="pe" v-model="email" type="email" class="fx-input" required autocomplete="email" />
           </div>
+        </div>
+      </section>
+
+      <!-- Language -->
+      <section class="fx-card overflow-hidden p-0" aria-labelledby="profile-language-heading">
+        <div class="flex items-center gap-3 border-b border-zinc-100 px-5 py-4">
+          <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="gear" class="fx-icon" /></span>
+          <div>
+            <h2 id="profile-language-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("profile.language") }}</h2>
+            <p class="text-xs text-zinc-400">{{ $t("profile.languageHelp") }}</p>
+          </div>
+        </div>
+        <div class="p-5 sm:p-6">
+          <label class="fx-label" for="profile-locale">{{ $t("profile.language") }}</label>
+          <select
+            id="profile-locale"
+            class="fx-input mt-1.5 max-w-xs"
+            :value="locale"
+            @change="onLocaleChange"
+          >
+            <option v-for="opt in localeSelectOptions" :key="opt.code" :value="opt.code">{{ opt.label }}</option>
+          </select>
         </div>
       </section>
 
@@ -299,44 +348,44 @@ async function save() {
         <div class="flex items-center gap-3 border-b border-zinc-100 px-5 py-4">
           <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="eye" class="fx-icon" /></span>
           <div>
-            <h2 id="profile-theme-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Appearance</h2>
-            <p class="text-xs text-zinc-400">Color theme for your account on this device.</p>
+            <h2 id="profile-theme-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("profile.appearance") }}</h2>
+            <p class="text-xs text-zinc-400">{{ $t("profile.appearanceHelp") }}</p>
           </div>
         </div>
         <div class="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
           <button
-            v-for="t in FX_THEMES"
-            :key="t.id"
+            v-for="theme in FX_THEMES"
+            :key="theme.id"
             type="button"
             class="group fx-profile-theme-tile"
-            :class="{ 'fx-profile-theme-tile--selected': activeThemeId === t.id }"
+            :class="{ 'fx-profile-theme-tile--selected': activeThemeId === theme.id }"
             :disabled="themeSaving !== null"
-            :aria-pressed="activeThemeId === t.id"
-            :aria-busy="themeSaving === t.id"
-            @click="selectTheme(t.id)"
+            :aria-pressed="activeThemeId === theme.id"
+            :aria-busy="themeSaving === theme.id"
+            @click="selectTheme(theme.id)"
           >
             <div class="flex h-12 w-full gap-0.5 overflow-hidden rounded-t-xl px-2 pt-2">
-              <div v-for="(sw, i) in t.swatches" :key="i" class="min-h-0 flex-1 rounded-md shadow-inner" :class="sw" />
+              <div v-for="(sw, i) in theme.swatches" :key="i" class="min-h-0 flex-1 rounded-md shadow-inner" :class="sw" />
             </div>
             <div class="flex flex-1 flex-col gap-0.5 px-3 pb-3 pt-2.5">
-              <span class="text-sm font-semibold text-zinc-900">{{ t.label }}</span>
-              <span class="text-xs leading-snug text-zinc-500">{{ t.description }}</span>
+              <span class="text-sm font-semibold text-zinc-900">{{ $t("themes." + theme.id + ".label") }}</span>
+              <span class="text-xs leading-snug text-zinc-500">{{ $t("themes." + theme.id + ".description") }}</span>
             </div>
             <span
-              v-if="themeSaving === t.id"
+              v-if="themeSaving === theme.id"
               class="flex items-center justify-center gap-2 border-t border-zinc-100/80 bg-zinc-50/90 py-2 text-xs font-medium text-zinc-600"
             >
               <span
                 class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600"
                 aria-hidden="true"
               ></span>
-              Applying…
+              {{ $t("profile.applying") }}
             </span>
             <span
-              v-else-if="activeThemeId === t.id"
+              v-else-if="activeThemeId === theme.id"
               class="fx-profile-theme-tile__footer-active border-t py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide"
             >
-              Active
+              {{ $t("common.active") }}
             </span>
           </button>
         </div>
@@ -347,19 +396,19 @@ async function save() {
         <div class="flex items-center gap-3 border-b border-zinc-100 px-5 py-4">
           <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="gear" class="fx-icon" /></span>
           <div>
-            <h2 id="profile-security-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Security</h2>
-            <p class="text-xs text-zinc-400">Current password is required to apply any changes.</p>
+            <h2 id="profile-security-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("profile.security") }}</h2>
+            <p class="text-xs text-zinc-400">{{ $t("profile.securityHelp") }}</p>
           </div>
         </div>
         <div class="space-y-4 p-5 sm:p-6">
           <div>
-            <label class="fx-label" for="pc">Current password</label>
+            <label class="fx-label" for="pc">{{ $t("profile.currentPassword") }}</label>
             <input id="pc" v-model="currentPassword" type="password" class="fx-input" autocomplete="current-password" />
           </div>
           <div>
-            <label class="fx-label" for="pn">New password</label>
+            <label class="fx-label" for="pn">{{ $t("profile.newPassword") }}</label>
             <input id="pn" v-model="newPassword" type="password" class="fx-input" autocomplete="new-password" />
-            <p class="mt-1.5 text-xs text-zinc-500">Leave blank to keep your current password. Minimum 10 characters when changing.</p>
+            <p class="mt-1.5 text-xs text-zinc-500">{{ $t("profile.newPasswordHelp") }}</p>
           </div>
         </div>
       </section>
@@ -371,9 +420,9 @@ async function save() {
               class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
               aria-hidden="true"
             ></span>
-            Saving…
+            {{ $t("profile.saving") }}
           </span>
-          <span v-else>Save changes</span>
+          <span v-else>{{ $t("profile.saveChanges") }}</span>
         </button>
       </div>
     </form>

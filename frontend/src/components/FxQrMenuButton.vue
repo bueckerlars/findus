@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, useId, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import FxSvg from "./FxSvg.vue";
+
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -29,11 +32,7 @@ const menuId = useId();
 /** Fixed panel position (viewport); Teleport avoids parent overflow / stacking contexts. */
 const menuStyle = ref({ top: "0px", right: "0px" });
 
-const hintText = computed(
-  () =>
-    props.hint ||
-    "Scan to open on your phone (same account).",
-);
+const hintText = computed(() => props.hint || t("qr.hintGeneric"));
 
 const downloadFilename = computed(() => {
   const raw = (props.downloadName || "item").replace(/[^\w\-._\s]+/g, "").trim().replace(/\s+/g, "-");
@@ -141,8 +140,8 @@ defineExpose({ close });
       type="button"
       class="fx-icon-btn"
       :class="{ 'border-sky-300/80 bg-sky-50/60 text-sky-800 ring-1 ring-sky-200/60': open }"
-      aria-label="QR code"
-      title="QR code"
+      :aria-label="t('qr.code')"
+      :title="t('qr.code')"
       aria-haspopup="true"
       :aria-expanded="open ? 'true' : 'false'"
       :aria-controls="menuId"
@@ -158,7 +157,7 @@ defineExpose({ close });
       ref="panelRef"
       class="fixed z-[90] w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
       role="region"
-      aria-label="QR code"
+      :aria-label="t('qr.code')"
       :style="{ top: menuStyle.top, right: menuStyle.right }"
       @click.stop
     >
@@ -168,7 +167,7 @@ defineExpose({ close });
       <div class="flex justify-center rounded-lg border border-zinc-100 bg-zinc-50/90 p-2">
         <img :src="pngUrl" width="200" height="200" alt="" class="h-48 w-48 max-w-full object-contain" />
       </div>
-      <button type="button" class="fx-btn-primary mt-4 w-full text-sm" @click="downloadPng">Download PNG</button>
+      <button type="button" class="fx-btn-primary mt-4 w-full text-sm" @click="downloadPng">{{ t("qr.downloadPng") }}</button>
     </div>
   </Teleport>
 </template>

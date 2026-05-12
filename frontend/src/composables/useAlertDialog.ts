@@ -1,4 +1,5 @@
 import { ref, shallowRef } from "vue";
+import { i18n } from "../i18n";
 
 export type AlertDialogVariant = "danger" | "default";
 
@@ -35,11 +36,13 @@ export function confirmAlert(options: AlertDialogOptions): Promise<boolean> {
   if (pendingResolve) {
     finish(false);
   }
+  // Avoid vue-i18n's heavy `t` generic in a non-component module (breaks tsc depth limit).
+  const $t = (i18n.global as unknown as { t: (key: string) => string }).t;
   dialogState.value = {
     title: options.title,
     message: options.message ?? "",
-    confirmLabel: options.confirmLabel ?? "Confirm",
-    cancelLabel: options.cancelLabel ?? "Cancel",
+    confirmLabel: options.confirmLabel ?? $t("common.confirm"),
+    cancelLabel: options.cancelLabel ?? $t("common.cancel"),
     variant: options.variant ?? "danger",
   };
   visible.value = true;

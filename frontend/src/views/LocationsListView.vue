@@ -32,9 +32,9 @@ onMounted(async () => {
   <div class="mx-auto max-w-3xl">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">Locations</h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("locations.title") }}</h1>
         <p class="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">
-          Top-level places first. Use the chevron to show or hide sub-locations. Tap the name to open a location.
+          {{ $t("locations.subtitle") }}
         </p>
       </div>
       <button
@@ -43,7 +43,7 @@ onMounted(async () => {
         class="fx-btn-primary shrink-0 self-start text-sm shadow-md sm:self-center"
         @click="openCreateLocation()"
       >
-        New location
+        {{ $t("locations.newLocation") }}
       </button>
     </div>
 
@@ -58,9 +58,9 @@ onMounted(async () => {
       />
     </ul>
     <div v-else class="fx-card px-5 py-14 text-center">
-      <p class="text-zinc-500">No locations yet.</p>
+      <p class="text-zinc-500">{{ $t("locations.noLocations") }}</p>
       <button v-if="isAdmin" type="button" class="mt-5 inline-flex fx-btn-primary" @click="openCreateLocation()">
-        Create your first location
+        {{ $t("locations.createFirst") }}
       </button>
     </div>
   </div>

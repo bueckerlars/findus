@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { api, csrfToken, postJson } from "../api";
 import { toast } from "../composables/useToast";
+
+const { t } = useI18n();
 
 type ItemIdPolicy = {
   kind: string;
@@ -35,7 +38,7 @@ async function load() {
     };
     itemCount.value = ids.item_count;
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Load failed";
+    err.value = e instanceof Error ? e.message : t("common.loadFailed");
   }
 }
 
@@ -44,9 +47,9 @@ async function saveRegistrationMode() {
   try {
     await postJson("/api/admin/settings/registration", { mode: registrationMode.value });
     await load();
-    toast.success("Registration mode saved.");
+    toast.success(t("toast.registrationModeSaved"));
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Save failed";
+    err.value = e instanceof Error ? e.message : t("common.saveFailed");
     toast.error(err.value);
   }
 }
@@ -60,9 +63,9 @@ async function saveItemIdPolicy() {
       width: itemIdPolicy.value.width ?? 4,
     });
     await load();
-    toast.success("Item ID policy saved.");
+    toast.success(t("toast.itemIdPolicySaved"));
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Save failed";
+    err.value = e instanceof Error ? e.message : t("common.saveFailed");
     toast.error(err.value);
   }
 }
@@ -113,9 +116,9 @@ async function downloadExport(format: "json" | "csv") {
     a.rel = "noopener";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(format === "json" ? "JSON export downloaded." : "CSV bundle downloaded.");
+    toast.success(format === "json" ? t("toast.jsonExportDownloaded") : t("toast.csvBundleDownloaded"));
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Export failed";
+    err.value = e instanceof Error ? e.message : t("toast.exportFailed");
     toast.error(err.value);
   }
 }
@@ -131,11 +134,16 @@ async function onImportJson(ev: Event) {
     const body = JSON.parse(text) as unknown;
     const res = await postJson<ImportSummary>("/api/admin/inventory-import", body);
     toast.success(
-      `Import complete: ${res.items_created} items created, ${res.items_updated} updated; ${res.locations_created} locations created, ${res.locations_updated} updated.`,
+      t("toast.importSummary", {
+        itemsCreated: res.items_created,
+        itemsUpdated: res.items_updated,
+        locsCreated: res.locations_created,
+        locsUpdated: res.locations_updated,
+      }),
     );
     await load();
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Import failed";
+    err.value = e instanceof Error ? e.message : t("toast.importFailed");
     toast.error(err.value);
   }
 }
@@ -150,8 +158,8 @@ async function onImportZip(ev: Event) {
     const fd = new FormData();
     fd.append("file", file);
     const headers = new Headers();
-    const t = csrfToken();
-    if (t) headers.set("X-CSRF-Token", t);
+    const csrf = csrfToken();
+    if (csrf) headers.set("X-CSRF-Token", csrf);
     const res = await fetch("/api/admin/inventory-import", {
       method: "POST",
       credentials: "same-origin",
@@ -170,11 +178,16 @@ async function onImportZip(ev: Event) {
     }
     const resBody = (await res.json()) as ImportSummary;
     toast.success(
-      `Import complete: ${resBody.items_created} items created, ${resBody.items_updated} updated; ${resBody.locations_created} locations created, ${resBody.locations_updated} updated.`,
+      t("toast.importSummary", {
+        itemsCreated: resBody.items_created,
+        itemsUpdated: resBody.items_updated,
+        locsCreated: resBody.locations_created,
+        locsUpdated: resBody.locations_updated,
+      }),
     );
     await load();
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Import failed";
+    err.value = e instanceof Error ? e.message : t("toast.importFailed");
     toast.error(err.value);
   }
 }
@@ -182,77 +195,68 @@ async function onImportZip(ev: Event) {
 
 <template>
   <div class="max-w-4xl space-y-10">
-    <h1 class="text-2xl font-semibold text-zinc-900">Application settings</h1>
+    <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminSettings.title") }}</h1>
     <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Registration mode</h2>
-      <p class="mt-2 text-sm text-zinc-600">Who may create new accounts.</p>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminSettings.registrationModeTitle") }}</h2>
+      <p class="mt-2 text-sm text-zinc-600">{{ $t("adminSettings.registrationHelp") }}</p>
       <div class="mt-4 flex flex-wrap items-end gap-3">
         <select v-model="registrationMode" class="fx-input max-w-xs">
-          <option value="admin_only">Admin only</option>
-          <option value="invite">Invite</option>
-          <option value="open">Open</option>
+          <option value="admin_only">{{ $t("adminSettings.regAdminOnly") }}</option>
+          <option value="invite">{{ $t("adminSettings.regInvite") }}</option>
+          <option value="open">{{ $t("adminSettings.regOpen") }}</option>
         </select>
-        <button type="button" class="fx-btn-primary text-sm" @click="saveRegistrationMode">Save</button>
+        <button type="button" class="fx-btn-primary text-sm" @click="saveRegistrationMode">{{ $t("common.save") }}</button>
       </div>
     </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Item IDs</h2>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminSettings.itemIdsTitle") }}</h2>
       <p class="mt-2 text-sm text-zinc-600">
-        Changing the scheme rewrites every item’s primary key and updates label links and image files. Bookmarks to
-        <span class="font-mono">/items/…</span> will break. QR codes use a separate token and keep working.
+        {{ $t("adminSettings.itemIdsWarning") }}
       </p>
-      <p class="mt-1 text-xs text-zinc-500">{{ itemCount }} items in the database.</p>
+      <p class="mt-1 text-xs text-zinc-500">{{ $t("adminSettings.itemsInDb", { n: itemCount }) }}</p>
       <div class="mt-4 flex flex-wrap items-end gap-3">
         <select v-model="itemIdPolicy.kind" class="fx-input max-w-xs">
-          <option value="sequential">Sequential (default)</option>
-          <option value="ulid">ULID</option>
-          <option value="uuid">UUID v4</option>
+          <option value="sequential">{{ $t("adminSettings.seqDefault") }}</option>
+          <option value="ulid">{{ $t("adminSettings.kindUlid") }}</option>
+          <option value="uuid">{{ $t("adminSettings.kindUuid") }}</option>
         </select>
         <template v-if="itemIdPolicy.kind === 'sequential'">
-          <input v-model="itemIdPolicy.prefix" class="fx-input w-40" placeholder="Prefix (default: item)" />
+          <input v-model="itemIdPolicy.prefix" class="fx-input w-40" :placeholder="$t('adminSettings.prefixPlaceholder')" />
           <label class="flex items-center gap-2 text-sm text-zinc-600">
-            Width
+            {{ $t("common.width") }}
             <input v-model.number="itemIdPolicy.width" type="number" min="1" max="12" class="fx-input w-20" />
           </label>
         </template>
-        <button type="button" class="fx-btn-primary text-sm" @click="saveItemIdPolicy">Save</button>
+        <button type="button" class="fx-btn-primary text-sm" @click="saveItemIdPolicy">{{ $t("common.save") }}</button>
       </div>
     </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Inventory export / import</h2>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminSettings.importExportTitle") }}</h2>
       <p class="mt-2 text-sm text-zinc-600">
-        Export or merge-import locations, labels, item templates, and items (including item–label links). User accounts
-        and registration settings are not included. Only image paths are in the data; use
-        <a class="text-sky-700 underline hover:text-sky-800" href="/admin/backup.zip">full database backup (ZIP)</a>
-        for a complete SQLite snapshot and image files.
+        {{ $t("adminSettings.importExportHelpBeforeLink") }}
+        <a class="text-sky-700 underline hover:text-sky-800" href="/admin/backup.zip">{{ $t("adminSettings.backupZipLinkLabel") }}</a>
+        {{ $t("adminSettings.importExportHelpAfterLink") }}
       </p>
       <p class="mt-2 text-xs text-zinc-500">
-        Import merges by primary key (updates existing rows; does not delete missing rows). Label names must remain
-        unique across the database. JSON is the canonical round-trip format; CSV is delivered as a ZIP of spreadsheets.
+        {{ $t("adminSettings.importExportNote") }}
       </p>
       <div class="mt-4 flex flex-wrap items-center gap-3">
-        <button type="button" class="fx-btn-primary text-sm" @click="downloadExport('json')">Download JSON</button>
-        <button type="button" class="fx-btn-primary text-sm" @click="downloadExport('csv')">Download CSV (ZIP)</button>
+        <button type="button" class="fx-btn-primary text-sm" @click="downloadExport('json')">{{ $t("adminSettings.downloadJson") }}</button>
+        <button type="button" class="fx-btn-primary text-sm" @click="downloadExport('csv')">{{ $t("adminSettings.downloadCsvZip") }}</button>
       </div>
       <div class="mt-6 flex flex-wrap items-end gap-8">
         <div>
-          <p class="text-sm font-medium text-zinc-800">Import JSON</p>
-          <p class="mt-1 text-xs text-zinc-500">Use the file produced by “Download JSON”.</p>
-          <input
-            ref="importJsonRef"
-            type="file"
-            accept=".json,application/json"
-            class="hidden"
-            @change="onImportJson"
-          />
-          <button type="button" class="fx-btn-secondary mt-2 text-sm" @click="triggerJsonPick">Choose file…</button>
+          <p class="text-sm font-medium text-zinc-800">{{ $t("adminSettings.importJsonTitle") }}</p>
+          <p class="mt-1 text-xs text-zinc-500">{{ $t("adminSettings.importJsonHint") }}</p>
+          <input ref="importJsonRef" type="file" accept=".json,application/json" class="hidden" @change="onImportJson" />
+          <button type="button" class="fx-btn-secondary mt-2 text-sm" @click="triggerJsonPick">{{ $t("common.chooseFile") }}</button>
         </div>
         <div>
-          <p class="text-sm font-medium text-zinc-800">Import CSV bundle</p>
-          <p class="mt-1 text-xs text-zinc-500">Use the ZIP from “Download CSV (ZIP)”.</p>
+          <p class="text-sm font-medium text-zinc-800">{{ $t("adminSettings.importCsvTitle") }}</p>
+          <p class="mt-1 text-xs text-zinc-500">{{ $t("adminSettings.importCsvHint") }}</p>
           <input ref="importZipRef" type="file" accept=".zip,application/zip" class="hidden" @change="onImportZip" />
-          <button type="button" class="fx-btn-secondary mt-2 text-sm" @click="triggerZipPick">Choose ZIP…</button>
+          <button type="button" class="fx-btn-secondary mt-2 text-sm" @click="triggerZipPick">{{ $t("common.chooseZip") }}</button>
         </div>
       </div>
     </section>

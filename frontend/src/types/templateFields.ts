@@ -48,8 +48,23 @@ function normalizeOption(x: unknown): FieldOption {
   };
 }
 
+export type ParseFieldsIssue = { kind: "invalid_json" } | { kind: "not_array" };
+
+export type ValidateFieldsIssue =
+  | { kind: "key_required"; index: number }
+  | { kind: "duplicate_key"; key: string }
+  | { kind: "label_required"; key: string }
+  | { kind: "widget_invalid"; key: string }
+  | { kind: "select_no_options"; key: string }
+  | { kind: "option_value_label"; key: string; optionIndex: number }
+  | { kind: "duplicate_option_value"; key: string; value: string }
+  | { kind: "invalid_regex"; key: string }
+  | { kind: "min_max_int"; key: string };
+
 /** Parse API `fields_json` into editable field rows (lenient import). */
-export function parseTemplateFieldsJson(raw: string): { ok: true; fields: TemplateField[] } | { ok: false; error: string } {
+export function parseTemplateFieldsJson(
+  raw: string,
+): { ok: true; fields: TemplateField[] } | { ok: false; issue: ParseFieldsIssue } {
   const s = raw.trim();
   if (s === "") {
     return { ok: true, fields: [] };
@@ -58,10 +73,10 @@ export function parseTemplateFieldsJson(raw: string): { ok: true; fields: Templa
   try {
     data = JSON.parse(s) as unknown;
   } catch {
-    return { ok: false, error: "Invalid JSON in fields." };
+    return { ok: false, issue: { kind: "invalid_json" } };
   }
   if (!Array.isArray(data)) {
-    return { ok: false, error: "Fields must be a JSON array." };
+    return { ok: false, issue: { kind: "not_array" } };
   }
   const fields: TemplateField[] = [];
   for (const el of data) {
@@ -124,29 +139,29 @@ export function serializeTemplateFields(fields: TemplateField[]): string {
   return JSON.stringify(wire);
 }
 
-/** Returns English validation message or null if OK (aligned with backend rules). */
-export function validateTemplateFields(fields: TemplateField[]): string | null {
+/** Returns structured validation issue or null if OK (aligned with backend rules). */
+export function validateTemplateFields(fields: TemplateField[]): ValidateFieldsIssue | null {
   const seen = new Set<string>();
   for (let i = 0; i < fields.length; i++) {
     const f = fields[i];
     const key = f.key.trim();
     if (key === "") {
-      return `Field at position ${i + 1}: key is required.`;
+      return { kind: "key_required", index: i };
     }
     if (seen.has(key)) {
-      return `Duplicate field key "${key}".`;
+      return { kind: "duplicate_key", key };
     }
     seen.add(key);
     if (f.label.trim() === "") {
-      return `Field "${key}": label is required.`;
+      return { kind: "label_required", key };
     }
     if (f.widget !== "text" && f.widget !== "select") {
-      return `Field "${key}": widget must be text or select.`;
+      return { kind: "widget_invalid", key };
     }
     if (f.widget === "select") {
       const opts = f.options ?? [];
       if (opts.length === 0) {
-        return `Field "${key}": select needs at least one option.`;
+        return { kind: "select_no_options", key };
       }
       const values = new Set<string>();
       for (let j = 0; j < opts.length; j++) {
@@ -154,10 +169,10 @@ export function validateTemplateFields(fields: TemplateField[]): string | null {
         const v = o.value.trim();
         const lb = o.label.trim();
         if (v === "" || lb === "") {
-          return `Field "${key}": option ${j + 1} needs value and label.`;
+          return { kind: "option_value_label", key, optionIndex: j };
         }
         if (values.has(v)) {
-          return `Field "${key}": duplicate option value "${v}".`;
+          return { kind: "duplicate_option_value", key, value: v };
         }
         values.add(v);
       }
@@ -167,11 +182,11 @@ export function validateTemplateFields(fields: TemplateField[]): string | null {
       try {
         new RegExp(pat);
       } catch {
-        return `Field "${key}": invalid regular expression in pattern.`;
+        return { kind: "invalid_regex", key };
       }
     }
     if (f.widget === "text" && f.min_int !== undefined && f.max_int !== undefined && f.min_int > f.max_int) {
-      return `Field "${key}": min_int must be less than or equal to max_int.`;
+      return { kind: "min_max_int", key };
     }
   }
   return null;

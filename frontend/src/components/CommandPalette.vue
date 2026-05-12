@@ -7,10 +7,12 @@ import FxSvg from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
+import { useI18n } from "vue-i18n";
 import { buildContextCommands } from "./commandPaletteContext";
 
 const router = useRouter();
 const route = useRoute();
+const { t, locale } = useI18n();
 const { isAdmin } = useSession();
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 const itemDetailHandlers = useItemDetailCommandHandlers();
@@ -477,27 +479,34 @@ onUnmounted(() => {
 
 watch(q, () => scheduleSearch());
 
-const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.value.trim()}”` : ""));
+const openSearchQText = computed(() =>
+  norm(q.value).length > 0 ? t("cpUi.openSearchFor", { q: q.value.trim() }) : "",
+);
 
 const inputPlaceholder = computed(() =>
-  route.path === "/search" ? "Filter or jump to a page…" : "Search items, jump to a page…",
+  route.path === "/search" ? t("cpUi.placeholderFilter") : t("cpUi.placeholderSearch"),
 );
 
-const contextCommands = computed(() =>
-  buildContextCommands(route, {
-    isAdmin: isAdmin.value,
-    itemDetail: itemDetailHandlers.value,
-    locationDetail: locationDetailHandlers.value,
-  }),
-);
+const contextCommands = computed(() => {
+  void locale.value;
+  return buildContextCommands(
+    route,
+    {
+      isAdmin: isAdmin.value,
+      itemDetail: itemDetailHandlers.value,
+      locationDetail: locationDetailHandlers.value,
+    },
+    t,
+  );
+});
 
 type CreateKind = "item" | "location" | "label";
 
-const createKindMeta: Record<CreateKind, { label: string; keywords: string }> = {
-  item: { label: "New item", keywords: "new item add create" },
-  location: { label: "New location", keywords: "new location place room shelf add create" },
-  label: { label: "New label", keywords: "new label tag add create" },
-};
+const createKindMeta = computed((): Record<CreateKind, { label: string; keywords: string }> => ({
+  item: { label: t("cpUi.newItem"), keywords: t("cpUi.newItemKw") },
+  location: { label: t("cpUi.newLocation"), keywords: t("cpUi.newLocationKw") },
+  label: { label: t("cpUi.newLabel"), keywords: t("cpUi.newLabelKw") },
+}));
 
 const DEFAULT_CREATE_ORDER: CreateKind[] = ["item", "location", "label"];
 
@@ -518,7 +527,7 @@ const createCommandOrder = computed((): CreateKind[] => {
 const createCommands = computed(() =>
   createCommandOrder.value.map((kind) => ({
     kind,
-    ...createKindMeta[kind],
+    ...createKindMeta.value[kind],
   })),
 );
 </script>
@@ -533,7 +542,7 @@ const createCommands = computed(() =>
     @close="onDialogClose"
   >
     <div class="fx-command-panel fx-command-glass">
-      <h2 id="fx-command-title" class="sr-only">Command palette</h2>
+      <h2 id="fx-command-title" class="sr-only">{{ $t("cpUi.title") }}</h2>
       <div class="flex items-center gap-2 border-b border-zinc-400/15 px-3 py-2 sm:px-3.5">
         <span class="fx-command-panel-search-icon" aria-hidden="true"><FxSvg name="magnifyingGlass" class="fx-icon shrink-0" /></span>
         <input
@@ -561,8 +570,8 @@ const createCommands = computed(() =>
         @mousemove="onBodyMousemove"
       >
         <div v-if="contextCommands.length" data-fx-cmd-group="context" class="mb-2">
-          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">On this page</p>
-          <div class="space-y-px" role="listbox" aria-label="On this page">
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.onPage") }}</p>
+          <div class="space-y-px" role="listbox" :aria-label="$t('cpUi.onPageAria')">
             <button
               v-for="cmd in contextCommands"
               :key="cmd.id"
@@ -588,8 +597,8 @@ const createCommands = computed(() =>
           </div>
         </div>
         <div v-if="isAdmin" data-fx-cmd-group="create" :class="['mb-2', contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
-          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Create</p>
-          <div class="space-y-px" role="listbox" aria-label="Create">
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.create") }}</p>
+          <div class="space-y-px" role="listbox" :aria-label="$t('cpUi.createAria')">
             <button
               v-for="row in createCommands"
               :key="row.kind"
@@ -608,127 +617,127 @@ const createCommands = computed(() =>
           </div>
         </div>
         <div data-fx-cmd-group="go" :class="['mb-2', isAdmin || contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
-          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Go to</p>
-          <div class="space-y-px" role="listbox" aria-label="Pages">
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.goTo") }}</p>
+          <div class="space-y-px" role="listbox" :aria-label="$t('cpUi.pagesAria')">
             <button
               type="button"
               data-cmd-static
               data-href="/"
-              data-keywords="home start dashboard"
+              :data-keywords="$t('cpUi.goHomeKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="home" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Home</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goHome") }}</span>
             </button>
             <button
               type="button"
               data-cmd-static
               data-href="/locations"
-              data-keywords="locations places rooms shelves map tree"
+              :data-keywords="$t('cpUi.goLocationsKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="mapPin" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Locations</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goLocations") }}</span>
             </button>
             <button
               type="button"
               data-cmd-static
               data-href="/items"
-              data-keywords="items inventory things stuff"
+              :data-keywords="$t('cpUi.goItemsKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="cube" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Items</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goItems") }}</span>
             </button>
             <button
               type="button"
               data-cmd-static
               data-href="/labels"
-              data-keywords="labels tags categories"
+              :data-keywords="$t('cpUi.goLabelsKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="tag" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Labels</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goLabels") }}</span>
             </button>
             <button
               type="button"
               data-cmd-static
               data-href="/search"
-              data-keywords="search find lookup filter"
+              :data-keywords="$t('cpUi.goSearchKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="magnifyingGlass" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Search</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goSearch") }}</span>
             </button>
             <button
               v-if="isAdmin"
               type="button"
               data-cmd-static
               data-href="/admin/users"
-              data-keywords="admin users user management invites backup"
+              :data-keywords="$t('cpUi.goAdminUsersKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="users" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Users</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goAdminUsers") }}</span>
             </button>
             <button
               v-if="isAdmin"
               type="button"
               data-cmd-static
               data-href="/admin/settings"
-              data-keywords="admin application settings registration item ids sequential ulid uuid policy"
+              :data-keywords="$t('cpUi.goAdminSettingsKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="gear" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Settings</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goAdminSettings") }}</span>
             </button>
             <button
               v-if="isAdmin"
               type="button"
               data-cmd-static
               data-href="/admin/templates"
-              data-keywords="admin templates item template fields editor"
+              :data-keywords="$t('cpUi.goAdminTemplatesKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="gear" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Templates</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goAdminTemplates") }}</span>
             </button>
             <button
               type="button"
               data-cmd-static
               data-href="/profile"
-              data-keywords="profile account user password avatar email"
+              :data-keywords="$t('cpUi.goProfileKw')"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="users" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Profile</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goProfile") }}</span>
             </button>
           </div>
         </div>
@@ -738,12 +747,12 @@ const createCommands = computed(() =>
           class="border-t border-zinc-400/15 pt-2"
           :class="{ hidden: !showResultsWrap }"
         >
-          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Items</p>
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.resultsItems") }}</p>
           <div
             id="fx-command-search-results"
             class="space-y-px"
             role="listbox"
-            aria-label="Matching items"
+            :aria-label="$t('cpUi.matchingItems')"
             :aria-busy="commandSearchLoading && norm(q).length > 0"
           >
             <template v-if="commandSearchLoading && norm(q).length > 0">
@@ -794,17 +803,14 @@ const createCommands = computed(() =>
               ><FxSvg name="magnifyingGlass" class="h-3.5 w-3.5 shrink-0"
             /></span>
             <span class="min-w-0 flex-1 font-medium text-zinc-900"
-              >Open full search<span id="fx-command-open-search-q" class="block truncate text-[11px] font-normal text-zinc-500">{{ openSearchQText }}</span></span
+              >{{ $t("cpUi.openFullSearch") }}<span id="fx-command-open-search-q" class="block truncate text-[11px] font-normal text-zinc-500">{{ openSearchQText }}</span></span
             >
           </button>
         </div>
       </div>
       <div class="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-400/15 px-3 py-1.5 text-[10px] text-zinc-600 sm:px-3.5">
-        <span
-          ><span class="font-medium text-zinc-700">↑↓</span> select · <span class="font-medium text-zinc-700">↵</span> open ·
-          <span class="font-medium text-zinc-700">esc</span> close</span
-        >
-        <span class="hidden text-zinc-500 sm:inline">Quick find</span>
+        <span>{{ $t("cpUi.footerHints") }}</span>
+        <span class="hidden text-zinc-500 sm:inline">{{ $t("cpUi.quickFind") }}</span>
       </div>
     </div>
   </dialog>
@@ -813,7 +819,7 @@ const createCommands = computed(() =>
     ref="triggerBtn"
     type="button"
     class="fx-command-trigger fx-command-glass sm:gap-2 sm:px-3 sm:py-1.5"
-    aria-label="Open command palette"
+    :aria-label="$t('cpUi.openCommandPalette')"
     aria-haspopup="dialog"
     aria-controls="fx-command-dialog"
     aria-expanded="false"
@@ -821,7 +827,7 @@ const createCommands = computed(() =>
     @click="openPalette"
   >
     <span class="fx-command-trigger-icon" aria-hidden="true"><FxSvg name="magnifyingGlass" class="h-4 w-4 shrink-0" /></span>
-    <kbd class="fx-command-kbd pointer-events-none hidden min-[380px]:inline-flex" title="Keyboard shortcut">
+    <kbd class="fx-command-kbd pointer-events-none hidden min-[380px]:inline-flex" :title="$t('cpUi.keyboardShortcut')">
       <span>{{ modLabel }}</span
       ><span>K</span>
     </kbd>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { useSession } from "../session";
 import FxSvg from "../components/FxSvg.vue";
@@ -33,6 +34,7 @@ type TemplateField = {
 const route = useRoute();
 const router = useRouter();
 const { isAdmin } = useSession();
+const { t } = useI18n();
 
 const item = ref<Item | null>(null);
 const labels = ref<Label[]>([]);
@@ -113,6 +115,16 @@ function addPairsForSnapshot() {
   return addPairsEdit.value.filter((r) => r.k.trim() !== "" || r.v.trim() !== "");
 }
 
+function systemRowLabel(label: string): string {
+  const map: Record<string, string> = {
+    "Item ID": t("itemDetail.systemLabels.itemId"),
+    Created: t("itemDetail.systemLabels.created"),
+    "Last updated": t("itemDetail.systemLabels.lastUpdated"),
+    Template: t("itemDetail.systemLabels.template"),
+  };
+  return map[label] ?? label;
+}
+
 async function loadEditForm() {
   if (!item.value) return;
   const r = await api<{
@@ -172,7 +184,7 @@ async function enterEditMode() {
     editMode.value = true;
     editBaseline = editSnapshot();
   } catch (e) {
-    saveErr.value = e instanceof Error ? e.message : "Could not load editor.";
+    saveErr.value = e instanceof Error ? e.message : t("common.couldNotLoadEditor");
   } finally {
     editLoading.value = false;
   }
@@ -189,9 +201,9 @@ async function applyRouteEditIntent() {
 async function exitEditMode() {
   if (isDirty()) {
     const ok = await confirmAlert({
-      title: "Discard unsaved changes?",
-      message: "Your edits will be lost.",
-      confirmLabel: "Discard",
+      title: t("itemDetail.discardTitle"),
+      message: t("itemDetail.discardMsg"),
+      confirmLabel: t("common.discard"),
       variant: "default",
     });
     if (!ok) return;
@@ -230,9 +242,9 @@ async function saveItem() {
     await api<{ next: string }>("/api/items/" + id.value, { method: "POST", body: fd });
     editMode.value = false;
     await load();
-    toast.success("Item saved.");
+    toast.success(t("toast.itemSaved"));
   } catch (e) {
-    saveErr.value = e instanceof Error ? e.message : "Save failed";
+    saveErr.value = e instanceof Error ? e.message : t("common.saveFailed");
   } finally {
     saveBusy.value = false;
   }
@@ -340,18 +352,18 @@ async function copyItemPageLink() {
 
 async function del() {
   const ok = await confirmAlert({
-    title: "Delete this item?",
-    message: "This cannot be undone.",
-    confirmLabel: "Delete",
+    title: t("itemDetail.deleteTitle"),
+    message: t("itemDetail.deleteMsg"),
+    confirmLabel: t("common.delete"),
     variant: "danger",
   });
   if (!ok) return;
   try {
     await postJson("/api/items/" + id.value + "/delete", {});
-    toast.success("Item deleted.");
+    toast.success(t("toast.itemDeleted"));
     await router.push("/items");
   } catch (e) {
-    toast.error(e instanceof Error ? e.message : "Delete failed");
+    toast.error(e instanceof Error ? e.message : t("common.deleteFailed"));
   }
 }
 
@@ -397,12 +409,12 @@ function removeCustomAttributeRow(i: number) {
 </script>
 
 <template>
-  <div v-if="!item" class="text-zinc-500">Loading…</div>
+  <div v-if="!item" class="text-zinc-500">{{ $t("common.loading") }}</div>
   <div v-else class="mx-auto max-w-4xl space-y-6">
-    <RouterLink to="/items" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">← All items</RouterLink>
+    <RouterLink to="/items" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("itemDetail.backItems") }}</RouterLink>
 
-    <nav class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-500" aria-label="Breadcrumb">
-      <RouterLink to="/items" class="hover:text-sky-600">Items</RouterLink>
+    <nav class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-500" :aria-label="$t('common.breadcrumb')">
+      <RouterLink to="/items" class="hover:text-sky-600">{{ $t("itemDetail.breadcrumbItems") }}</RouterLink>
       <span class="text-zinc-300">/</span>
       <span class="truncate font-medium text-zinc-800">{{ breadcrumbTitle }}</span>
     </nav>
@@ -423,7 +435,7 @@ function removeCustomAttributeRow(i: number) {
                 class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 hover:text-sky-900"
               >
                 <FxSvg name="photo" class="h-4 w-4 shrink-0 text-zinc-500" />
-                {{ photoUrl ? "Replace photo" : "Set photo" }}
+                {{ photoUrl ? $t("itemDetail.replacePhoto") : $t("itemDetail.setPhoto") }}
                 <input type="file" accept="image/*" class="fx-item-photo-file-input sr-only" @change="onPhotoEdit" />
               </label>
               <p v-if="photoFile" class="truncate text-center text-[11px] leading-tight text-zinc-500" :title="photoFile.name">{{ photoFile.name }}</p>
@@ -433,7 +445,7 @@ function removeCustomAttributeRow(i: number) {
                 class="w-full text-center text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-red-600 hover:underline"
                 @click="clearPhotoEdit"
               >
-                Discard new image
+                {{ $t("itemDetail.discardNewImage") }}
               </button>
             </div>
           </template>
@@ -448,7 +460,7 @@ function removeCustomAttributeRow(i: number) {
                 class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 hover:text-sky-900"
               >
                 <FxSvg name="photo" class="h-4 w-4 shrink-0 text-zinc-500" />
-                Add photo
+                {{ $t("itemDetail.addPhoto") }}
                 <input type="file" accept="image/*" class="fx-item-photo-file-input sr-only" @change="onPhotoEdit" />
               </label>
               <p v-if="photoFile" class="truncate text-center text-[11px] leading-tight text-zinc-500" :title="photoFile.name">{{ photoFile.name }}</p>
@@ -458,7 +470,7 @@ function removeCustomAttributeRow(i: number) {
                 class="w-full text-center text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-red-600 hover:underline"
                 @click="clearPhotoEdit"
               >
-                Discard new image
+                {{ $t("itemDetail.discardNewImage") }}
               </button>
             </div>
           </template>
@@ -472,13 +484,13 @@ function removeCustomAttributeRow(i: number) {
                   <h1 class="min-w-0 max-w-full text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ item.Name }}</h1>
                 </template>
                 <template v-else>
-                  <label class="sr-only" for="item-inline-name">Name</label>
+                  <label class="sr-only" for="item-inline-name">{{ $t("itemDetail.name") }}</label>
                   <input
                     id="item-inline-name"
                     v-model="draftName"
                     type="text"
                     required
-                    placeholder="Item name"
+                    :placeholder="$t('itemDetail.itemNamePh')"
                     class="min-w-0 flex-1 basis-[min(100%,16rem)] rounded-xl border border-zinc-200 bg-white px-3 py-2 text-2xl font-semibold tracking-tight text-zinc-900 shadow-inner shadow-zinc-950/5 outline-none transition placeholder:text-zinc-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100 sm:text-3xl"
                   />
                 </template>
@@ -487,10 +499,10 @@ function removeCustomAttributeRow(i: number) {
                 <p v-if="item.Description" class="whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-600">
                   {{ item.Description }}
                 </p>
-                <p v-else class="text-sm italic text-zinc-400">No description</p>
+                <p v-else class="text-sm italic text-zinc-400">{{ $t("common.noDescription") }}</p>
                 <div v-if="locationPath.length" class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-500">
                   <FxSvg name="mapPin" class="mr-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-                  <span class="font-medium text-zinc-400">Stored in</span>
+                  <span class="font-medium text-zinc-400">{{ $t("itemDetail.storedIn") }}</span>
                   <template v-for="(p, i) in locationPath" :key="p.ID">
                     <span v-if="i > 0" class="text-zinc-300">/</span>
                     <RouterLink :to="'/locations/' + p.ID" class="font-medium text-sky-700 hover:text-sky-800 hover:underline">{{ p.Name }}</RouterLink>
@@ -499,17 +511,17 @@ function removeCustomAttributeRow(i: number) {
               </template>
               <template v-else>
                 <div>
-                  <label class="fx-label" for="item-inline-desc">Description</label>
+                  <label class="fx-label" for="item-inline-desc">{{ $t("itemDetail.description") }}</label>
                   <textarea
                     id="item-inline-desc"
                     v-model="draftDesc"
                     rows="4"
                     class="fx-input mt-1.5 min-h-[6.5rem] resize-y text-sm leading-relaxed text-zinc-800"
-                    placeholder="Optional details…"
+                    :placeholder="$t('itemDetail.descPlaceholder')"
                   />
                 </div>
                 <div>
-                  <label class="fx-label" for="item-inline-loc">Stored in</label>
+                  <label class="fx-label" for="item-inline-loc">{{ $t("itemDetail.storedIn") }}</label>
                   <div class="mt-1.5 flex items-center gap-2">
                     <FxSvg name="mapPin" class="h-4 w-4 shrink-0 text-zinc-400" aria-hidden="true" />
                     <select id="item-inline-loc" v-model="draftLocationId" class="fx-input mt-0 min-h-[2.5rem] flex-1 py-2 text-sm" required>
@@ -525,7 +537,7 @@ function removeCustomAttributeRow(i: number) {
                 ref="qrMenuBtn"
                 :png-url="qrPngUrl"
                 :download-name="item?.Name"
-                hint="Scan to open this item on your phone (same account)."
+                :hint="$t('itemDetail.qrHint')"
                 @open="labelAddMenuOpen = false"
               />
               <template v-if="isAdmin">
@@ -533,26 +545,32 @@ function removeCustomAttributeRow(i: number) {
                   <button
                     type="button"
                     class="fx-icon-btn"
-                    aria-label="Edit item"
-                    title="Edit"
+                    :aria-label="$t('itemDetail.editItem')"
+                    :title="$t('common.edit')"
                     :disabled="editLoading"
                     @click="enterEditMode"
                   >
                     <FxSvg name="pencilSquare" />
                   </button>
-                  <button type="button" class="fx-icon-btn-danger" aria-label="Delete item" title="Delete" @click="del">
+                  <button
+                    type="button"
+                    class="fx-icon-btn-danger"
+                    :aria-label="$t('itemDetail.deleteItem')"
+                    :title="$t('common.delete')"
+                    @click="del"
+                  >
                     <FxSvg name="trash" />
                   </button>
                 </template>
                 <template v-else>
-                  <button type="button" class="fx-icon-btn" aria-label="View mode" title="View" @click="exitEditMode">
+                  <button type="button" class="fx-icon-btn" :aria-label="$t('itemDetail.viewMode')" :title="$t('common.view')" @click="exitEditMode">
                     <FxSvg name="eye" />
                   </button>
                   <button
                     type="button"
                     class="fx-icon-btn border-emerald-200/90 bg-emerald-50/80 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100"
-                    aria-label="Save changes"
-                    title="Save"
+                    :aria-label="$t('itemDetail.saveChanges')"
+                    :title="$t('itemDetail.save')"
                     :disabled="saveBusy"
                     @click="saveItem"
                   >
@@ -567,7 +585,7 @@ function removeCustomAttributeRow(i: number) {
     </div>
 
     <div v-if="labels.length && !editMode" class="fx-card px-5 py-4 sm:px-6">
-      <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Labels</h2>
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("itemDetail.labels") }}</h2>
       <div class="mt-3 flex flex-wrap gap-2">
         <span
           v-for="lb in labels"
@@ -582,7 +600,7 @@ function removeCustomAttributeRow(i: number) {
 
     <div v-if="editMode" class="fx-card px-5 py-4 sm:px-6">
       <div class="flex flex-wrap items-start justify-between gap-3">
-        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Labels</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("itemDetail.labels") }}</h2>
         <div ref="labelPickerRoot" class="relative shrink-0">
           <button
             type="button"
@@ -594,14 +612,14 @@ function removeCustomAttributeRow(i: number) {
             @click="toggleLabelAddMenu"
           >
             <FxSvg name="plus" />
-            Add label
+            {{ $t("itemDetail.addLabel") }}
           </button>
           <div
             v-show="labelAddMenuOpen"
             id="item-label-add-dropdown"
             class="absolute right-0 top-full z-50 mt-2 max-h-56 w-[min(16rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-zinc-200/90 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
             role="listbox"
-            aria-label="Labels to add"
+            :aria-label="$t('itemDetail.labelsToAdd')"
             @click.stop
           >
             <button
@@ -618,7 +636,7 @@ function removeCustomAttributeRow(i: number) {
           </div>
         </div>
       </div>
-      <p v-if="!allLabelsEdit.length" class="mt-2 text-sm text-zinc-500">Create labels first under Labels in the sidebar.</p>
+      <p v-if="!allLabelsEdit.length" class="mt-2 text-sm text-zinc-500">{{ $t("itemDetail.createLabelsFirst") }}</p>
       <div v-else class="mt-3 flex min-h-[2.25rem] flex-wrap items-center gap-2">
         <template v-if="selectedLabelsOrdered.length">
           <span
@@ -631,25 +649,25 @@ function removeCustomAttributeRow(i: number) {
             <button
               type="button"
               class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-200/90 hover:text-zinc-800"
-              :aria-label="'Remove label ' + lb.Name"
+              :aria-label="$t('itemDetail.removeLabel', { name: lb.Name })"
               @click="removeLabel(lb.ID)"
             >
               <span class="text-base leading-none" aria-hidden="true">×</span>
             </button>
           </span>
         </template>
-        <p v-else class="text-sm text-zinc-400">No labels</p>
+        <p v-else class="text-sm text-zinc-400">{{ $t("itemDetail.noLabels") }}</p>
       </div>
     </div>
 
     <section v-if="attrRows.length && !editMode" class="fx-card overflow-hidden p-0">
-      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">Details</h2>
+      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">{{ $t("itemDetail.details") }}</h2>
       <div class="overflow-x-auto">
         <table class="w-full min-w-[20rem] text-left text-sm">
           <thead>
             <tr class="border-b border-zinc-200 bg-zinc-50/90">
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Field</th>
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Value</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.field") }}</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.value") }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100">
@@ -663,13 +681,13 @@ function removeCustomAttributeRow(i: number) {
     </section>
 
     <section v-if="editMode" class="fx-card overflow-hidden p-0">
-      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">Details</h2>
+      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">{{ $t("itemDetail.details") }}</h2>
       <div v-if="fieldsEdit.length" class="overflow-x-auto">
         <table class="w-full min-w-[20rem] text-left text-sm">
           <thead>
             <tr class="border-b border-zinc-200 bg-zinc-50/90">
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Field</th>
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Value</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.field") }}</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.value") }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100">
@@ -684,7 +702,7 @@ function removeCustomAttributeRow(i: number) {
                   class="fx-input mt-0 py-2 text-sm"
                   :required="f.required"
                 >
-                  <option value="">—</option>
+                  <option value="">{{ $t("common.optionEmpty") }}</option>
                   <option v-for="opt in f.options || []" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                 </select>
                 <input
@@ -702,7 +720,7 @@ function removeCustomAttributeRow(i: number) {
       </div>
       <div class="px-5 py-4 sm:px-6" :class="fieldsEdit.length ? 'border-t border-zinc-100' : ''">
         <div class="flex flex-wrap items-start justify-between gap-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Custom attributes</h2>
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("itemDetail.customAttrs") }}</h2>
           <div class="relative shrink-0">
             <button
               type="button"
@@ -710,25 +728,25 @@ function removeCustomAttributeRow(i: number) {
               @click="addCustomAttributeRow"
             >
               <FxSvg name="plus" />
-              Add Field
+              {{ $t("itemDetail.addField") }}
             </button>
           </div>
         </div>
-        <p class="mt-2 text-xs text-zinc-500">Extra keys not covered by the preset fields above.</p>
+        <p class="mt-2 text-xs text-zinc-500">{{ $t("itemDetail.customAttrsHelp") }}</p>
         <div v-if="addPairsEdit.length" class="mt-3 space-y-2">
           <div
             v-for="(row, i) in addPairsEdit"
             :key="i"
             class="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-2 sm:pr-2"
           >
-            <input v-model="row.k" class="fx-input mt-0 flex-1 text-sm" placeholder="Key" />
-            <input v-model="row.v" class="fx-input mt-0 flex-1 text-sm" placeholder="Value" />
+            <input v-model="row.k" class="fx-input mt-0 flex-1 text-sm" :placeholder="$t('itemDetail.keyPh')" />
+            <input v-model="row.v" class="fx-input mt-0 flex-1 text-sm" :placeholder="$t('itemDetail.valuePh')" />
             <button
               type="button"
               class="shrink-0 self-end rounded-lg px-2 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-red-50 hover:text-red-700 sm:self-center"
               @click="removeCustomAttributeRow(i)"
             >
-              Remove
+              {{ $t("common.remove") }}
             </button>
           </div>
         </div>
@@ -736,18 +754,18 @@ function removeCustomAttributeRow(i: number) {
     </section>
 
     <section v-if="systemRows.length" class="fx-card overflow-hidden p-0">
-      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">System</h2>
+      <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">{{ $t("itemDetail.system") }}</h2>
       <div class="overflow-x-auto">
         <table class="w-full min-w-[20rem] text-left text-sm">
           <thead>
             <tr class="border-b border-zinc-200 bg-zinc-50/90">
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Field</th>
-              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Value</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.field") }}</th>
+              <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("common.value") }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100">
             <tr v-for="(row, i) in systemRows" :key="i" class="align-top bg-zinc-50/50">
-              <td class="whitespace-nowrap px-5 py-3.5 font-medium text-zinc-600">{{ row.label }}</td>
+              <td class="whitespace-nowrap px-5 py-3.5 font-medium text-zinc-600">{{ systemRowLabel(row.label) }}</td>
               <td
                 class="px-5 py-3.5 break-words text-zinc-700"
                 :class="row.label === 'Item ID' ? 'font-mono text-xs break-all' : 'text-sm'"

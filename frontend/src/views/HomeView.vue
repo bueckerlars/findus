@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api } from "../api";
 import type { User } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
+import { bcp47ForUiLocale, type SupportedLocale } from "../locale/constants";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
@@ -44,6 +46,13 @@ const data = ref<{
 
 const { isAdmin } = useSession();
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
+const { locale } = useI18n();
+
+const dateLocale = computed(() => bcp47ForUiLocale(locale.value as SupportedLocale));
+
+function fmtItemTime(iso: string): string {
+  return formatItemUpdatedAt(iso, dateLocale.value);
+}
 
 onMounted(async () => {
   data.value = await api("/api/home");
@@ -51,32 +60,32 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="!data" class="text-zinc-500">Loading…</div>
+  <div v-if="!data" class="text-zinc-500">{{ $t("common.loading") }}</div>
   <div v-else class="mx-auto max-w-5xl space-y-6">
     <div class="mb-8">
-      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">Hello, {{ data.user.username }}</h1>
-      <p class="mt-2 max-w-xl text-zinc-500">Your Inventory at a glance</p>
+      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("home.greeting", { name: data.user.username }) }}</h1>
+      <p class="mt-2 max-w-xl text-zinc-500">{{ $t("home.tagline") }}</p>
     </div>
 
-    <section class="fx-home-stats mb-8" aria-label="Inventory totals">
+    <section class="fx-home-stats mb-8" :aria-label="$t('home.statsAria')">
       <div class="fx-card fx-home-stat">
         <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="cube" class="fx-icon" /></span>
         <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Items</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("home.items") }}</p>
           <p class="mt-0.5 text-2xl font-semibold tabular-nums leading-none text-zinc-900">{{ data.item_count }}</p>
         </div>
       </div>
       <div class="fx-card fx-home-stat">
         <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="mapPin" class="fx-icon" /></span>
         <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Locations</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("home.locations") }}</p>
           <p class="mt-0.5 text-2xl font-semibold tabular-nums leading-none text-zinc-900">{{ data.location_count }}</p>
         </div>
       </div>
       <div class="fx-card fx-home-stat">
         <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="tag" class="fx-icon" /></span>
         <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Labels</p>
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("home.labels") }}</p>
           <p class="mt-0.5 text-2xl font-semibold tabular-nums leading-none text-zinc-900">{{ data.label_count }}</p>
         </div>
       </div>
@@ -85,10 +94,10 @@ onMounted(async () => {
     <ItemsViewToggle storage-key="home_recent_items" class="fx-card overflow-hidden p-0">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-          <h2 id="home-recent-items" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Recent items</h2>
+          <h2 id="home-recent-items" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("home.recentItems") }}</h2>
           <div class="flex flex-wrap items-center gap-2">
             <ItemsViewModeToolbar />
-            <RouterLink to="/items" class="text-sm font-medium text-sky-600 hover:text-sky-700">All items</RouterLink>
+            <RouterLink to="/items" class="text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("home.allItems") }}</RouterLink>
           </div>
         </div>
       </template>
@@ -107,12 +116,12 @@ onMounted(async () => {
                   <span
                     v-if="row.recently_added"
                     class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
-                    >New</span
+                    >{{ $t("home.new") }}</span
                   >
                   <span
                     v-else
                     class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
-                    >Updated</span
+                    >{{ $t("home.updated") }}</span
                   >
                 </div>
                 <p
@@ -126,7 +135,7 @@ onMounted(async () => {
                 <time
                   class="text-right text-xs tabular-nums text-zinc-400 transition-colors group-hover:text-zinc-500"
                   :datetime="row.item.UpdatedAt"
-                  >{{ formatItemUpdatedAt(row.item.UpdatedAt) }}</time
+                  >{{ fmtItemTime(row.item.UpdatedAt) }}</time
                 >
                 <span class="fx-home-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
               </div>
@@ -166,12 +175,12 @@ onMounted(async () => {
                 <span
                   v-if="row.recently_added"
                   class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
-                  >New</span
+                  >{{ $t("home.new") }}</span
                 >
                 <span
                   v-else
                   class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
-                  >Updated</span
+                  >{{ $t("home.updated") }}</span
                 >
               </div>
             </div>
@@ -179,17 +188,17 @@ onMounted(async () => {
         </div>
       </template>
       <div v-else class="px-5 py-10 text-center">
-        <p class="text-sm text-zinc-500">No items yet.</p>
+        <p class="text-sm text-zinc-500">{{ $t("home.noItems") }}</p>
         <button v-if="isAdmin" type="button" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700" @click="openCreateItem()">
-          Add an item
+          {{ $t("home.addItem") }}
         </button>
       </div>
     </ItemsViewToggle>
 
     <section class="fx-card overflow-hidden p-0" aria-labelledby="home-locations">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-        <h2 id="home-locations" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Locations</h2>
-        <RouterLink to="/locations" class="text-sm font-medium text-sky-600 hover:text-sky-700">All locations</RouterLink>
+        <h2 id="home-locations" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("home.locations") }}</h2>
+        <RouterLink to="/locations" class="text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("home.allLocations") }}</RouterLink>
       </div>
       <ul v-if="data.home_locations.length" class="divide-y divide-zinc-100" role="list">
         <li v-for="row in data.home_locations" :key="row.location.ID">
@@ -203,12 +212,12 @@ onMounted(async () => {
                 <span
                   v-if="row.recently_added"
                   class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-[1.02]"
-                  >New</span
+                  >{{ $t("home.new") }}</span
                 >
                 <span
                   v-else
                   class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-[1.02]"
-                  >Updated</span
+                  >{{ $t("home.updated") }}</span
                 >
               </div>
             </div>
@@ -216,7 +225,9 @@ onMounted(async () => {
               <span
                 v-if="row.sub_location_count > 0"
                 class="fx-home-loc-count-badge"
-                :aria-label="row.sub_location_count === 1 ? '1 sub-location' : row.sub_location_count + ' sub-locations'"
+                :aria-label="
+                  row.sub_location_count === 1 ? $t('home.subLocationOne') : $t('home.subLocationMany', { n: row.sub_location_count })
+                "
                 >{{ row.sub_location_count }}</span
               >
               <span class="fx-home-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
@@ -225,26 +236,26 @@ onMounted(async () => {
         </li>
       </ul>
       <div v-else class="px-5 py-10 text-center">
-        <p class="text-sm text-zinc-500">No locations yet.</p>
+        <p class="text-sm text-zinc-500">{{ $t("home.noLocations") }}</p>
         <button
           v-if="isAdmin"
           type="button"
           class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
           @click="openCreateLocation()"
         >
-          Create a location
+          {{ $t("home.createLocation") }}
         </button>
       </div>
     </section>
 
     <section class="fx-card overflow-hidden p-0" aria-labelledby="home-labels-heading">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-        <h2 id="home-labels-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Labels</h2>
+        <h2 id="home-labels-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("home.labels") }}</h2>
         <div class="flex flex-wrap items-center gap-2">
           <button v-if="isAdmin" type="button" class="text-sm font-medium text-sky-600 hover:text-sky-700" @click="openCreateLabel()">
-            New label
+            {{ $t("home.newLabel") }}
           </button>
-          <RouterLink to="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">All labels</RouterLink>
+          <RouterLink to="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("home.allLabels") }}</RouterLink>
         </div>
       </div>
       <div v-if="data.all_labels?.length" class="max-h-80 overflow-y-auto overscroll-y-contain px-5 py-4">
@@ -261,14 +272,14 @@ onMounted(async () => {
         </div>
       </div>
       <div v-else class="px-5 py-10 text-center">
-        <p class="text-sm text-zinc-500">No labels configured.</p>
+        <p class="text-sm text-zinc-500">{{ $t("home.noLabels") }}</p>
         <button
           v-if="isAdmin"
           type="button"
           class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
           @click="openCreateLabel()"
         >
-          Create a label
+          {{ $t("home.createLabel") }}
         </button>
       </div>
     </section>
