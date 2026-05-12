@@ -211,7 +211,8 @@ function closePalette() {
     if (d.open) d.close();
   };
 
-  const onTransitionEnd = (e: TransitionEvent) => {
+  const onTransitionEnd = (e: Event) => {
+    if (!(e instanceof TransitionEvent)) return;
     if (e.target !== panel) return;
     if (e.propertyName !== "opacity") return;
     cleanup();

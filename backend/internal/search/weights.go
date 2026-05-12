@@ -4,16 +4,16 @@ package search
 // name, description, template_data, additional_data, search_labels, search_location, template_type.
 // Higher values emphasize matches in that column (SQLite bm25 weight semantics).
 type RankWeights struct {
-	Name            float64
-	Description     float64
-	TemplateData    float64
-	AdditionalData  float64
-	Labels          float64
-	Location        float64
-	TemplateType    float64
-	SubstrWeight    float64 // multiplier for trigram table bm25 contribution
-	FuzzyMaxDist    int     // Levenshtein cap for fuzzy bonus (e.g. 2)
-	FuzzyMinQuery   int     // min rune length of query to apply fuzzy bonus
+	Name           float64
+	Description    float64
+	TemplateData   float64
+	AdditionalData float64
+	Labels         float64
+	Location       float64
+	TemplateType   float64
+	SubstrWeight   float64 // multiplier for trigram table bm25 contribution
+	FuzzyMaxDist   int     // Levenshtein cap for fuzzy bonus (e.g. 2)
+	FuzzyMinQuery  int     // min rune length of query to apply fuzzy bonus
 }
 
 func DefaultRankWeights() RankWeights {
