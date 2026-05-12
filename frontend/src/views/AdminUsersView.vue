@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api, postJson } from "../api";
+import { toast } from "../composables/useToast";
 
 type UserRow = {
   id: string;
@@ -39,32 +40,64 @@ async function load() {
 }
 
 async function setRole(uid: string, role: string) {
-  await postJson("/api/admin/users/" + uid + "/role", { role });
-  await load();
+  err.value = "";
+  try {
+    await postJson("/api/admin/users/" + uid + "/role", { role });
+    await load();
+    toast.success("Role updated.");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Update failed";
+    err.value = msg;
+    toast.error(msg);
+  }
 }
 
 async function setActive(uid: string, active: boolean) {
-  await postJson("/api/admin/users/" + uid + "/active", { active });
-  await load();
+  err.value = "";
+  try {
+    await postJson("/api/admin/users/" + uid + "/active", { active });
+    await load();
+    toast.success(active ? "User activated." : "User deactivated.");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Update failed";
+    err.value = msg;
+    toast.error(msg);
+  }
 }
 
 async function createUser() {
-  await postJson("/api/admin/users", {
-    username: newUser.value.username,
-    email: newUser.value.email,
-    password: newUser.value.password,
-    role: newUser.value.role,
-  });
-  newUser.value = { username: "", email: "", password: "", role: "user" };
-  await load();
+  err.value = "";
+  try {
+    await postJson("/api/admin/users", {
+      username: newUser.value.username,
+      email: newUser.value.email,
+      password: newUser.value.password,
+      role: newUser.value.role,
+    });
+    newUser.value = { username: "", email: "", password: "", role: "user" };
+    await load();
+    toast.success("User created.");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Create failed";
+    err.value = msg;
+    toast.error(msg);
+  }
 }
 
 async function createInvite() {
-  await postJson("/api/admin/invites", {
-    role: newInvite.value.role,
-    ttl_hours: newInvite.value.ttl_hours,
-  });
-  await load();
+  err.value = "";
+  try {
+    await postJson("/api/admin/invites", {
+      role: newInvite.value.role,
+      ttl_hours: newInvite.value.ttl_hours,
+    });
+    await load();
+    toast.success("Invite created.");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Create failed";
+    err.value = msg;
+    toast.error(msg);
+  }
 }
 </script>
 

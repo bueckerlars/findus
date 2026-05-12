@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { api, postJson } from "../api";
+import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
 
 type ItemTemplate = { ID: string; DisplayName: string };
@@ -51,6 +52,7 @@ async function save() {
       color: color.value,
       default_template_type: defaultTemplateType.value,
     });
+    toast.success("Label created.");
     close();
     await router.push(r.next);
   } catch (e) {

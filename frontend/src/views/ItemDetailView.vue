@@ -6,6 +6,7 @@ import { useSession } from "../session";
 import FxSvg from "../components/FxSvg.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 import { confirmAlert } from "../composables/useAlertDialog";
+import { toast } from "../composables/useToast";
 import { setItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 
 type Item = {
@@ -229,6 +230,7 @@ async function saveItem() {
     await api<{ next: string }>("/api/items/" + id.value, { method: "POST", body: fd });
     editMode.value = false;
     await load();
+    toast.success("Item saved.");
   } catch (e) {
     saveErr.value = e instanceof Error ? e.message : "Save failed";
   } finally {
@@ -344,8 +346,13 @@ async function del() {
     variant: "danger",
   });
   if (!ok) return;
-  await postJson("/api/items/" + id.value + "/delete", {});
-  await router.push("/items");
+  try {
+    await postJson("/api/items/" + id.value + "/delete", {});
+    toast.success("Item deleted.");
+    await router.push("/items");
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Delete failed");
+  }
 }
 
 function onPhotoEdit(e: Event) {

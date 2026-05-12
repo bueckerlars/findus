@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { api, postJson } from "../api";
 import type { User } from "../api";
+import { toast } from "../composables/useToast";
 import { useSession } from "../session";
 import { usernameInitial } from "../utils/initial";
 import FxSvg from "../components/FxSvg.vue";
@@ -15,28 +16,9 @@ const removeAvatar = ref(false);
 const avatar = ref<File | null>(null);
 const avatarPreviewUrl = ref<string | null>(null);
 const err = ref("");
-const success = ref("");
 const saving = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const { refresh } = useSession();
-
-let successTimer: ReturnType<typeof setTimeout> | null = null;
-
-function clearSuccessTimer() {
-  if (successTimer) {
-    clearTimeout(successTimer);
-    successTimer = null;
-  }
-}
-
-function showSuccess(msg: string) {
-  clearSuccessTimer();
-  success.value = msg;
-  successTimer = setTimeout(() => {
-    success.value = "";
-    successTimer = null;
-  }, 4000);
-}
 
 onMounted(async () => {
   const r = await api<{ user: User }>("/api/profile");
@@ -46,7 +28,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  clearSuccessTimer();
   if (avatarPreviewUrl.value) URL.revokeObjectURL(avatarPreviewUrl.value);
 });
 
@@ -113,7 +94,6 @@ function clearPendingAvatar() {
 
 async function save() {
   err.value = "";
-  success.value = "";
   saving.value = true;
   try {
     if (avatar.value) {
@@ -142,7 +122,7 @@ async function save() {
     removeAvatar.value = false;
     avatar.value = null;
     if (fileInputRef.value) fileInputRef.value.value = "";
-    showSuccess("Your profile was updated.");
+    toast.success("Your profile was updated.");
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Could not save";
   } finally {
@@ -166,14 +146,6 @@ async function save() {
     >
       {{ err }}
     </p>
-    <p
-      v-if="success"
-      class="rounded-2xl border border-emerald-200/90 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm ring-1 ring-emerald-900/5"
-      role="status"
-    >
-      {{ success }}
-    </p>
-
     <form class="space-y-6" @submit.prevent="save">
       <!-- Identity hero -->
       <section
