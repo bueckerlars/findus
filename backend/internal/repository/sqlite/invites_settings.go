@@ -96,9 +96,12 @@ func scanInvite(sc interface {
 	return &inv, nil
 }
 
-type SettingsRepo struct{ db *sql.DB }
+type SettingsRepo struct{ db DBConn }
 
 func NewSettingsRepo(db *sql.DB) *SettingsRepo { return &SettingsRepo{db: db} }
+
+// NewSettingsRepoConn wraps any DBConn (e.g. *sql.Tx).
+func NewSettingsRepoConn(c DBConn) *SettingsRepo { return &SettingsRepo{db: c} }
 
 func (r *SettingsRepo) Get(ctx context.Context, key string) (string, bool, error) {
 	var v string

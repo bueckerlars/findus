@@ -9,9 +9,12 @@ import (
 	"findus/backend/internal/domain"
 )
 
-type LocationRepo struct{ db *sql.DB }
+type LocationRepo struct{ db DBConn }
 
 func NewLocationRepo(db *sql.DB) *LocationRepo { return &LocationRepo{db: db} }
+
+// NewLocationRepoConn wraps any DBConn (e.g. *sql.Tx).
+func NewLocationRepoConn(c DBConn) *LocationRepo { return &LocationRepo{db: c} }
 
 func (r *LocationRepo) Create(ctx context.Context, l *domain.Location) error {
 	_, err := r.db.ExecContext(ctx, `
@@ -113,6 +116,26 @@ func (r *LocationRepo) ListAll(ctx context.Context, limit int) ([]domain.Locatio
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, name, parent_id, description, qr_token, created_at, updated_at
 		FROM locations ORDER BY name LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.Location
+	for rows.Next() {
+		l, err := scanLocation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *l)
+	}
+	return out, rows.Err()
+}
+
+// ListAllExport returns all locations (admin export); no row cap.
+func (r *LocationRepo) ListAllExport(ctx context.Context) ([]domain.Location, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, name, parent_id, description, qr_token, created_at, updated_at
+		FROM locations ORDER BY id`)
 	if err != nil {
 		return nil, err
 	}

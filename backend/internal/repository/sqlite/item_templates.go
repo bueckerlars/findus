@@ -10,9 +10,12 @@ import (
 	"findus/backend/internal/domain"
 )
 
-type ItemTemplateRepo struct{ db *sql.DB }
+type ItemTemplateRepo struct{ db DBConn }
 
 func NewItemTemplateRepo(db *sql.DB) *ItemTemplateRepo { return &ItemTemplateRepo{db: db} }
+
+// NewItemTemplateRepoConn wraps any DBConn (e.g. *sql.Tx).
+func NewItemTemplateRepoConn(c DBConn) *ItemTemplateRepo { return &ItemTemplateRepo{db: c} }
 
 func (r *ItemTemplateRepo) List(ctx context.Context) ([]domain.ItemTemplate, error) {
 	rows, err := r.db.QueryContext(ctx, `
