@@ -6,7 +6,7 @@ import { useSession } from "../session";
 import FxSvg from "../components/FxSvg.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 import { confirmAlert } from "../composables/useAlertDialog";
-import { setItemEditCommandHandlers } from "../composables/useItemEditCommandBridge";
+import { setItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 
 type Item = {
   ID: string;
@@ -245,22 +245,38 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener("pointerdown", onDocPointerDown, true);
   document.removeEventListener("keydown", onGlobalKeydown, true);
-  setItemEditCommandHandlers(null);
+  setItemDetailCommandHandlers(null);
   if (photoPendingPreview.value) {
     URL.revokeObjectURL(photoPendingPreview.value);
   }
 });
 
 watch(
-  editMode,
-  (ed) => {
-    if (ed && isAdmin.value) {
-      setItemEditCommandHandlers({
+  () => ({ it: item.value, ed: editMode.value, ad: isAdmin.value }),
+  () => {
+    if (!item.value) {
+      setItemDetailCommandHandlers(null);
+      return;
+    }
+    const shared = {
+      downloadQrPng,
+      copyPageLink: copyItemPageLink,
+    };
+    if (!isAdmin.value) {
+      setItemDetailCommandHandlers(shared);
+      return;
+    }
+    if (editMode.value) {
+      setItemDetailCommandHandlers({
+        ...shared,
         save: () => saveItem(),
         cancel: () => exitEditMode(),
       });
     } else {
-      setItemEditCommandHandlers(null);
+      setItemDetailCommandHandlers({
+        ...shared,
+        deleteItem: () => del(),
+      });
     }
   },
   { flush: "post" },
@@ -293,6 +309,30 @@ function onDocPointerDown(e: PointerEvent) {
 function onGlobalKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     labelAddMenuOpen.value = false;
+  }
+}
+
+function qrDownloadFilename(): string {
+  const raw = (item.value?.Name || "item").replace(/[^\w\-._\s]+/g, "").trim().replace(/\s+/g, "-");
+  const base = raw.length ? raw.slice(0, 80) : "item";
+  return `findus-${base}-qr.png`;
+}
+
+function downloadQrPng() {
+  const a = document.createElement("a");
+  a.href = qrPngUrl.value;
+  a.download = qrDownloadFilename();
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function copyItemPageLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+  } catch {
+    /* ignore */
   }
 }
 

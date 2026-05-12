@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, provide } from "vue";
-import { readItemsViewMode, writeItemsViewMode } from "../composables/itemsViewMode";
+import { ref, onMounted, onUnmounted, watch, nextTick, provide } from "vue";
+import { readItemsViewMode, writeItemsViewMode, FINDUS_ITEMS_VIEW_MODE_EVENT } from "../composables/itemsViewMode";
 
 const props = defineProps<{
   storageKey: string;
@@ -11,6 +11,13 @@ const root = ref<HTMLElement | null>(null);
 
 function setMode(m: "list" | "gallery") {
   mode.value = m;
+}
+
+function onExternalItemsViewMode(e: Event) {
+  const ce = e as CustomEvent<{ storageKey: string; mode: "list" | "gallery" }>;
+  const d = ce.detail;
+  if (!d || d.storageKey !== props.storageKey) return;
+  setMode(d.mode);
 }
 
 provide("itemsViewMode", mode);
@@ -27,6 +34,11 @@ function syncAria() {
 onMounted(() => {
   mode.value = readItemsViewMode(props.storageKey);
   nextTick(syncAria);
+  window.addEventListener(FINDUS_ITEMS_VIEW_MODE_EVENT, onExternalItemsViewMode);
+});
+
+onUnmounted(() => {
+  window.removeEventListener(FINDUS_ITEMS_VIEW_MODE_EVENT, onExternalItemsViewMode);
 });
 
 watch(

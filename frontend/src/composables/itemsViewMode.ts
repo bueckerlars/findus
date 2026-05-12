@@ -30,3 +30,13 @@ export function writeItemsViewMode(storageKey: string, mode: "list" | "gallery")
     /* ignore */
   }
 }
+
+/** Dispatched when Command Palette (or other UI) changes layout mode for a scoped list. */
+export const FINDUS_ITEMS_VIEW_MODE_EVENT = "findus:set-items-view-mode";
+
+export function dispatchItemsViewMode(storageKey: string, mode: "list" | "gallery") {
+  writeItemsViewMode(storageKey, mode);
+  window.dispatchEvent(
+    new CustomEvent(FINDUS_ITEMS_VIEW_MODE_EVENT, { detail: { storageKey, mode } }),
+  );
+}

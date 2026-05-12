@@ -4,15 +4,18 @@ import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import { useSession } from "../session";
 import FxSvg from "./FxSvg.vue";
-import type { FxIconName } from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
-import { useItemEditCommandHandlers } from "../composables/useItemEditCommandBridge";
+import { useItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
+import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
+import { dispatchItemsViewMode } from "../composables/itemsViewMode";
+import { buildContextCommands } from "./commandPaletteContext";
 
 const router = useRouter();
 const route = useRoute();
 const { isAdmin } = useSession();
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
-const itemEditHandlers = useItemEditCommandHandlers();
+const itemDetailHandlers = useItemDetailCommandHandlers();
+const locationDetailHandlers = useLocationDetailCommandHandlers();
 
 const dialog = ref<HTMLDialogElement | null>(null);
 const inputEl = ref<HTMLInputElement | null>(null);
@@ -245,6 +248,7 @@ function focusTargetAfterModal(sel: string) {
 }
 
 function runCmdAction(action: string) {
+  if (!action) return;
   if (action.startsWith("focus:")) {
     const sel = action.slice("focus:".length).trim();
     lastFocus = null;
@@ -252,14 +256,48 @@ function runCmdAction(action: string) {
     closePalette();
     return;
   }
-  if (action === "item-edit:save" || action === "item-edit:cancel") {
+  if (action.startsWith("tab:")) {
+    const url = action.slice(4);
     lastFocus = null;
+    const d = dialog.value;
+    const open = () => window.open(url, "_blank", "noopener,noreferrer");
+    if (d?.open) d.addEventListener("close", () => nextTick(open), { once: true });
+    else nextTick(open);
     closePalette();
-    const h = itemEditHandlers.value;
-    if (h) {
-      if (action === "item-edit:save") void h.save();
-      else void h.cancel();
-    }
+    return;
+  }
+  if (action.startsWith("item-detail:")) {
+    const sub = action.slice("item-detail:".length);
+    const h = itemDetailHandlers.value;
+    if (!h) return;
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      if (sub === "save" && h.save) void h.save();
+      else if (sub === "cancel" && h.cancel) void h.cancel();
+      else if (sub === "delete" && h.deleteItem) void h.deleteItem();
+      else if (sub === "download-qr" && h.downloadQrPng) void h.downloadQrPng();
+      else if (sub === "copy-link" && h.copyPageLink) void h.copyPageLink();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return;
+  }
+  if (action.startsWith("loc-detail:")) {
+    const sub = action.slice("loc-detail:".length);
+    const h = locationDetailHandlers.value;
+    if (!h) return;
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      if (sub === "delete" && h.deleteLocation) void h.deleteLocation();
+      else if (sub === "download-qr" && h.downloadQrPng) void h.downloadQrPng();
+      else if (sub === "copy-link" && h.copyPageLink) void h.copyPageLink();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
     return;
   }
   closePalette();
@@ -268,29 +306,97 @@ function runCmdAction(action: string) {
   }
 }
 
-function goCreate(kind: "item" | "location" | "label") {
+function goCreate(
+  kind: "item" | "location" | "label",
+  opts?: { itemLocationId?: string; locationParentId?: string },
+) {
   closePalette();
-  if (kind === "item") openCreateItem();
-  else if (kind === "location") openCreateLocation();
+  if (kind === "item") openCreateItem(opts?.itemLocationId ? { locationId: opts.itemLocationId } : undefined);
+  else if (kind === "location") openCreateLocation(opts?.locationParentId ? { parentId: opts.locationParentId } : undefined);
   else openCreateLabel();
+}
+
+function handleCommandButton(btn: HTMLElement) {
+  const clipboard = btn.getAttribute("data-clipboard");
+  if (clipboard) {
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => void navigator.clipboard.writeText(clipboard).catch(() => {});
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return true;
+  }
+  const ext = btn.getAttribute("data-external-href");
+  if (ext) {
+    lastFocus = null;
+    const d = dialog.value;
+    const go = () => {
+      window.location.href = ext;
+    };
+    if (d?.open) d.addEventListener("close", go, { once: true });
+    else go();
+    closePalette();
+    return true;
+  }
+  const durl = btn.getAttribute("data-download-url");
+  if (durl) {
+    const fn = btn.getAttribute("data-download-filename") || "download.png";
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      const a = document.createElement("a");
+      a.href = durl;
+      a.download = fn;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return true;
+  }
+  const ivk = btn.getAttribute("data-items-view-key");
+  const ivm = btn.getAttribute("data-items-view-mode");
+  if (ivk && (ivm === "list" || ivm === "gallery")) {
+    lastFocus = null;
+    const d = dialog.value;
+    const apply = () => dispatchItemsViewMode(ivk, ivm);
+    if (d?.open) d.addEventListener("close", () => nextTick(apply), { once: true });
+    else nextTick(apply);
+    closePalette();
+    return true;
+  }
+
+  const create = btn.getAttribute("data-create");
+  if (create === "item" || create === "location" || create === "label") {
+    const itemLoc = btn.getAttribute("data-create-location-id");
+    const locParent = btn.getAttribute("data-create-parent-id");
+    if (create === "item" && itemLoc) goCreate("item", { itemLocationId: itemLoc });
+    else if (create === "location" && locParent) goCreate("location", { locationParentId: locParent });
+    else goCreate(create);
+    return true;
+  }
+  const cmdAction = btn.getAttribute("data-cmd-action");
+  if (cmdAction) {
+    runCmdAction(cmdAction);
+    return true;
+  }
+  const href = btn.getAttribute("data-href");
+  if (href) {
+    goHref(href);
+    return true;
+  }
+  return false;
 }
 
 function activateSelected() {
   const items = visibleItems();
   const el = items[selectedIdx.value];
   if (!el) return;
-  const create = el.getAttribute("data-create");
-  if (create === "item" || create === "location" || create === "label") {
-    goCreate(create);
-    return;
-  }
-  const cmdAction = el.getAttribute("data-cmd-action");
-  if (cmdAction) {
-    runCmdAction(cmdAction);
-    return;
-  }
-  const href = el.getAttribute("data-href");
-  if (href) goHref(href);
+  void handleCommandButton(el);
 }
 
 function onGlobalKeydown(e: KeyboardEvent) {
@@ -338,27 +444,20 @@ function onInputKeydown(e: KeyboardEvent) {
 }
 
 function onBodyClick(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create], [data-cmd-action]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.(
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+  ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   if (!btn.hasAttribute("data-cmd-static") && !btn.hasAttribute("data-cmd-search-hit") && btn.id !== "fx-command-open-search")
     return;
   e.preventDefault();
-  const create = btn.getAttribute("data-create");
-  if (create === "item" || create === "location" || create === "label") {
-    goCreate(create);
-    return;
-  }
-  const cmdAction = btn.getAttribute("data-cmd-action");
-  if (cmdAction) {
-    runCmdAction(cmdAction);
-    return;
-  }
-  const href = btn.getAttribute("data-href");
-  if (href) goHref(href);
+  void handleCommandButton(btn);
 }
 
 function onBodyMousemove(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create], [data-cmd-action]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.(
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+  ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   const items = visibleItems();
   const idx = items.indexOf(btn as HTMLElement);
@@ -383,280 +482,13 @@ const inputPlaceholder = computed(() =>
   route.path === "/search" ? "Filter or jump to a page…" : "Search items, jump to a page…",
 );
 
-type ContextCommand = {
-  id: string;
-  label: string;
-  keywords: string;
-  icon: FxIconName;
-  href?: string;
-  action?: string;
-};
-
-const contextCommands = computed((): ContextCommand[] => {
-  const path = route.path;
-  const admin = isAdmin.value;
-  const out: ContextCommand[] = [];
-
-  const itemsDetail = /^\/items\/([^/]+)$/.exec(path);
-  if (itemsDetail?.[1] && itemsDetail[1] !== "new") {
-    const id = itemsDetail[1];
-    if (admin && itemEditHandlers.value) {
-      out.push(
-        {
-          id: "ctx-item-save",
-          label: "Save item",
-          keywords: "save commit apply submit store persist",
-          icon: "check",
-          action: "item-edit:save",
-        },
-        {
-          id: "ctx-item-cancel-edit",
-          label: "Cancel editing",
-          keywords: "cancel discard exit close abort revert view discard changes",
-          icon: "eye",
-          action: "item-edit:cancel",
-        },
-      );
-    } else if (admin) {
-      out.push({
-        id: "ctx-item-edit",
-        label: "Edit item",
-        keywords: "edit modify save form",
-        icon: "pencilSquare",
-        href: `/items/${id}?edit=1`,
-      });
-    }
-    out.push(
-      { id: "ctx-item-all", label: "All items", keywords: "items list inventory back", icon: "cube", href: "/items" },
-      {
-        id: "ctx-item-search",
-        label: "Search",
-        keywords: "search find lookup filter",
-        icon: "magnifyingGlass",
-        href: "/search",
-      },
-    );
-    return out;
-  }
-
-  const locDetail = /^\/locations\/([^/]+)$/.exec(path);
-  if (locDetail?.[1] && locDetail[1] !== "new") {
-    const id = locDetail[1];
-    if (admin) {
-      out.push(
-        {
-          id: "ctx-loc-edit",
-          label: "Edit location",
-          keywords: "edit modify rename",
-          icon: "pencilSquare",
-          href: `/locations/${id}/edit`,
-        },
-        {
-          id: "ctx-loc-subloc",
-          label: "Add sub-location",
-          keywords: "new child sub place room",
-          icon: "plus",
-          href: `/locations/new?parent_id=${encodeURIComponent(id)}`,
-        },
-      );
-    }
-    out.push({
-      id: "ctx-loc-all",
-      label: "All locations",
-      keywords: "locations places tree map back",
-      icon: "mapPin",
-      href: "/locations",
-    });
-    return out;
-  }
-
-  const locEdit = /^\/locations\/([^/]+)\/edit$/.exec(path);
-  if (locEdit?.[1]) {
-    const id = locEdit[1];
-    out.push({
-      id: "ctx-loc-view",
-      label: "View location",
-      keywords: "back cancel detail read",
-      icon: "eye",
-      href: `/locations/${id}`,
-    });
-    return out;
-  }
-
-  if (path === "/locations/new") {
-    const pid = route.query.parent_id;
-    if (typeof pid === "string" && pid.trim()) {
-      out.push({
-        id: "ctx-loc-parent",
-        label: "Open parent location",
-        keywords: "parent back navigate",
-        icon: "mapPin",
-        href: `/locations/${pid.trim()}`,
-      });
-    }
-    out.push({
-      id: "ctx-loc-new-all",
-      label: "All locations",
-      keywords: "locations list",
-      icon: "mapPin",
-      href: "/locations",
-    });
-    return out;
-  }
-
-  if (path === "/items") {
-    out.push({
-      id: "ctx-items-search",
-      label: "Open search",
-      keywords: "search find lookup filter",
-      icon: "magnifyingGlass",
-      href: "/search",
-    });
-    return out;
-  }
-
-  if (path === "/") {
-    out.push({
-      id: "ctx-home-search",
-      label: "Open search",
-      keywords: "search find lookup filter",
-      icon: "magnifyingGlass",
-      href: "/search",
-    });
-    return out;
-  }
-
-  if (path === "/search") {
-    out.push(
-      {
-        id: "ctx-search-focus",
-        label: "Focus search field",
-        keywords: "focus type query input cursor",
-        icon: "magnifyingGlass",
-        action: "focus:#q",
-      },
-      { id: "ctx-search-home", label: "Home", keywords: "dashboard start", icon: "home", href: "/" },
-    );
-    return out;
-  }
-
-  if (path === "/labels") {
-    if (admin) {
-      out.push({
-        id: "ctx-labels-new",
-        label: "New label",
-        keywords: "add create tag",
-        icon: "plus",
-        href: "/labels/new",
-      });
-    }
-    return out;
-  }
-
-  const labelEdit = /^\/labels\/([^/]+)\/edit$/.exec(path);
-  if (labelEdit?.[1]) {
-    out.push({
-      id: "ctx-label-all",
-      label: "All labels",
-      keywords: "labels list tags back",
-      icon: "tag",
-      href: "/labels",
-    });
-    return out;
-  }
-
-  if (path === "/labels/new") {
-    out.push({
-      id: "ctx-label-new-all",
-      label: "All labels",
-      keywords: "labels list cancel back",
-      icon: "tag",
-      href: "/labels",
-    });
-    return out;
-  }
-
-  if (path === "/admin/users") {
-    out.push(
-      {
-        id: "ctx-admin-tpl",
-        label: "Templates",
-        keywords: "item template fields editor",
-        icon: "gear",
-        href: "/admin/templates",
-      },
-      { id: "ctx-admin-home", label: "Home", keywords: "dashboard", icon: "home", href: "/" },
-    );
-    return out;
-  }
-
-  if (path === "/admin/templates") {
-    out.push(
-      {
-        id: "ctx-tpl-users",
-        label: "Users",
-        keywords: "admin invites user management",
-        icon: "users",
-        href: "/admin/users",
-      },
-      {
-        id: "ctx-tpl-new",
-        label: "New template",
-        keywords: "add create",
-        icon: "plus",
-        href: "/admin/templates/new",
-      },
-    );
-    return out;
-  }
-
-  if (path === "/admin/templates/new") {
-    out.push({
-      id: "ctx-tpl-new-list",
-      label: "All templates",
-      keywords: "templates list back cancel",
-      icon: "gear",
-      href: "/admin/templates",
-    });
-    return out;
-  }
-
-  const tplEdit = /^\/admin\/templates\/([^/]+)\/edit$/.exec(path);
-  if (tplEdit?.[1]) {
-    out.push({
-      id: "ctx-tpl-edit-list",
-      label: "All templates",
-      keywords: "templates list back cancel",
-      icon: "gear",
-      href: "/admin/templates",
-    });
-    return out;
-  }
-
-  if (path === "/items/new") {
-    out.push({
-      id: "ctx-itemform-items",
-      label: "All items",
-      keywords: "items list cancel back",
-      icon: "cube",
-      href: "/items",
-    });
-    return out;
-  }
-
-  if (path === "/profile") {
-    out.push({
-      id: "ctx-profile-home",
-      label: "Home",
-      keywords: "dashboard",
-      icon: "home",
-      href: "/",
-    });
-    return out;
-  }
-
-  return out;
-});
+const contextCommands = computed(() =>
+  buildContextCommands(route, {
+    isAdmin: isAdmin.value,
+    itemDetail: itemDetailHandlers.value,
+    locationDetail: locationDetailHandlers.value,
+  }),
+);
 
 type CreateKind = "item" | "location" | "label";
 
@@ -738,6 +570,14 @@ const createCommands = computed(() =>
               :data-keywords="cmd.keywords"
               :data-href="cmd.href"
               :data-cmd-action="cmd.action"
+              :data-clipboard="cmd.clipboard"
+              :data-external-href="cmd.externalHref"
+              :data-download-url="cmd.downloadUrl"
+              :data-download-filename="cmd.downloadFilename"
+              :data-items-view-key="cmd.itemsViewKey"
+              :data-items-view-mode="cmd.itemsViewMode"
+              :data-create="cmd.createPreset?.kind"
+              :data-create-location-id="cmd.createPreset?.locationId"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
