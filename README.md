@@ -57,6 +57,7 @@ Set environment variables (or use a `.env` file next to `docker-compose.yml`). F
 | `FINDUS_JWT_SECRET` | *(optional)* | Sign-in tokens; if unset, a file is created under the data directory |
 | `FINDUS_COOKIE_SECURE` | `false` (`true` with HTTPS) | Secure cookie flag |
 | `FINDUS_LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
+| `FINDUS_LOG_FORMAT` | `text` | `text` (human-readable) or `json` (structured) |
 
 Copy [`.env.example`](.env.example) as a starting point. Full detail: [Configuration](docs/configuration.md).
 

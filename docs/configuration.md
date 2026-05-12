@@ -12,6 +12,7 @@ All settings are read from environment variables (optional `.env` for local or C
 | `FINDUS_JWT_SECRET` | *(empty)* | HS256 secret for JWTs. If empty, the app creates or loads `$DATA_DIR/.jwt_secret` |
 | `FINDUS_COOKIE_SECURE` | `false` | If `true`, auth cookies are marked `Secure` (required for HTTPS deployments) |
 | `FINDUS_LOG_LEVEL` | `info` | One of `debug`, `info`, `warn`, `error` |
+| `FINDUS_LOG_FORMAT` | `text` | `text` for human-readable key=value lines; `json` for structured logs (aggregators, Docker) |
 
 ## HTTPS and reverse proxies
 
