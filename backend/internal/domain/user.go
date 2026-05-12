@@ -19,6 +19,7 @@ type User struct {
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	AvatarPath   *string
+	UITheme      string
 }
 
 func (r Role) IsAdmin() bool { return r == RoleAdmin }

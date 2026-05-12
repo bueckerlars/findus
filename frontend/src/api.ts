@@ -11,6 +11,14 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
   });
 }
 
+export async function patchJson<T>(path: string, body: unknown): Promise<T> {
+  return api<T>(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   const method = (init.method || "GET").toUpperCase();
@@ -59,6 +67,7 @@ export type User = {
   email: string;
   role: string;
   is_active: boolean;
+  theme?: string;
   avatar_path?: string | null;
   created_at?: string;
   updated_at?: string;

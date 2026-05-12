@@ -190,3 +190,44 @@ func (s *Server) removeUserAvatarFile(ctx context.Context, u2 *domain.User) {
 		s.Log.Error("avatar remove", "err", err)
 	}
 }
+
+type apiProfileThemePatchReq struct {
+	Theme string `json:"theme"`
+}
+
+// APIProfileThemePatch sets ui_theme for the current user (no password).
+func (s *Server) APIProfileThemePatch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		s.writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	ctx := r.Context()
+	u, ok := middleware.User(ctx)
+	if !ok {
+		s.writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	var req apiProfileThemePatchReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	theme := strings.TrimSpace(req.Theme)
+	if !domain.ValidUITheme(theme) {
+		s.writeJSONError(w, http.StatusBadRequest, "Invalid theme.")
+		return
+	}
+	fresh, err := s.Users.GetByID(ctx, u.ID)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "Could not load profile.")
+		return
+	}
+	fresh.UITheme = theme
+	fresh.UpdatedAt = time.Now().UTC()
+	if err := s.Users.Update(ctx, fresh); err != nil {
+		s.Log.Error("profile theme", "err", err)
+		s.writeJSONError(w, http.StatusInternalServerError, "Could not save theme.")
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"user": apiUserFrom(fresh)})
+}

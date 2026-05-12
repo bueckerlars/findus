@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { api, postJson } from "../api";
+import { api, patchJson, postJson } from "../api";
 import type { User } from "../api";
 import { toast } from "../composables/useToast";
 import { useSession } from "../session";
+import { FX_THEMES, normalizeFxThemeId } from "../themes";
 import { usernameInitial } from "../utils/initial";
 import FxSvg from "../components/FxSvg.vue";
 
@@ -17,6 +18,7 @@ const avatar = ref<File | null>(null);
 const avatarPreviewUrl = ref<string | null>(null);
 const err = ref("");
 const saving = ref(false);
+const themeSaving = ref<string | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const { refresh } = useSession();
 
@@ -59,6 +61,23 @@ const avatarImgSrc = computed(() => {
 });
 
 const roleLabel = computed(() => (u.value?.role === "admin" ? "Administrator" : "Member"));
+
+const activeThemeId = computed(() => normalizeFxThemeId(u.value?.theme));
+
+async function selectTheme(themeId: string) {
+  if (!u.value || themeId === activeThemeId.value) return;
+  themeSaving.value = themeId;
+  try {
+    const r = await patchJson<{ user: User }>("/api/profile/theme", { theme: themeId });
+    u.value = r.user;
+    await refresh();
+    toast.success("Theme updated.");
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Could not update theme");
+  } finally {
+    themeSaving.value = null;
+  }
+}
 
 function formatProfileDate(iso: string | undefined): string {
   if (!iso) return "—";
@@ -146,6 +165,7 @@ async function save() {
     >
       {{ err }}
     </p>
+
     <form class="space-y-6" @submit.prevent="save">
       <!-- Identity hero -->
       <section
@@ -271,6 +291,54 @@ async function save() {
             <label class="fx-label" for="pe">Email</label>
             <input id="pe" v-model="email" type="email" class="fx-input" required autocomplete="email" />
           </div>
+        </div>
+      </section>
+
+      <!-- Appearance (theme saves immediately; no password) -->
+      <section class="fx-card overflow-hidden p-0" aria-labelledby="profile-theme-heading">
+        <div class="flex items-center gap-3 border-b border-zinc-100 px-5 py-4">
+          <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="eye" class="fx-icon" /></span>
+          <div>
+            <h2 id="profile-theme-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Appearance</h2>
+            <p class="text-xs text-zinc-400">Color theme for your account on this device.</p>
+          </div>
+        </div>
+        <div class="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
+          <button
+            v-for="t in FX_THEMES"
+            :key="t.id"
+            type="button"
+            class="group fx-profile-theme-tile"
+            :class="{ 'fx-profile-theme-tile--selected': activeThemeId === t.id }"
+            :disabled="themeSaving !== null"
+            :aria-pressed="activeThemeId === t.id"
+            :aria-busy="themeSaving === t.id"
+            @click="selectTheme(t.id)"
+          >
+            <div class="flex h-12 w-full gap-0.5 overflow-hidden rounded-t-xl px-2 pt-2">
+              <div v-for="(sw, i) in t.swatches" :key="i" class="min-h-0 flex-1 rounded-md shadow-inner" :class="sw" />
+            </div>
+            <div class="flex flex-1 flex-col gap-0.5 px-3 pb-3 pt-2.5">
+              <span class="text-sm font-semibold text-zinc-900">{{ t.label }}</span>
+              <span class="text-xs leading-snug text-zinc-500">{{ t.description }}</span>
+            </div>
+            <span
+              v-if="themeSaving === t.id"
+              class="flex items-center justify-center gap-2 border-t border-zinc-100/80 bg-zinc-50/90 py-2 text-xs font-medium text-zinc-600"
+            >
+              <span
+                class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600"
+                aria-hidden="true"
+              ></span>
+              Applying…
+            </span>
+            <span
+              v-else-if="activeThemeId === t.id"
+              class="fx-profile-theme-tile__footer-active border-t py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide"
+            >
+              Active
+            </span>
+          </button>
         </div>
       </section>
 
