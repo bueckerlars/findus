@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
+import { toast } from "../composables/useToast";
 import TemplateFieldsEditor from "../components/TemplateFieldsEditor.vue";
 import { parseTemplateFieldsJson, validateTemplateFields } from "../types/templateFields";
 
@@ -61,6 +62,7 @@ async function save() {
         sort_order: sortOrder.value,
       });
     }
+    toast.success("Template saved.");
     await router.push("/admin/templates");
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Save failed";
@@ -77,6 +79,7 @@ async function del() {
   if (!ok) return;
   try {
     await postJson("/api/admin/templates/" + id.value + "/delete", {});
+    toast.success("Template deleted.");
     await router.push("/admin/templates");
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Delete failed";

@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { api, postJson } from "../api";
+import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
 
 type LocOpt = { ID: string; Label: string };
@@ -62,6 +63,7 @@ async function save() {
       description: description.value,
       parent_id: parentId.value,
     });
+    toast.success("Location created.");
     close();
     await router.push(r.next);
   } catch (e) {

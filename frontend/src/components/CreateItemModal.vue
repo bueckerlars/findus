@@ -2,6 +2,7 @@
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { api } from "../api";
+import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
 import FxSvg from "./FxSvg.vue";
 
@@ -269,6 +270,7 @@ async function submit() {
       method: "POST",
       body: fd,
     });
+    toast.success("Item created.");
     close();
     await router.push(r.next);
   } catch (e) {

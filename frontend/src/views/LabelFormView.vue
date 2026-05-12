@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
+import { toast } from "../composables/useToast";
 
 type ItemTemplate = { ID: string; DisplayName: string };
 type Label = { ID: string; Name: string; Color: string; DefaultTemplateType?: string | null };
@@ -33,6 +34,7 @@ async function save() {
       color: color.value,
       default_template_type: defaultTemplateType.value,
     });
+    toast.success("Label saved.");
     await router.push(r.next);
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Save failed";
@@ -47,8 +49,13 @@ async function del() {
     variant: "danger",
   });
   if (!ok) return;
-  await postJson("/api/labels/" + id.value + "/delete", {});
-  await router.push("/labels");
+  try {
+    await postJson("/api/labels/" + id.value + "/delete", {});
+    toast.success("Label deleted.");
+    await router.push("/labels");
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Delete failed");
+  }
 }
 </script>
 

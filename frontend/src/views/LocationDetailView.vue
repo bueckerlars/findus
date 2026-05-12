@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
+import { toast } from "../composables/useToast";
 import { useCreateModals } from "../composables/useCreateModals";
 import { setLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
 import { useSession } from "../session";
@@ -112,8 +113,13 @@ async function del() {
     variant: "danger",
   });
   if (!ok) return;
-  await postJson("/api/locations/" + id.value + "/delete", {});
-  await router.push("/locations");
+  try {
+    await postJson("/api/locations/" + id.value + "/delete", {});
+    toast.success("Location deleted.");
+    await router.push("/locations");
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Delete failed");
+  }
 }
 </script>
 

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
+import { toast } from "../composables/useToast";
 
 type LocOpt = { ID: string; Label: string };
 type Location = { ID: string; Name: string; Description: string };
@@ -38,6 +39,7 @@ async function save() {
       description: description.value,
       parent_id: parentId.value,
     });
+    toast.success("Location saved.");
     await router.push(r.next);
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Save failed";
