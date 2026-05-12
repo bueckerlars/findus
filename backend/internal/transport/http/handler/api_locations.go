@@ -2,20 +2,56 @@ package handler
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 
 	"findus/backend/internal/domain"
 )
 
-// APILocationsList returns root locations.
+// apiLocationTreeNode is a minimal location row for the list UI (no duplicate long fields).
+type apiLocationTreeNode struct {
+	ID       string                `json:"ID"`
+	Name     string                `json:"Name"`
+	Children []apiLocationTreeNode `json:"children"`
+}
+
+func buildLocationTreeNodes(byParent map[string][]domain.Location, id string) []apiLocationTreeNode {
+	kids := byParent[id]
+	out := make([]apiLocationTreeNode, 0, len(kids))
+	for _, l := range kids {
+		out = append(out, apiLocationTreeNode{
+			ID:       l.ID,
+			Name:     l.Name,
+			Children: buildLocationTreeNodes(byParent, l.ID),
+		})
+	}
+	return out
+}
+
+// APILocationsList returns the full location hierarchy for the list page.
 func (s *Server) APILocationsList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	roots, err := s.Locs.ListChildren(ctx, nil)
+	all, err := s.Locs.ListAll(ctx, 500)
 	if err != nil {
 		s.writeJSONError(w, http.StatusInternalServerError, "server error")
 		return
 	}
-	s.writeJSON(w, http.StatusOK, map[string]any{"roots": roots})
+	byParent := make(map[string][]domain.Location)
+	for _, l := range all {
+		key := ""
+		if l.ParentID != nil {
+			key = *l.ParentID
+		}
+		byParent[key] = append(byParent[key], l)
+	}
+	for k, sl := range byParent {
+		sort.Slice(sl, func(i, j int) bool {
+			return strings.ToLower(sl[i].Name) < strings.ToLower(sl[j].Name)
+		})
+		byParent[k] = sl
+	}
+	tree := buildLocationTreeNodes(byParent, "")
+	s.writeJSON(w, http.StatusOK, map[string]any{"tree": tree})
 }
 
 // APILocationNew returns parent options for create form.

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useId, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, useId, watch } from "vue";
 import FxSvg from "./FxSvg.vue";
 
 const props = withDefaults(
@@ -22,7 +22,12 @@ const emit = defineEmits<{
 
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
+const triggerRef = ref<HTMLButtonElement | null>(null);
+const panelRef = ref<HTMLElement | null>(null);
 const menuId = useId();
+
+/** Fixed panel position (viewport); Teleport avoids parent overflow / stacking contexts. */
+const menuStyle = ref({ top: "0px", right: "0px" });
 
 const hintText = computed(
   () =>
@@ -36,11 +41,41 @@ const downloadFilename = computed(() => {
   return `findus-${base}-qr.png`;
 });
 
+function updateMenuPosition() {
+  const btn = triggerRef.value;
+  if (!btn || !open.value) return;
+  const r = btn.getBoundingClientRect();
+  const margin = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let topPx = r.bottom + margin;
+  let rightPx = vw - r.right;
+  menuStyle.value = { top: `${topPx}px`, right: `${rightPx}px` };
+  requestAnimationFrame(() => {
+    const panel = panelRef.value;
+    if (!panel || !open.value) return;
+    const pr = panel.getBoundingClientRect();
+    if (pr.left < margin) rightPx = vw - margin - pr.width;
+    if (pr.right > vw - margin) rightPx = margin;
+    if (pr.bottom > vh - margin && r.top - margin - pr.height >= margin) {
+      topPx = r.top - margin - pr.height;
+    }
+    menuStyle.value = { top: `${topPx}px`, right: `${rightPx}px` };
+  });
+}
+
+function detachPositionListeners() {
+  window.removeEventListener("scroll", updateMenuPosition, true);
+  window.removeEventListener("resize", updateMenuPosition);
+}
+
 function onDocPointerDown(e: PointerEvent) {
   if (!open.value) return;
   const t = e.target as Node | null;
-  const el = root.value;
-  if (el && t && !el.contains(t)) open.value = false;
+  const rootEl = root.value;
+  const panelEl = panelRef.value;
+  if (t && (rootEl?.contains(t) || panelEl?.contains(t))) return;
+  open.value = false;
 }
 
 function onGlobalKeydown(e: KeyboardEvent) {
@@ -75,6 +110,18 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener("pointerdown", onDocPointerDown, true);
   document.removeEventListener("keydown", onGlobalKeydown, true);
+  detachPositionListeners();
+});
+
+watch(open, async (isOpen) => {
+  if (isOpen) {
+    await nextTick();
+    updateMenuPosition();
+    window.addEventListener("scroll", updateMenuPosition, true);
+    window.addEventListener("resize", updateMenuPosition);
+  } else {
+    detachPositionListeners();
+  }
 });
 
 watch(
@@ -88,8 +135,9 @@ defineExpose({ close });
 </script>
 
 <template>
-  <div ref="root" class="relative inline-flex">
+  <div ref="root" class="inline-flex">
     <button
+      ref="triggerRef"
       type="button"
       class="fx-icon-btn"
       :class="{ 'border-sky-300/80 bg-sky-50/60 text-sky-800 ring-1 ring-sky-200/60': open }"
@@ -102,12 +150,16 @@ defineExpose({ close });
     >
       <FxSvg name="qr" />
     </button>
+  </div>
+  <Teleport to="body">
     <div
       v-show="open"
       :id="menuId"
-      class="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
+      ref="panelRef"
+      class="fixed z-[90] w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
       role="region"
       aria-label="QR code"
+      :style="{ top: menuStyle.top, right: menuStyle.right }"
       @click.stop
     >
       <p class="mb-3 text-center text-xs leading-snug text-zinc-500">
@@ -118,5 +170,5 @@ defineExpose({ close });
       </div>
       <button type="button" class="fx-btn-primary mt-4 w-full text-sm" @click="downloadPng">Download PNG</button>
     </div>
-  </div>
+  </Teleport>
 </template>
