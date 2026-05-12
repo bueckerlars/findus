@@ -14,6 +14,27 @@ import (
 	"findus/backend/internal/transport/http/middleware"
 )
 
+type itemListRow struct {
+	domain.Item
+	LocationName string `json:"location_name"`
+}
+
+func (s *Server) itemsAsListRows(ctx context.Context, items []domain.Item) []itemListRow {
+	if len(items) == 0 {
+		return []itemListRow{}
+	}
+	ids := make([]string, 0, len(items))
+	for i := range items {
+		ids = append(ids, items[i].LocationID)
+	}
+	names := s.locationDisplayNamesForIDs(ctx, ids)
+	out := make([]itemListRow, len(items))
+	for i := range items {
+		out[i] = itemListRow{Item: items[i], LocationName: names[items[i].LocationID]}
+	}
+	return out
+}
+
 func (s *Server) APIItemsList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	items, err := s.Items.ListAll(ctx, 500)
@@ -21,7 +42,7 @@ func (s *Server) APIItemsList(w http.ResponseWriter, r *http.Request) {
 		s.writeJSONError(w, http.StatusInternalServerError, "server error")
 		return
 	}
-	s.writeJSON(w, http.StatusOK, map[string]any{"items": items})
+	s.writeJSON(w, http.StatusOK, map[string]any{"items": s.itemsAsListRows(ctx, items)})
 }
 
 func (s *Server) APIItemNew(w http.ResponseWriter, r *http.Request) {
@@ -282,7 +303,7 @@ func (s *Server) APISearch(w http.ResponseWriter, r *http.Request) {
 	if res == nil {
 		res = []domain.Item{}
 	}
-	s.writeJSON(w, http.StatusOK, map[string]any{"query": q, "results": res})
+	s.writeJSON(w, http.StatusOK, map[string]any{"query": q, "results": s.itemsAsListRows(ctx, res)})
 }
 
 type apiLabelRow struct {
@@ -323,9 +344,9 @@ func (s *Server) APILabelNew(w http.ResponseWriter, r *http.Request) {
 }
 
 type apiLabelSaveReq struct {
-	Name                 string `json:"name"`
-	Color                string `json:"color"`
-	DefaultTemplateType  string `json:"default_template_type"`
+	Name                string `json:"name"`
+	Color               string `json:"color"`
+	DefaultTemplateType string `json:"default_template_type"`
 }
 
 func (s *Server) APILabelCreate(w http.ResponseWriter, r *http.Request) {

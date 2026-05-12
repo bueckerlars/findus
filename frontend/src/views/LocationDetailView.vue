@@ -11,7 +11,7 @@ import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 
 type Location = { ID: string; Name: string; Description: string; ParentID?: string | null };
-type Item = { ID: string; Name: string; Description: string; TemplateType: string; PhotoPath?: string | null };
+type Item = { ID: string; Name: string; Description: string; PhotoPath?: string | null };
 type Crumb = { ID: string; Name: string };
 
 const route = useRoute();
@@ -145,10 +145,6 @@ async function del() {
               <span class="fx-item-row-accent" aria-hidden="true"></span>
               <div class="relative z-[1] min-w-0 flex-1">
                 <span class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-                <span
-                  class="ml-2 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium capitalize text-zinc-600 transition-colors duration-200 group-hover:bg-sky-100 group-hover:text-sky-900"
-                  >{{ it.TemplateType }}</span
-                >
               </div>
               <span class="fx-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon" /></span>
             </RouterLink>
@@ -177,7 +173,6 @@ async function del() {
             </div>
             <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1.5 border-t border-zinc-100/90 p-3">
               <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-              <span class="fx-item-gallery-badge">{{ it.TemplateType }}</span>
             </div>
           </RouterLink>
         </div>

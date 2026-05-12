@@ -14,7 +14,6 @@ type Item = {
   ID: string;
   Name: string;
   Description: string;
-  TemplateType: string;
   LocationID: string;
   PhotoPath?: string | null;
   CreatedAt: string;
@@ -104,10 +103,6 @@ onMounted(async () => {
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-900">{{ row.item.Name }}</span>
                   <span
-                    class="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium capitalize text-zinc-600 transition-colors duration-200 group-hover:bg-sky-100 group-hover:text-sky-900"
-                    >{{ row.item.TemplateType }}</span
-                  >
-                  <span
                     v-if="row.recently_added"
                     class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
                     >New</span
@@ -118,7 +113,12 @@ onMounted(async () => {
                     >Updated</span
                   >
                 </div>
-                <p class="mt-1 truncate text-xs text-zinc-500 transition-colors group-hover:text-zinc-600">{{ row.location_name }}</p>
+                <p
+                  class="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm font-medium text-zinc-700 transition-colors group-hover:text-zinc-800"
+                >
+                  <FxSvg name="mapPin" class="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
+                  <span class="truncate">{{ row.location_name }}</span>
+                </p>
               </div>
               <div class="relative z-[1] flex shrink-0 items-start gap-1.5 pt-0.5">
                 <time
@@ -156,8 +156,11 @@ onMounted(async () => {
               <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{
                 row.item.Name
               }}</span>
+              <p class="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-zinc-700 transition-colors group-hover:text-zinc-800">
+                <FxSvg name="mapPin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
+                <span class="line-clamp-2 min-w-0">{{ row.location_name }}</span>
+              </p>
               <div class="flex flex-wrap items-center gap-1.5">
-                <span class="fx-item-gallery-badge">{{ row.item.TemplateType }}</span>
                 <span
                   v-if="row.recently_added"
                   class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
@@ -169,7 +172,6 @@ onMounted(async () => {
                   >Updated</span
                 >
               </div>
-              <p class="line-clamp-2 text-xs text-zinc-500 transition-colors group-hover:text-zinc-600">{{ row.location_name }}</p>
             </div>
           </RouterLink>
         </div>

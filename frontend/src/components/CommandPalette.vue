@@ -13,7 +13,7 @@ const inputEl = ref<HTMLInputElement | null>(null);
 const triggerBtn = ref<HTMLButtonElement | null>(null);
 const q = ref("");
 const selectedIdx = ref(0);
-const searchItems = ref<{ id: string; name: string; type: string }[]>([]);
+const searchItems = ref<{ id: string; name: string; location_name: string }[]>([]);
 const showResultsWrap = ref(false);
 let debounceTimer: ReturnType<typeof setTimeout>;
 let fetchAbort: AbortController | null = null;
@@ -103,7 +103,7 @@ function clampSelection() {
   setActive(items);
 }
 
-function renderSearchItems(items: { id: string; name: string; type: string }[], query: string) {
+function renderSearchItems(items: { id: string; name: string; location_name: string }[], query: string) {
   searchItems.value = items;
   const hasQ = norm(query).length > 0;
   showResultsWrap.value = items.length > 0 || hasQ;
@@ -123,7 +123,7 @@ async function runSearch(query: string) {
   }
   fetchAbort = new AbortController();
   try {
-    const data = await api<{ items: { id: string; name: string; type: string }[] }>(
+    const data = await api<{ items: { id: string; name: string; location_name: string }[] }>(
       "/api/command-search?q=" + encodeURIComponent(query.trim()),
       { signal: fetchAbort.signal },
     );
@@ -489,11 +489,13 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="cube" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ it.name }}</span>
-              <span
-                class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium capitalize leading-none text-zinc-600 ring-1 ring-zinc-200/60 bg-zinc-100/50"
-                >{{ it.type }}</span
-              >
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-medium text-zinc-900">{{ it.name }}</span>
+                <span class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] font-medium leading-snug text-zinc-500">
+                  <FxSvg name="mapPin" class="h-3 w-3 shrink-0 text-sky-600/90" aria-hidden="true" />
+                  <span class="truncate">{{ it.location_name }}</span>
+                </span>
+              </span>
             </button>
           </div>
           <button

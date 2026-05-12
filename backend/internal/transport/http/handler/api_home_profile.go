@@ -45,26 +45,20 @@ func (s *Server) APIHome(w http.ResponseWriter, r *http.Request) {
 		labelCount, _ = s.Labels.Count(ctx)
 		allLabels, _ = s.Labels.ListAll(ctx)
 	}
-	locNames := make(map[string]string)
 	type recentRow struct {
-		Item             domain.Item `json:"item"`
-		LocationName     string      `json:"location_name"`
-		RecentlyAdded    bool        `json:"recently_added"`
+		Item          domain.Item `json:"item"`
+		LocationName  string      `json:"location_name"`
+		RecentlyAdded bool        `json:"recently_added"`
 	}
+	locIDs := make([]string, 0, len(recentItems))
+	for _, it := range recentItems {
+		locIDs = append(locIDs, it.LocationID)
+	}
+	locNames := s.locationDisplayNamesForIDs(ctx, locIDs)
 	itemRows := make([]recentRow, 0, len(recentItems))
 	for _, it := range recentItems {
-		name, ok := locNames[it.LocationID]
-		if !ok {
-			loc, err := s.Locs.GetByID(ctx, it.LocationID)
-			if err != nil {
-				name = "Unknown"
-			} else {
-				name = loc.Name
-			}
-			locNames[it.LocationID] = name
-		}
 		itemRows = append(itemRows, recentRow{
-			Item: it, LocationName: name,
+			Item: it, LocationName: locNames[it.LocationID],
 			RecentlyAdded: recentlyCreated(it.CreatedAt, it.UpdatedAt),
 		})
 	}
@@ -85,13 +79,13 @@ func (s *Server) APIHome(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	s.writeJSON(w, http.StatusOK, map[string]any{
-		"user":             apiUserFrom(u),
-		"item_count":       itemCount,
-		"location_count":   locCount,
-		"label_count":      labelCount,
-		"recent_items":     itemRows,
-		"home_locations":   locRows,
-		"all_labels":       allLabels,
+		"user":           apiUserFrom(u),
+		"item_count":     itemCount,
+		"location_count": locCount,
+		"label_count":    labelCount,
+		"recent_items":   itemRows,
+		"home_locations": locRows,
+		"all_labels":     allLabels,
 	})
 }
 

@@ -12,7 +12,8 @@ type Item = {
   ID: string;
   Name: string;
   Description: string;
-  TemplateType: string;
+  LocationID: string;
+  location_name: string;
   PhotoPath?: string | null;
 };
 
@@ -51,10 +52,12 @@ onMounted(async () => {
           <span class="fx-item-row-accent" aria-hidden="true"></span>
           <div class="relative z-[1] min-w-0 flex-1">
             <span class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-            <span
-              class="ml-2 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium capitalize text-zinc-600 transition-colors duration-200 group-hover:bg-sky-100 group-hover:text-sky-900"
-              >{{ it.TemplateType }}</span
+            <p
+              class="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-medium text-zinc-700 transition-colors duration-200 group-hover:text-zinc-800"
             >
+              <FxSvg name="mapPin" class="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
+              <span class="truncate">{{ it.location_name }}</span>
+            </p>
           </div>
           <span class="fx-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon" /></span>
         </RouterLink>
@@ -82,7 +85,10 @@ onMounted(async () => {
           </div>
           <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1.5 border-t border-zinc-100/90 p-3">
             <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-            <span class="fx-item-gallery-badge">{{ it.TemplateType }}</span>
+            <p class="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-zinc-700 transition-colors group-hover:text-zinc-800">
+              <FxSvg name="mapPin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
+              <span class="line-clamp-2 min-w-0">{{ it.location_name }}</span>
+            </p>
           </div>
         </RouterLink>
       </div>

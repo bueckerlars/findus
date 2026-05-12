@@ -192,6 +192,40 @@ func (s *Server) flatLocations(ctx context.Context) ([]locOpt, error) {
 	return out, nil
 }
 
+// locationDisplayNamesForIDs returns a full path label ("A / B / C") per location id (deduplicated).
+func (s *Server) locationDisplayNamesForIDs(ctx context.Context, ids []string) map[string]string {
+	seen := make(map[string]struct{}, len(ids))
+	uniq := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		uniq = append(uniq, id)
+	}
+	out := make(map[string]string, len(uniq))
+	for _, id := range uniq {
+		path, err := s.Locs.PathFromRoot(ctx, id)
+		if err != nil || len(path) == 0 {
+			if loc, err2 := s.Locs.GetByID(ctx, id); err2 == nil {
+				out[id] = loc.Name
+			} else {
+				out[id] = "Unknown"
+			}
+			continue
+		}
+		parts := make([]string, len(path))
+		for i, e := range path {
+			parts[i] = e.Name
+		}
+		out[id] = strings.Join(parts, " / ")
+	}
+	return out
+}
+
 func (s *Server) parentLocationOptions(ctx context.Context, excludeID string) ([]locOpt, error) {
 	all, err := s.flatLocations(ctx)
 	if err != nil {
@@ -330,15 +364,20 @@ func (s *Server) CommandSearchGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type row struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-		Type string `json:"type"`
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		LocationName string `json:"location_name"`
 	}
+	ids := make([]string, 0, len(res))
+	for _, it := range res {
+		ids = append(ids, it.LocationID)
+	}
+	locNames := s.locationDisplayNamesForIDs(ctx, ids)
 	out := struct {
 		Items []row `json:"items"`
 	}{Items: make([]row, 0, len(res))}
 	for _, it := range res {
-		out.Items = append(out.Items, row{ID: it.ID, Name: it.Name, Type: string(it.TemplateType)})
+		out.Items = append(out.Items, row{ID: it.ID, Name: it.Name, LocationName: locNames[it.LocationID]})
 	}
 	_ = json.NewEncoder(w).Encode(out)
 }
