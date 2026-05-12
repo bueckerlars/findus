@@ -1,0 +1,437 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.fx-dialog-open {
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  .fx-icon {
+    @apply h-5 w-5 text-zinc-500;
+  }
+  .fx-icon-sm {
+    @apply h-4 w-4 text-zinc-500;
+  }
+  .fx-icon-xs {
+    @apply h-3.5 w-3.5 text-current;
+  }
+  .fx-icon-lg {
+    @apply h-10 w-10 text-zinc-400;
+  }
+
+  .fx-card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white shadow-card ring-1 ring-zinc-950/[0.03];
+  }
+  .fx-card-interactive {
+    @apply transition-all duration-200 ease-out-expo hover:-translate-y-0.5 hover:border-sky-200/90 hover:shadow-card-hover hover:ring-sky-500/10;
+  }
+
+  .fx-page-shell {
+    @apply min-h-screen bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(56,189,248,0.09),transparent)] bg-zinc-50;
+  }
+
+  .fx-sidebar-link {
+    @apply mx-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-600 outline-offset-2 transition-colors duration-150 hover:bg-zinc-100/90 hover:text-zinc-900;
+  }
+  .fx-sidebar-link-active {
+    @apply bg-sky-50 text-sky-900 shadow-sm ring-1 ring-sky-100/80;
+  }
+  .fx-sidebar-link-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100/90 text-zinc-500 transition-colors duration-150;
+  }
+  .fx-sidebar-link:hover .fx-sidebar-link-icon {
+    @apply bg-white text-sky-600 shadow-sm ring-1 ring-zinc-200/80;
+  }
+  .fx-sidebar-link-active .fx-sidebar-link-icon {
+    @apply bg-sky-100 text-sky-700 ring-1 ring-sky-200/60;
+  }
+
+  .fx-dash-icon-wrap {
+    @apply flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/80 text-sky-700 ring-1 ring-sky-200/40 shadow-sm transition-all duration-200 ease-out-expo;
+  }
+  .group:hover .fx-dash-icon-wrap {
+    @apply scale-[1.03] shadow-md ring-sky-300/50;
+  }
+  .fx-dash-icon-wrap .fx-icon {
+    @apply h-6 w-6 text-sky-700;
+  }
+
+  .fx-link-back {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-sky-600 transition hover:text-sky-800;
+  }
+
+  .fx-input {
+    @apply mt-1.5 w-full min-h-[2.75rem] rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-zinc-900 shadow-inner shadow-zinc-950/5 outline-none transition placeholder:text-zinc-400 focus:border-sky-400 focus:shadow-sm focus:ring-2 focus:ring-sky-100;
+  }
+  .fx-label {
+    @apply block text-sm font-medium text-zinc-700;
+  }
+  .fx-btn {
+    @apply inline-flex min-h-[2.75rem] cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 ease-out active:scale-[0.98];
+  }
+  .fx-btn-primary {
+    @apply fx-btn bg-sky-600 text-white shadow-md shadow-sky-900/10 hover:bg-sky-500 hover:shadow-lg hover:shadow-sky-900/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600;
+  }
+  .fx-btn-secondary {
+    @apply fx-btn border border-zinc-200/90 bg-white text-zinc-800 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 hover:shadow;
+  }
+  .fx-btn-danger {
+    @apply fx-btn border border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100;
+  }
+
+  .fx-icon-btn {
+    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-zinc-200/90 bg-white text-zinc-600 shadow-sm transition duration-150 ease-out hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 active:scale-[0.98];
+  }
+  .fx-icon-btn svg {
+    @apply h-5 w-5 shrink-0;
+  }
+  .fx-icon-btn-danger {
+    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 shadow-sm transition duration-150 ease-out hover:border-red-300 hover:bg-red-100 hover:text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 active:scale-[0.98];
+  }
+  .fx-icon-btn-danger svg {
+    @apply h-5 w-5 shrink-0;
+  }
+
+  .items-view-mode-btn {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-white hover:text-zinc-900 hover:shadow-sm;
+  }
+  .items-view-scope[data-items-view="list"] .items-view-mode-btn[data-items-view-mode="list"],
+  .items-view-scope[data-items-view="gallery"] .items-view-mode-btn[data-items-view-mode="gallery"] {
+    @apply bg-white text-sky-700 shadow-sm ring-1 ring-zinc-200/80;
+  }
+  .items-view-scope[data-items-view="list"] .items-view-gallery-only,
+  .items-view-scope:not([data-items-view]) .items-view-gallery-only {
+    display: none !important;
+  }
+  .items-view-scope[data-items-view="gallery"] .items-view-list-only {
+    display: none !important;
+  }
+
+  /* Item list rows: accent bar + chevron chrome (group = row link) */
+  .fx-item-row {
+    @apply relative overflow-hidden transition-all duration-200 ease-out motion-reduce:transition-none active:scale-[0.995];
+  }
+  .fx-item-row-accent {
+    @apply pointer-events-none absolute left-0 top-1/2 z-0 h-[68%] w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-sky-300 via-sky-500 to-sky-600 opacity-0 shadow-[0_0_16px_rgba(56,189,248,0.45)] transition-all duration-300 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-row:hover .fx-item-row-accent {
+    @apply opacity-100;
+  }
+  .fx-item-row-chevron {
+    @apply relative z-[1] flex shrink-0 items-center justify-center rounded-lg p-1.5 text-zinc-400 transition-all duration-200 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-row:hover .fx-item-row-chevron {
+    @apply translate-x-0.5 bg-sky-50 text-sky-600 shadow-sm ring-1 ring-sky-200/60;
+  }
+  .fx-item-row:hover .fx-item-row-chevron .fx-icon {
+    @apply text-sky-600;
+  }
+
+  /* Home “recent item” row: no fx-list-row; subtle lift + chevron reveal */
+  .fx-home-item-row {
+    @apply relative overflow-hidden transition-colors duration-200 ease-out motion-reduce:transition-none;
+  }
+  .fx-home-item-row:hover {
+    @apply bg-gradient-to-r from-sky-50/70 to-transparent;
+  }
+  .fx-home-item-row:hover .fx-item-row-accent {
+    @apply opacity-100;
+  }
+  .fx-home-item-row-chevron {
+    @apply flex shrink-0 items-center justify-center rounded-lg p-1 text-zinc-300 opacity-0 transition-all duration-200 ease-out motion-reduce:transition-none;
+  }
+  .fx-home-item-row:hover .fx-home-item-row-chevron {
+    @apply translate-x-0 opacity-100 text-sky-500;
+  }
+
+  /* Home locations list: table-like rows + prominent “inside” counter */
+  .fx-home-loc-row {
+    @apply relative overflow-hidden transition-colors duration-200 ease-out motion-reduce:transition-none;
+  }
+  .fx-home-loc-row:hover {
+    @apply bg-gradient-to-r from-sky-50/60 to-transparent;
+  }
+  .fx-home-loc-row:hover .fx-home-item-row-chevron {
+    @apply translate-x-0 opacity-100 text-sky-500;
+  }
+  .fx-home-label-chip {
+    @apply inline-flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-white py-2 pl-2.5 pr-3 text-sm font-semibold leading-snug text-zinc-900 shadow-sm ring-1 ring-zinc-950/[0.03] transition duration-200 ease-out motion-reduce:transition-none hover:border-sky-200/90 hover:bg-gradient-to-r hover:from-sky-50/85 hover:to-white hover:text-sky-950 hover:shadow-md hover:ring-sky-100/50 active:scale-[0.99] motion-reduce:active:scale-100;
+  }
+  .fx-home-label-chip-dot {
+    @apply h-3 w-3 shrink-0 rounded-md shadow-sm ring-1 ring-black/[0.08];
+  }
+  .fx-home-loc-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 text-sky-600 shadow-sm ring-1 ring-sky-200/70 transition duration-200 group-hover:from-sky-200/80 group-hover:to-sky-100 group-hover:text-sky-800;
+  }
+  .fx-home-loc-icon .fx-icon {
+    @apply h-5 w-5;
+  }
+  .fx-home-loc-count-badge {
+    @apply inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full bg-sky-600 px-2.5 text-sm font-bold tabular-nums text-white shadow-sm ring-1 ring-sky-700/25 transition duration-200 group-hover:bg-sky-700 group-hover:shadow-md;
+  }
+  .fx-home-loc-count-badge--sm {
+    @apply h-8 min-w-[2rem] px-2 text-xs;
+  }
+
+  .fx-home-stats {
+    @apply grid w-full grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4;
+  }
+  .fx-home-stat {
+    @apply flex min-w-0 items-center gap-3 px-4 py-4;
+  }
+  .fx-home-stat-icon {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100 text-zinc-500 ring-1 ring-zinc-200/70;
+  }
+  .fx-home-stat-icon .fx-icon {
+    @apply h-5 w-5;
+  }
+
+  /* Item gallery tiles */
+  .fx-item-gallery {
+    @apply relative transition-all duration-300 ease-out will-change-transform motion-reduce:transition-none motion-reduce:transform-none active:scale-[0.99];
+  }
+  .fx-item-gallery:hover {
+    @apply -translate-y-1.5 border-sky-200/90 shadow-xl shadow-sky-900/[0.09] ring-2 ring-sky-200/30;
+  }
+  .fx-item-gallery-media {
+    @apply relative overflow-hidden;
+  }
+  .fx-item-gallery-photo {
+    @apply h-full w-full object-cover transition-[transform,filter] duration-500 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-gallery:hover .fx-item-gallery-photo {
+    @apply scale-[1.06] brightness-[1.04] contrast-[1.02];
+  }
+  .fx-item-gallery-placeholder {
+    @apply flex h-full min-h-0 w-full items-stretch justify-stretch overflow-hidden transition-transform duration-300 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-gallery:hover .fx-item-gallery-placeholder .fx-item-photo-placeholder-svg {
+    @apply scale-110 motion-reduce:scale-100;
+  }
+  .fx-item-gallery-shade {
+    @apply pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-900/30 via-zinc-900/5 to-transparent opacity-0 transition-opacity duration-300 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-gallery:hover .fx-item-gallery-shade {
+    @apply opacity-100;
+  }
+  .fx-item-gallery-fab {
+    @apply pointer-events-none absolute bottom-2.5 right-2.5 z-[2] flex h-9 w-9 translate-y-2 scale-75 items-center justify-center rounded-full bg-white/95 text-sky-600 opacity-0 shadow-lg shadow-zinc-900/15 ring-1 ring-zinc-200/90 backdrop-blur-sm transition-all duration-300 ease-out motion-reduce:transition-none;
+  }
+  .fx-item-gallery:hover .fx-item-gallery-fab {
+    @apply translate-y-0 scale-100 opacity-100;
+  }
+  .fx-item-gallery-fab .fx-icon {
+    @apply text-sky-600 transition-transform duration-200 ease-out group-hover:translate-x-0.5;
+  }
+  .fx-item-gallery:hover .fx-item-gallery-badge {
+    @apply border-sky-200/80 bg-sky-50 text-sky-800;
+  }
+  .fx-item-gallery-badge {
+    @apply inline-flex w-fit rounded-md border border-transparent bg-zinc-100 px-2 py-0.5 text-xs font-medium capitalize text-zinc-600 transition-colors duration-200;
+  }
+
+  .fx-list-row {
+    @apply flex min-h-[3.25rem] items-center justify-between gap-3 rounded-xl border border-zinc-100/90 bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-950/[0.02] transition-all duration-150 hover:border-sky-200/80 hover:bg-gradient-to-r hover:from-sky-50/50 hover:to-white hover:shadow-md hover:shadow-zinc-900/5;
+  }
+
+  .fx-auth-shell {
+    @apply min-h-full bg-gradient-to-b from-zinc-100 via-white to-sky-50/40;
+  }
+  .fx-auth-card {
+    @apply fx-card p-8 ring-zinc-950/5;
+  }
+
+  .fx-command-dialog::backdrop {
+    background-color: rgba(24, 24, 27, 0.5);
+  }
+
+  .fx-command-dialog[open]::backdrop {
+    opacity: 1;
+    transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .fx-command-dialog[open].fx-command-dialog--closing::backdrop {
+    opacity: 0;
+    transition: opacity 165ms cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  @starting-style {
+    .fx-command-dialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  /* Shared frosted panel (trigger bubble + command palette card) */
+  .fx-command-glass {
+    isolation: isolate;
+    border: 1px solid rgba(113, 113, 122, 0.25);
+    background-color: rgba(250, 250, 250, 0.72);
+    background-image:
+      linear-gradient(
+        168deg,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(244, 244, 245, 0.78) 42%,
+        rgba(228, 228, 231, 0.82) 100%
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/%3E%3C/svg%3E");
+    background-size: auto, 96px 96px;
+    background-repeat: no-repeat, repeat;
+    background-blend-mode: normal, soft-light;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      inset 0 -1px 0 rgba(24, 24, 27, 0.04),
+      0 1px 2px rgba(15, 23, 42, 0.06),
+      0 6px 16px rgba(15, 23, 42, 0.08),
+      0 18px 44px rgba(15, 23, 42, 0.1);
+    backdrop-filter: blur(20px) saturate(1.65);
+    -webkit-backdrop-filter: blur(20px) saturate(1.65);
+  }
+
+  .fx-command-panel {
+    @apply flex max-h-[min(36rem,80vh)] flex-col overflow-hidden rounded-2xl text-zinc-600;
+  }
+
+  .fx-command-dialog[open] .fx-command-panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transform-origin: 50% 0%;
+    transition:
+      opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .fx-command-dialog[open].fx-command-dialog--closing .fx-command-panel {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+    transition:
+      opacity 170ms cubic-bezier(0.4, 0, 1, 1),
+      transform 170ms cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  @starting-style {
+    .fx-command-dialog[open] .fx-command-panel {
+      opacity: 0;
+      transform: translateY(0.75rem) scale(0.968);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fx-command-dialog[open]::backdrop,
+    .fx-command-dialog[open].fx-command-dialog--closing::backdrop,
+    .fx-command-dialog[open] .fx-command-panel,
+    .fx-command-dialog[open].fx-command-dialog--closing .fx-command-panel {
+      transition: none !important;
+    }
+
+    @starting-style {
+      .fx-command-dialog[open]::backdrop {
+        opacity: 1;
+      }
+
+      .fx-command-dialog[open] .fx-command-panel {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+
+  /* Command palette only: lighter glass + sky/indigo/rose blobs (see item_photo_placeholder_abstract) */
+  .fx-command-panel.fx-command-glass {
+    background-color: rgba(252, 252, 253, 0.4);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.13'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse 130% 100% at 10% -18%, rgba(56, 189, 248, 0.22), transparent 56%),
+      radial-gradient(ellipse 95% 75% at 100% 0%, rgba(99, 102, 241, 0.14), transparent 52%),
+      radial-gradient(ellipse 75% 60% at 52% 112%, rgba(251, 113, 133, 0.09), transparent 58%),
+      linear-gradient(
+        168deg,
+        rgba(255, 255, 255, 0.52) 0%,
+        rgba(244, 244, 247, 0.36) 40%,
+        rgba(234, 236, 241, 0.42) 100%
+      );
+    background-size: 96px 96px, auto, auto, auto, auto;
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-blend-mode: soft-light, normal, normal, normal, normal;
+    border-color: rgba(125, 211, 252, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.62),
+      inset 0 -1px 0 rgba(15, 23, 42, 0.035),
+      0 1px 2px rgba(56, 189, 248, 0.05),
+      0 8px 28px rgba(15, 23, 42, 0.08),
+      0 20px 48px rgba(15, 23, 42, 0.09);
+    backdrop-filter: blur(26px) saturate(1.55);
+    -webkit-backdrop-filter: blur(26px) saturate(1.55);
+  }
+
+  .fx-command-panel-search-icon {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center text-zinc-600/80;
+  }
+  .fx-command-panel-search-icon .fx-icon {
+    @apply h-4 w-4;
+  }
+
+  .fx-command-item-icon .fx-icon {
+    @apply h-3.5 w-3.5;
+  }
+
+  .fx-command-item-active {
+    @apply bg-sky-50/45 ring-1 ring-sky-200/40;
+  }
+
+  /* Bottom-centered command trigger, comfortably above safe area */
+  .fx-command-trigger {
+    bottom: max(2.25rem, calc(env(safe-area-inset-bottom, 0px) + 1.75rem));
+    @apply fixed left-1/2 z-[45] flex -translate-x-1/2 items-center gap-2 rounded-full px-2.5 py-1.5 text-zinc-600 transition duration-200 ease-out motion-reduce:transition-none;
+  }
+  .fx-command-trigger:hover {
+    background-color: rgba(252, 252, 252, 0.82);
+    background-image:
+      linear-gradient(
+        168deg,
+        rgba(255, 255, 255, 0.97) 0%,
+        rgba(247, 247, 248, 0.88) 45%,
+        rgba(234, 234, 237, 0.9) 100%
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+    background-size: auto, 96px 96px;
+    background-repeat: no-repeat, repeat;
+    background-blend-mode: normal, soft-light;
+    border-color: rgba(113, 113, 122, 0.32);
+    @apply text-zinc-700;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1px 0 rgba(24, 24, 27, 0.05),
+      0 2px 4px rgba(15, 23, 42, 0.07),
+      0 10px 24px rgba(15, 23, 42, 0.1),
+      0 22px 50px rgba(15, 23, 42, 0.12);
+  }
+  .fx-command-trigger:focus-visible {
+    @apply outline-none ring-2 ring-zinc-400/20 ring-offset-2 ring-offset-transparent;
+  }
+  .fx-command-trigger-icon {
+    @apply flex shrink-0 items-center justify-center text-zinc-600/85;
+  }
+  .fx-command-trigger-icon .fx-icon {
+    @apply h-4 w-4 transition-colors duration-200;
+  }
+  .fx-command-trigger:hover .fx-command-trigger-icon {
+    @apply text-zinc-700;
+  }
+  .fx-command-kbd {
+    @apply items-center gap-0.5 font-mono text-[10px] font-medium tracking-tight text-zinc-600/85 sm:text-[11px];
+  }
+  .fx-command-trigger:hover .fx-command-kbd {
+    @apply text-zinc-700;
+  }
+
+  /* Square item photo slot on detail pages when no image */
+  .fx-item-detail-photo-slot {
+    @apply aspect-square overflow-hidden shadow-inner ring-1 ring-zinc-200/60;
+  }
+}

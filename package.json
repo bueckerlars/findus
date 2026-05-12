@@ -1,7 +1,0 @@
-{
-  "name": "findus",
-  "private": true,
-  "devDependencies": {
-    "tailwindcss": "^3.4.17"
-  }
-}

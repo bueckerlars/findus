@@ -3,11 +3,11 @@ tmp_dir = "tmp"
 
 [build]
   entrypoint = ["./tmp/findus"]
-  cmd = "go build -o ./tmp/findus ./cmd/findus"
+  cmd = "go build -o ./tmp/findus ./backend/app"
   delay = 200
-  exclude_dir = ["tmp", "bin", "data", "node_modules", "vendor", ".git", "dist"]
+  exclude_dir = ["tmp", "bin", "data", "node_modules", "vendor", ".git", "dist", "frontend/node_modules"]
   exclude_regex = ["_test\\.go$"]
-  include_ext = ["go", "html", "tmpl", "tpl", "css", "sql"]
+  include_ext = ["go", "html", "tmpl", "tpl", "css", "sql", "vue", "ts"]
   # Allow graceful HTTP shutdown (main uses up to 10s) plus DB close before SIGKILL.
   kill_delay = "12s"
   log = "tmp/air-build-errors.log"
