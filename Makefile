@@ -18,10 +18,10 @@ db-reset:
 	@echo "Database reset at $(FINDUS_DATA_DIR)"
 
 css:
-	npm install && npx tailwindcss -i ./web/static/css/input.css -o ./web/static/css/output.css --minify
+	cd frontend && npm install && npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
 
 build: css
-	CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bin/findus ./cmd/findus
+	CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bin/findus ./backend/app
 
 test:
 	go test ./...
@@ -42,7 +42,7 @@ hooks-uninstall:
 	$(LEFTHOOK) uninstall
 
 run:
-	go run ./cmd/findus
+	go run ./backend/app
 
 # Dev server: debug logs + rebuild/restart on Go and embedded asset changes (see .air.toml).
 dev:

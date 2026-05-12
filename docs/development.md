@@ -5,7 +5,7 @@ This page is for contributors and anyone running Findus **without** Docker from 
 ## Prerequisites
 
 - **Go** 1.23 or newer
-- **Node.js** 20+ (only for building Tailwind CSS; not required at runtime for `go run` if `output.css` is already present)
+- **Node.js** 20+ (only for building Tailwind CSS in `frontend/`; not required at runtime for `go run` if `output.css` is already present)
 
 ## Common commands
 
@@ -14,8 +14,8 @@ The [Makefile](../Makefile) wraps the usual tasks:
 | Target | Purpose |
 |--------|---------|
 | `make tidy` | `go mod tidy` |
-| `make css` | `npm install` and build minified Tailwind to `web/static/css/output.css` |
-| `make run` | Run the app with `go run ./cmd/findus` |
+| `make css` | `npm install` in `frontend/` and build minified Tailwind to `frontend/static/css/output.css` |
+| `make run` | Run the app with `go run ./backend/app` |
 | `make dev` | Debug log level + [Air](https://github.com/air-verse/air) hot reload (rebuild on Go/HTML/CSS/SQL changes; see `.air.toml`) |
 | `make build` | Build CSS then compile static binary to `./bin/findus` |
 | `make test` | `go test ./...` |
@@ -26,9 +26,9 @@ The [Makefile](../Makefile) wraps the usual tasks:
 
 ```bash
 go mod tidy
-npm install
-npx tailwindcss -i ./web/static/css/input.css -o ./web/static/css/output.css --minify
-go run ./cmd/findus
+( cd frontend && npm install \
+  && npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify )
+go run ./backend/app
 ```
 
 Or: `make css` then `make run`.
@@ -48,14 +48,15 @@ go fmt ./...
 
 | Path | Role |
 |------|------|
-| `cmd/findus` | `main`, wiring |
-| `internal/config` | Environment-based configuration |
-| `internal/domain` | Domain types |
-| `internal/repository` | Persistence interfaces and SQLite |
-| `internal/service` | Application services |
-| `internal/transport/http` | HTTP server, handlers, middleware |
-| `web/templates` | HTML templates |
-| `web/static` | CSS and static files |
+| `backend/app` | `main`, wiring |
+| `backend/internal/config` | Environment-based configuration |
+| `backend/internal/domain` | Domain types |
+| `backend/internal/repository` | Persistence interfaces and SQLite |
+| `backend/internal/service` | Application services |
+| `backend/internal/transport/http` | HTTP server, handlers, middleware |
+| `frontend/templates` | HTML templates |
+| `frontend/static` | CSS and static files (Tailwind input/output) |
+| `frontend/embed.go` | `go:embed` of templates and static assets |
 
 ## Docker from this repo
 

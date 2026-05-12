@@ -1,6 +1,6 @@
 # Routes
 
-This is an **overview** of HTTP surfaces. For implementation details, see `internal/transport/http/handler`.
+This is an **overview** of HTTP surfaces. For implementation details, see `backend/internal/transport/http/handler`.
 
 ## Public
 
