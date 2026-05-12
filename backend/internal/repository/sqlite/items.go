@@ -361,7 +361,7 @@ func migrateItemPKSinglePhase(ctx context.Context, tx *sql.Tx, rows []domain.Ite
 func migrateItemPKTwoPhase(ctx context.Context, tx *sql.Tx, rows []domain.ItemIDMigration) error {
 	type step struct {
 		old, tmp, new string
-		photo           *string
+		photo         *string
 	}
 	steps := make([]step, 0, len(rows))
 	for _, rw := range rows {

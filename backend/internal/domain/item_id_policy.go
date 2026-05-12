@@ -17,9 +17,9 @@ const SettingItemIDPolicy = "item_id_policy"
 type ItemIDKind string
 
 const (
-	ItemIDKindULID        ItemIDKind = "ulid"
-	ItemIDKindUUID        ItemIDKind = "uuid"
-	ItemIDKindSequential  ItemIDKind = "sequential"
+	ItemIDKindULID       ItemIDKind = "ulid"
+	ItemIDKindUUID       ItemIDKind = "uuid"
+	ItemIDKindSequential ItemIDKind = "sequential"
 )
 
 // ItemIDPolicy is stored as JSON under SettingItemIDPolicy.
@@ -77,7 +77,7 @@ func (p ItemIDPolicy) Normalize() ItemIDPolicy {
 
 const (
 	maxItemIDPolicyPrefixRunes = 48
-	maxItemIDTotalLen        = 200
+	maxItemIDTotalLen          = 200
 )
 
 // Validate checks policy fields; use on admin input and after JSON parse.
