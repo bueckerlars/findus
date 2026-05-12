@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
 
@@ -74,6 +74,9 @@ async function del() {
 
 <template>
   <div class="max-w-3xl space-y-6">
+    <p>
+      <RouterLink to="/admin/templates" class="text-sm font-medium text-sky-700 hover:text-sky-800">← Templates</RouterLink>
+    </p>
     <h1 class="text-2xl font-semibold text-zinc-900">{{ isNew ? "New template" : "Edit template" }}</h1>
     <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
     <form class="space-y-4" @submit.prevent="save">

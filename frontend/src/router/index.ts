@@ -60,11 +60,18 @@ const router = createRouter({
       },
     },
     { path: "/labels/:id/edit", component: () => import("../views/LabelFormView.vue"), meta: { requiresAdmin: true } },
-    { path: "/admin", redirect: "/admin/users" },
-    { path: "/admin/users", component: () => import("../views/AdminUsersView.vue"), meta: { requiresAdmin: true } },
-    { path: "/admin/templates", component: () => import("../views/AdminTemplatesView.vue"), meta: { requiresAdmin: true } },
-    { path: "/admin/templates/new", component: () => import("../views/AdminTemplateFormView.vue"), meta: { requiresAdmin: true } },
-    { path: "/admin/templates/:id/edit", component: () => import("../views/AdminTemplateFormView.vue"), meta: { requiresAdmin: true } },
+    {
+      path: "/admin",
+      component: () => import("../views/AdminLayout.vue"),
+      meta: { requiresAdmin: true },
+      redirect: "/admin/users",
+      children: [
+        { path: "users", component: () => import("../views/AdminUsersView.vue") },
+        { path: "templates", component: () => import("../views/AdminTemplatesView.vue") },
+        { path: "templates/new", component: () => import("../views/AdminTemplateFormView.vue") },
+        { path: "templates/:id/edit", component: () => import("../views/AdminTemplateFormView.vue") },
+      ],
+    },
   ],
 });
 
@@ -77,7 +84,7 @@ router.beforeEach(async (to) => {
   if (needAuth && !user.value) {
     return { path: "/login", query: { next: to.fullPath } };
   }
-  if (to.meta.requiresAdmin && user.value?.role !== "admin") {
+  if (to.matched.some((r) => r.meta.requiresAdmin) && user.value?.role !== "admin") {
     return { path: "/" };
   }
   if (to.meta.guestOnly && user.value) {

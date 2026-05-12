@@ -78,7 +78,7 @@ async function saveRegistrationMode() {
 <template>
   <div class="max-w-4xl space-y-10">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold text-zinc-900">Admin · Users</h1>
+      <h1 class="text-2xl font-semibold text-zinc-900">User management</h1>
       <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">Download backup</a>
     </div>
     <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
