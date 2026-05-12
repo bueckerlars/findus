@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
 import type { User } from "../api";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
@@ -42,6 +43,7 @@ const data = ref<{
 } | null>(null);
 
 const { isAdmin } = useSession();
+const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 
 onMounted(async () => {
   data.value = await api("/api/home");
@@ -178,9 +180,9 @@ onMounted(async () => {
       </template>
       <div v-else class="px-5 py-10 text-center">
         <p class="text-sm text-zinc-500">No items yet.</p>
-        <RouterLink v-if="isAdmin" to="/items/new" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
-          >Add an item</RouterLink
-        >
+        <button v-if="isAdmin" type="button" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700" @click="openCreateItem()">
+          Add an item
+        </button>
       </div>
     </ItemsViewToggle>
 
@@ -224,9 +226,14 @@ onMounted(async () => {
       </ul>
       <div v-else class="px-5 py-10 text-center">
         <p class="text-sm text-zinc-500">No locations yet.</p>
-        <RouterLink v-if="isAdmin" to="/locations/new" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
-          >Create a location</RouterLink
+        <button
+          v-if="isAdmin"
+          type="button"
+          class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
+          @click="openCreateLocation()"
         >
+          Create a location
+        </button>
       </div>
     </section>
 
@@ -234,7 +241,9 @@ onMounted(async () => {
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
         <h2 id="home-labels-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Labels</h2>
         <div class="flex flex-wrap items-center gap-2">
-          <RouterLink v-if="isAdmin" to="/labels/new" class="text-sm font-medium text-sky-600 hover:text-sky-700">New label</RouterLink>
+          <button v-if="isAdmin" type="button" class="text-sm font-medium text-sky-600 hover:text-sky-700" @click="openCreateLabel()">
+            New label
+          </button>
           <RouterLink to="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">All labels</RouterLink>
         </div>
       </div>
@@ -253,9 +262,14 @@ onMounted(async () => {
       </div>
       <div v-else class="px-5 py-10 text-center">
         <p class="text-sm text-zinc-500">No labels configured.</p>
-        <RouterLink v-if="isAdmin" to="/labels/new" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
-          >Create a label</RouterLink
+        <button
+          v-if="isAdmin"
+          type="button"
+          class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
+          @click="openCreateLabel()"
         >
+          Create a label
+        </button>
       </div>
     </section>
   </div>

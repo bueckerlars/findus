@@ -4,9 +4,11 @@ import { useRouter } from "vue-router";
 import { api } from "../api";
 import { useSession } from "../session";
 import FxSvg from "./FxSvg.vue";
+import { useCreateModals } from "../composables/useCreateModals";
 
 const router = useRouter();
 const { isAdmin } = useSession();
+const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 
 const dialog = ref<HTMLDialogElement | null>(null);
 const inputEl = ref<HTMLInputElement | null>(null);
@@ -206,10 +208,22 @@ function goHref(href: string) {
   void router.push(href);
 }
 
+function goCreate(kind: "item" | "location" | "label") {
+  closePalette();
+  if (kind === "item") openCreateItem();
+  else if (kind === "location") openCreateLocation();
+  else openCreateLabel();
+}
+
 function activateSelected() {
   const items = visibleItems();
   const el = items[selectedIdx.value];
   if (!el) return;
+  const create = el.getAttribute("data-create");
+  if (create === "item" || create === "location" || create === "label") {
+    goCreate(create);
+    return;
+  }
   const href = el.getAttribute("data-href");
   if (href) goHref(href);
 }
@@ -259,17 +273,22 @@ function onInputKeydown(e: KeyboardEvent) {
 }
 
 function onBodyClick(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create]") as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   if (!btn.hasAttribute("data-cmd-static") && !btn.hasAttribute("data-cmd-search-hit") && btn.id !== "fx-command-open-search")
     return;
   e.preventDefault();
+  const create = btn.getAttribute("data-create");
+  if (create === "item" || create === "location" || create === "label") {
+    goCreate(create);
+    return;
+  }
   const href = btn.getAttribute("data-href");
   if (href) goHref(href);
 }
 
 function onBodyMousemove(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create]") as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   const items = visibleItems();
   const idx = items.indexOf(btn as HTMLElement);
@@ -334,7 +353,7 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
             <button
               type="button"
               data-cmd-static
-              data-href="/items/new"
+              data-create="item"
               data-keywords="new item add create"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
@@ -347,7 +366,7 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
             <button
               type="button"
               data-cmd-static
-              data-href="/locations/new"
+              data-create="location"
               data-keywords="new location place room shelf add create"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
@@ -360,7 +379,7 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
             <button
               type="button"
               data-cmd-static
-              data-href="/labels/new"
+              data-create="label"
               data-keywords="new label tag add create"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >

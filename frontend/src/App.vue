@@ -3,6 +3,7 @@ import { RouterView } from "vue-router";
 import AppSidebar from "./components/AppSidebar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import FxAlertDialogHost from "./components/FxAlertDialogHost.vue";
+import CreateModalsHost from "./components/CreateModalsHost.vue";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
 
@@ -20,6 +21,7 @@ const guest = computed(() => !!route.meta.guestOnly);
       <RouterView />
     </main>
     <CommandPalette />
+    <CreateModalsHost />
   </div>
   <FxAlertDialogHost />
 </template>

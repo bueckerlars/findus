@@ -8,8 +8,7 @@ type Location = { ID: string; Name: string; Description: string };
 
 const route = useRoute();
 const router = useRouter();
-const isNew = computed(() => route.path.endsWith("/new"));
-const id = computed(() => (isNew.value ? "" : (route.params.id as string)));
+const id = computed(() => route.params.id as string);
 
 const name = ref("");
 const description = ref("");
@@ -19,48 +18,27 @@ const err = ref("");
 
 async function load() {
   err.value = "";
-  if (isNew.value) {
-    const pid = typeof route.query.parent_id === "string" ? route.query.parent_id : "";
-    const r = await api<{ parent_options: LocOpt[]; selected_parent: string }>(
-      "/api/locations/new" + (pid ? "?parent_id=" + encodeURIComponent(pid) : ""),
-    );
-    parentOptions.value = r.parent_options;
-    parentId.value = r.selected_parent || pid || "";
-  } else {
-    const r = await api<{ location: Location; parent_options: LocOpt[]; selected_parent: string }>("/api/locations/" + id.value + "/edit");
-    name.value = r.location.Name;
-    description.value = r.location.Description;
-    parentOptions.value = r.parent_options;
-    parentId.value = r.selected_parent;
-  }
+  const r = await api<{ location: Location; parent_options: LocOpt[]; selected_parent: string }>("/api/locations/" + id.value + "/edit");
+  name.value = r.location.Name;
+  description.value = r.location.Description;
+  parentOptions.value = r.parent_options;
+  parentId.value = r.selected_parent;
 }
 
 onMounted(load);
-watch(
-  () => route.fullPath,
-  () => {
-    void load();
-  },
-);
+watch(id, () => {
+  void load();
+});
 
 async function save() {
   err.value = "";
   try {
-    if (isNew.value) {
-      const r = await postJson<{ next: string }>("/api/locations", {
-        name: name.value,
-        description: description.value,
-        parent_id: parentId.value,
-      });
-      await router.push(r.next);
-    } else {
-      const r = await postJson<{ next: string }>("/api/locations/" + id.value, {
-        name: name.value,
-        description: description.value,
-        parent_id: parentId.value,
-      });
-      await router.push(r.next);
-    }
+    const r = await postJson<{ next: string }>("/api/locations/" + id.value, {
+      name: name.value,
+      description: description.value,
+      parent_id: parentId.value,
+    });
+    await router.push(r.next);
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Save failed";
   }
@@ -69,7 +47,7 @@ async function save() {
 
 <template>
   <div class="max-w-lg space-y-6">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ isNew ? "New location" : "Edit location" }}</h1>
+    <h1 class="text-2xl font-semibold text-zinc-900">Edit location</h1>
     <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
     <form class="space-y-4" @submit.prevent="save">
       <div>

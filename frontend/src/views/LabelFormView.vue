@@ -9,8 +9,7 @@ type Label = { ID: string; Name: string; Color: string; DefaultTemplateType?: st
 
 const route = useRoute();
 const router = useRouter();
-const isNew = computed(() => route.path.endsWith("/new"));
-const id = computed(() => (isNew.value ? "" : (route.params.id as string)));
+const id = computed(() => route.params.id as string);
 
 const name = ref("");
 const color = ref("#6366f1");
@@ -19,37 +18,22 @@ const templates = ref<ItemTemplate[]>([]);
 const err = ref("");
 
 onMounted(async () => {
-  if (isNew.value) {
-    const r = await api<{ templates: ItemTemplate[] }>("/api/labels/new");
-    templates.value = r.templates;
-    defaultTemplateType.value = r.templates[0]?.ID || "";
-  } else {
-    const r = await api<{ label: Label; templates: ItemTemplate[]; selected_template: string }>("/api/labels/" + id.value + "/edit");
-    name.value = r.label.Name;
-    color.value = r.label.Color;
-    templates.value = r.templates;
-    defaultTemplateType.value = r.selected_template || "";
-  }
+  const r = await api<{ label: Label; templates: ItemTemplate[]; selected_template: string }>("/api/labels/" + id.value + "/edit");
+  name.value = r.label.Name;
+  color.value = r.label.Color;
+  templates.value = r.templates;
+  defaultTemplateType.value = r.selected_template || "";
 });
 
 async function save() {
   err.value = "";
   try {
-    if (isNew.value) {
-      const r = await postJson<{ next: string }>("/api/labels", {
-        name: name.value,
-        color: color.value,
-        default_template_type: defaultTemplateType.value,
-      });
-      await router.push(r.next);
-    } else {
-      const r = await postJson<{ next: string }>("/api/labels/" + id.value, {
-        name: name.value,
-        color: color.value,
-        default_template_type: defaultTemplateType.value,
-      });
-      await router.push(r.next);
-    }
+    const r = await postJson<{ next: string }>("/api/labels/" + id.value, {
+      name: name.value,
+      color: color.value,
+      default_template_type: defaultTemplateType.value,
+    });
+    await router.push(r.next);
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Save failed";
   }
@@ -70,7 +54,7 @@ async function del() {
 
 <template>
   <div class="max-w-lg space-y-6">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ isNew ? "New label" : "Edit label" }}</h1>
+    <h1 class="text-2xl font-semibold text-zinc-900">Edit label</h1>
     <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
     <form class="space-y-4" @submit.prevent="save">
       <div>
@@ -90,7 +74,7 @@ async function del() {
       </div>
       <div class="flex gap-2">
         <button type="submit" class="fx-btn-primary">Save</button>
-        <button v-if="!isNew" type="button" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="del">Delete</button>
+        <button type="button" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="del">Delete</button>
       </div>
     </form>
   </div>

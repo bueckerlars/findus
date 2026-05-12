@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 
 const router = createRouter({
@@ -9,11 +10,35 @@ const router = createRouter({
     { path: "/", component: () => import("../views/HomeView.vue") },
     { path: "/profile", component: () => import("../views/ProfileView.vue") },
     { path: "/locations", component: () => import("../views/LocationsListView.vue") },
-    { path: "/locations/new", component: () => import("../views/LocationFormView.vue"), meta: { requiresAdmin: true } },
+    {
+      path: "/locations/new",
+      meta: { requiresAdmin: true },
+      redirect: (to) => {
+        const { setPending } = useCreateModals();
+        const pid = to.query.parent_id;
+        setPending({
+          kind: "location",
+          parentId: typeof pid === "string" ? pid : undefined,
+        });
+        return { path: "/locations", replace: true };
+      },
+    },
     { path: "/locations/:id", component: () => import("../views/LocationDetailView.vue") },
     { path: "/locations/:id/edit", component: () => import("../views/LocationFormView.vue"), meta: { requiresAdmin: true } },
     { path: "/items", component: () => import("../views/ItemsListView.vue") },
-    { path: "/items/new", component: () => import("../views/ItemFormView.vue"), meta: { requiresAdmin: true } },
+    {
+      path: "/items/new",
+      meta: { requiresAdmin: true },
+      redirect: (to) => {
+        const { setPending } = useCreateModals();
+        const loc = to.query.location_id;
+        setPending({
+          kind: "item",
+          locationId: typeof loc === "string" ? loc : undefined,
+        });
+        return { path: "/items", replace: true };
+      },
+    },
     { path: "/items/:id", component: () => import("../views/ItemDetailView.vue") },
     {
       path: "/items/:id/edit",
@@ -25,7 +50,15 @@ const router = createRouter({
     },
     { path: "/search", component: () => import("../views/SearchView.vue") },
     { path: "/labels", component: () => import("../views/LabelsListView.vue") },
-    { path: "/labels/new", component: () => import("../views/LabelFormView.vue"), meta: { requiresAdmin: true } },
+    {
+      path: "/labels/new",
+      meta: { requiresAdmin: true },
+      redirect: () => {
+        const { setPending } = useCreateModals();
+        setPending({ kind: "label" });
+        return { path: "/labels", replace: true };
+      },
+    },
     { path: "/labels/:id/edit", component: () => import("../views/LabelFormView.vue"), meta: { requiresAdmin: true } },
     { path: "/admin", redirect: "/admin/users" },
     { path: "/admin/users", component: () => import("../views/AdminUsersView.vue"), meta: { requiresAdmin: true } },

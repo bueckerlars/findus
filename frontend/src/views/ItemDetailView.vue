@@ -56,12 +56,24 @@ const fieldsEdit = ref<TemplateField[]>([]);
 const fieldValsEdit = ref<Record<string, string>>({});
 const addPairsEdit = ref<{ k: string; v: string }[]>([]);
 const photoFile = ref<File | null>(null);
+const photoPendingPreview = ref<string | null>(null);
 const labelAddMenuOpen = ref(false);
 const labelPickerRoot = ref<HTMLElement | null>(null);
 
 const id = computed(() => route.params.id as string);
 const qrPngUrl = computed(() => "/items/" + id.value + "/qr.png");
 const breadcrumbTitle = computed(() => (editMode.value ? draftName.value : item.value?.Name) || "");
+const heroImageSrc = computed(() => photoPendingPreview.value || photoUrl.value);
+
+watch(photoFile, (f) => {
+  if (photoPendingPreview.value) {
+    URL.revokeObjectURL(photoPendingPreview.value);
+    photoPendingPreview.value = null;
+  }
+  if (f) {
+    photoPendingPreview.value = URL.createObjectURL(f);
+  }
+});
 
 async function load() {
   const r = await api<{
@@ -128,6 +140,7 @@ async function loadEditForm() {
   }
   applyMergedRows(r.additional_rows || []);
   photoFile.value = null;
+  labelAddMenuOpen.value = false;
 }
 
 function editSnapshot(): string {
@@ -226,10 +239,15 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener("pointerdown", onDocPointerDown, true);
   document.removeEventListener("keydown", onGlobalKeydown, true);
+  if (photoPendingPreview.value) {
+    URL.revokeObjectURL(photoPendingPreview.value);
+  }
 });
 
 watch(id, async () => {
   editMode.value = false;
+  photoFile.value = null;
+  labelAddMenuOpen.value = false;
   await load();
 });
 
@@ -262,6 +280,14 @@ async function del() {
 function onPhotoEdit(e: Event) {
   const t = (e.target as HTMLInputElement).files?.[0];
   photoFile.value = t || null;
+}
+
+function clearPhotoEdit() {
+  photoFile.value = null;
+  const inputs = document.querySelectorAll<HTMLInputElement>(".fx-item-photo-file-input");
+  inputs.forEach((el) => {
+    el.value = "";
+  });
 }
 
 const selectedLabelsOrdered = computed(() => allLabelsEdit.value.filter((lb) => selectedLabelsEdit.value[lb.ID]));
@@ -308,21 +334,29 @@ function removeCustomAttributeRow(i: number) {
     <div class="fx-card overflow-visible">
       <div class="grid gap-6 p-5 sm:grid-cols-[minmax(0,11.25rem)_1fr] sm:items-start sm:gap-8 sm:p-7 lg:p-8">
         <div class="mx-auto w-full max-w-[11.25rem] shrink-0 justify-self-center sm:mx-0 sm:justify-self-start">
-          <template v-if="photoUrl">
+          <template v-if="heroImageSrc">
             <div
               class="overflow-hidden rounded-2xl border border-zinc-200/90 bg-zinc-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ring-1 ring-zinc-950/[0.04]"
             >
-              <img :src="photoUrl" alt="" class="aspect-square w-full object-cover" />
+              <img :src="heroImageSrc" alt="" class="aspect-square w-full object-cover" />
             </div>
-            <div v-if="editMode" class="mt-3 space-y-1.5">
+            <div v-if="editMode" class="mt-3 space-y-2">
               <label
-                class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+                class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 hover:text-sky-900"
               >
                 <FxSvg name="photo" class="h-4 w-4 shrink-0 text-zinc-500" />
-                Replace photo
-                <input type="file" accept="image/*" class="sr-only" @change="onPhotoEdit" />
+                {{ photoUrl ? "Replace photo" : "Set photo" }}
+                <input type="file" accept="image/*" class="fx-item-photo-file-input sr-only" @change="onPhotoEdit" />
               </label>
               <p v-if="photoFile" class="truncate text-center text-[11px] leading-tight text-zinc-500" :title="photoFile.name">{{ photoFile.name }}</p>
+              <button
+                v-if="photoFile"
+                type="button"
+                class="w-full text-center text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-red-600 hover:underline"
+                @click="clearPhotoEdit"
+              >
+                Discard new image
+              </button>
             </div>
           </template>
           <template v-else>
@@ -331,15 +365,23 @@ function removeCustomAttributeRow(i: number) {
             >
               <FxSvg name="cube" class="h-14 w-14 opacity-40 sm:h-16 sm:w-16" />
             </div>
-            <div v-if="editMode" class="mt-3 space-y-1.5">
+            <div v-if="editMode" class="mt-3 space-y-2">
               <label
-                class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+                class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 hover:text-sky-900"
               >
                 <FxSvg name="photo" class="h-4 w-4 shrink-0 text-zinc-500" />
                 Add photo
-                <input type="file" accept="image/*" class="sr-only" @change="onPhotoEdit" />
+                <input type="file" accept="image/*" class="fx-item-photo-file-input sr-only" @change="onPhotoEdit" />
               </label>
               <p v-if="photoFile" class="truncate text-center text-[11px] leading-tight text-zinc-500" :title="photoFile.name">{{ photoFile.name }}</p>
+              <button
+                v-if="photoFile"
+                type="button"
+                class="w-full text-center text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-red-600 hover:underline"
+                @click="clearPhotoEdit"
+              >
+                Discard new image
+              </button>
             </div>
           </template>
         </div>
@@ -498,7 +540,8 @@ function removeCustomAttributeRow(i: number) {
           </div>
         </div>
       </div>
-      <div class="mt-3 flex min-h-[2.25rem] flex-wrap items-center gap-2">
+      <p v-if="!allLabelsEdit.length" class="mt-2 text-sm text-zinc-500">Create labels first under Labels in the sidebar.</p>
+      <div v-else class="mt-3 flex min-h-[2.25rem] flex-wrap items-center gap-2">
         <template v-if="selectedLabelsOrdered.length">
           <span
             v-for="lb in selectedLabelsOrdered"
@@ -519,7 +562,6 @@ function removeCustomAttributeRow(i: number) {
         </template>
         <p v-else class="text-sm text-zinc-400">No labels</p>
       </div>
-      <p v-if="!allLabelsEdit.length" class="mt-2 text-xs text-zinc-500">Create labels first under Labels in the sidebar.</p>
     </div>
 
     <section v-if="attrRows.length && !editMode" class="fx-card overflow-hidden p-0">

@@ -3,6 +3,7 @@ import { onMounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
@@ -17,6 +18,7 @@ type Crumb = { ID: string; Name: string };
 const route = useRoute();
 const router = useRouter();
 const { isAdmin } = useSession();
+const { openCreateItem, openCreateLocation } = useCreateModals();
 
 const loc = ref<Location | null>(null);
 const children = ref<Location[]>([]);
@@ -102,9 +104,14 @@ async function del() {
     <section class="mt-6 fx-card p-6">
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-base font-semibold text-zinc-900">Inside this location</h2>
-        <RouterLink v-if="isAdmin" :to="'/locations/new?parent_id=' + loc.ID" class="text-sm font-medium text-sky-600 hover:text-sky-700"
-          >+ Add sub-location</RouterLink
+        <button
+          v-if="isAdmin"
+          type="button"
+          class="text-sm font-medium text-sky-600 hover:text-sky-700"
+          @click="openCreateLocation({ parentId: loc.ID })"
         >
+          + Add sub-location
+        </button>
       </div>
       <ul class="mt-4 space-y-2">
         <li v-for="ch in children" :key="ch.ID">
@@ -128,12 +135,14 @@ async function del() {
           <h2 class="text-base font-semibold text-zinc-900">Items here</h2>
           <div class="flex flex-wrap items-center gap-2">
             <ItemsViewModeToolbar />
-            <RouterLink
+            <button
               v-if="isAdmin"
-              :to="'/items/new?location_id=' + loc.ID"
+              type="button"
               class="text-sm font-medium text-sky-600 hover:text-sky-700"
-              >+ Add item</RouterLink
+              @click="openCreateItem({ locationId: loc.ID })"
             >
+              + Add item
+            </button>
           </div>
         </div>
       </template>

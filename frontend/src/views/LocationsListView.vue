@@ -2,12 +2,14 @@
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 import LocationTreeRow, { type LocationTreeNode } from "../components/LocationTreeRow.vue";
 
 const tree = ref<LocationTreeNode[]>([]);
 const expandedIds = ref(new Set<string>());
 const { isAdmin } = useSession();
+const { openCreateLocation } = useCreateModals();
 
 function isExpanded(id: string) {
   return expandedIds.value.has(id);
@@ -35,13 +37,14 @@ onMounted(async () => {
           Top-level places first. Use the chevron to show or hide sub-locations. Tap the name to open a location.
         </p>
       </div>
-      <RouterLink
+      <button
         v-if="isAdmin"
-        to="/locations/new"
+        type="button"
         class="fx-btn-primary shrink-0 self-start text-sm shadow-md sm:self-center"
+        @click="openCreateLocation()"
       >
         New location
-      </RouterLink>
+      </button>
     </div>
 
     <ul v-if="tree.length" class="fx-card divide-y divide-zinc-100 overflow-visible p-0" role="list">
@@ -56,7 +59,9 @@ onMounted(async () => {
     </ul>
     <div v-else class="fx-card px-5 py-14 text-center">
       <p class="text-zinc-500">No locations yet.</p>
-      <RouterLink v-if="isAdmin" to="/locations/new" class="mt-5 inline-flex fx-btn-primary">Create your first location</RouterLink>
+      <button v-if="isAdmin" type="button" class="mt-5 inline-flex fx-btn-primary" @click="openCreateLocation()">
+        Create your first location
+      </button>
     </div>
   </div>
 </template>

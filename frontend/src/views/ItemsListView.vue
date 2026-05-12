@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
@@ -19,6 +20,7 @@ type Item = {
 
 const items = ref<Item[]>([]);
 const { isAdmin } = useSession();
+const { openCreateItem } = useCreateModals();
 
 onMounted(async () => {
   const r = await api<{ items: Item[] }>("/api/items");
@@ -36,6 +38,7 @@ onMounted(async () => {
         </div>
         <div class="flex shrink-0 flex-wrap items-center gap-2">
           <ItemsViewModeToolbar />
+          <button v-if="isAdmin" type="button" class="fx-btn-primary text-sm" @click="openCreateItem()">New item</button>
           <RouterLink to="/search" class="fx-btn-secondary text-sm">Search</RouterLink>
         </div>
       </div>
@@ -95,7 +98,7 @@ onMounted(async () => {
     </div>
     <div v-else class="fx-card px-5 py-12 text-center">
       <p class="text-zinc-500">No items yet.</p>
-      <RouterLink v-if="isAdmin" to="/items/new" class="mt-4 inline-flex fx-btn-primary">Add your first item</RouterLink>
+      <button v-if="isAdmin" type="button" class="mt-4 inline-flex fx-btn-primary" @click="openCreateItem()">Add your first item</button>
     </div>
   </ItemsViewToggle>
 </template>

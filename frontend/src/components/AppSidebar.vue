@@ -6,10 +6,12 @@ import { postJson } from "../api";
 import { navActive } from "../utils/nav";
 import { usernameInitial } from "../utils/initial";
 import FxSvg from "./FxSvg.vue";
+import { useCreateModals } from "../composables/useCreateModals";
 
 const route = useRoute();
 const router = useRouter();
 const { user, isAdmin, refresh } = useSession();
+const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 void refresh();
 
 const profilePhotoSrc = "/profile/photo";
@@ -59,24 +61,36 @@ async function logout() {
         <div
           class="absolute left-4 right-4 z-30 mt-2 overflow-hidden rounded-xl border border-zinc-200/90 bg-white/95 py-1.5 shadow-xl shadow-zinc-900/10 ring-1 ring-zinc-950/5 backdrop-blur-md"
         >
-          <RouterLink
-            to="/items/new"
-            class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
-            @click="closeAddMenu"
-            >New item</RouterLink
+          <button
+            type="button"
+            class="block w-full px-4 py-2.5 text-left text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
+            @click="
+              closeAddMenu();
+              openCreateItem();
+            "
           >
-          <RouterLink
-            to="/locations/new"
-            class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
-            @click="closeAddMenu"
-            >New location</RouterLink
+            New item
+          </button>
+          <button
+            type="button"
+            class="block w-full px-4 py-2.5 text-left text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
+            @click="
+              closeAddMenu();
+              openCreateLocation();
+            "
           >
-          <RouterLink
-            to="/labels/new"
-            class="block px-4 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
-            @click="closeAddMenu"
-            >New label</RouterLink
+            New location
+          </button>
+          <button
+            type="button"
+            class="block w-full px-4 py-2.5 text-left text-sm font-medium text-zinc-800 transition hover:bg-sky-50/80 hover:text-sky-900"
+            @click="
+              closeAddMenu();
+              openCreateLabel();
+            "
           >
+            New label
+          </button>
         </div>
       </details>
     </div>

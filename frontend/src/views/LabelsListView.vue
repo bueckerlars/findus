@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
+import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 
 type Label = { ID: string; Name: string; Color: string };
@@ -9,6 +10,7 @@ type Row = { label: Label; chip_href: string; default_template_title?: string };
 
 const rows = ref<Row[]>([]);
 const { isAdmin } = useSession();
+const { openCreateLabel } = useCreateModals();
 
 onMounted(async () => {
   const r = await api<{ label_rows: Row[] }>("/api/labels");
@@ -20,7 +22,7 @@ onMounted(async () => {
   <div class="max-w-3xl space-y-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <h1 class="text-2xl font-semibold text-zinc-900">Labels</h1>
-      <RouterLink v-if="isAdmin" to="/labels/new" class="fx-btn-primary text-sm">New label</RouterLink>
+      <button v-if="isAdmin" type="button" class="fx-btn-primary text-sm" @click="openCreateLabel()">New label</button>
     </div>
     <ul class="divide-y divide-zinc-100 rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
       <li v-for="row in rows" :key="row.label.ID" class="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
