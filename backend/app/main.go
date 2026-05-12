@@ -61,7 +61,8 @@ func main() {
 	authSvc := &service.Auth{Users: users, Settings: settings, Invites: invites}
 	adminSvc := &service.Admin{Users: users, Settings: settings, Invites: invites}
 	labels := sqlite.NewLabelRepo(db)
-	invSvc := &service.Inventory{Locations: locs, Items: items, Labels: labels, Templates: templates, Settings: settings}
+	attachments := sqlite.NewItemAttachmentRepo(db)
+	invSvc := &service.Inventory{Locations: locs, Items: items, Labels: labels, Templates: templates, Settings: settings, ItemAttachments: attachments}
 	qrSvc := &service.QR{BaseURL: cfg.BaseURL}
 
 	srv := &handler.Server{

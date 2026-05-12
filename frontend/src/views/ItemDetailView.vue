@@ -2,9 +2,9 @@
 import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { api, postJson } from "../api";
+import { api, patchJson, postJson } from "../api";
 import { useSession } from "../session";
-import FxSvg from "../components/FxSvg.vue";
+import FxSvg, { type FxIconName } from "../components/FxSvg.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 import { confirmAlert } from "../composables/useAlertDialog";
 import { toast } from "../composables/useToast";
@@ -29,6 +29,17 @@ type TemplateField = {
   required: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
+};
+
+type ItemAttachment = {
+  ID: string;
+  ItemID: string;
+  OriginalFilename: string;
+  Title: string;
+  MimeType: string;
+  SizeBytes: number;
+  CreatedAt: string;
+  DownloadURL: string;
 };
 
 const route = useRoute();
@@ -64,6 +75,11 @@ const photoPendingPreview = ref<string | null>(null);
 const labelAddMenuOpen = ref(false);
 const labelPickerRoot = ref<HTMLElement | null>(null);
 
+const attachments = ref<ItemAttachment[]>([]);
+const attachmentBusy = ref(false);
+const attachmentDragOver = ref(false);
+const attachmentInputRef = ref<HTMLInputElement | null>(null);
+
 const id = computed(() => route.params.id as string);
 const qrPngUrl = computed(() => "/items/" + id.value + "/qr.png");
 const breadcrumbTitle = computed(() => (editMode.value ? draftName.value : item.value?.Name) || "");
@@ -87,6 +103,7 @@ async function load() {
     location_path: PathEl[];
     attr_rows: AttrRow[];
     system_rows: { label: string; value: string }[];
+    attachments?: ItemAttachment[];
   }>("/api/items/" + id.value);
   item.value = r.item;
   labels.value = r.labels ?? [];
@@ -94,6 +111,7 @@ async function load() {
   locationPath.value = r.location_path ?? [];
   attrRows.value = r.attr_rows ?? [];
   systemRows.value = r.system_rows ?? [];
+  attachments.value = r.attachments ?? [];
 }
 
 function applyMergedRows(rows: KV[]) {
@@ -299,9 +317,16 @@ watch(
 watch(id, async () => {
   editMode.value = false;
   photoFile.value = null;
+  clearAttachmentPick();
   labelAddMenuOpen.value = false;
   await load();
   await applyRouteEditIntent();
+});
+
+watch(editMode, (ed) => {
+  if (!ed) {
+    clearAttachmentPick();
+  }
 });
 
 watch(
@@ -405,6 +430,125 @@ function addCustomAttributeRow() {
 
 function removeCustomAttributeRow(i: number) {
   addPairsEdit.value = addPairsEdit.value.filter((_, j) => j !== i);
+}
+
+function attachmentMimeIcon(mime: string): FxIconName {
+  if (mime.startsWith("image/")) return "photo";
+  if (mime === "application/pdf") return "documentText";
+  return "cube";
+}
+
+function formatAttachmentBytes(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return t("common.emDash");
+  if (n < 1024) return `${Math.round(n)} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function attachmentDisplayName(a: ItemAttachment): string {
+  const tit = a.Title?.trim();
+  return tit || a.OriginalFilename || t("itemDetail.documentFallback");
+}
+
+/** Default display title from file name (basename, extension stripped for known types). */
+function defaultTitleFromFilename(name: string): string {
+  const base = name.trim().replace(/^.*[/\\]/, "");
+  const noExt = base.replace(/\.(pdf|png|jpe?g|gif|webp)$/i, "").trim();
+  return noExt || base || t("itemDetail.documentFallback");
+}
+
+function attachmentRowTitle(a: ItemAttachment): string {
+  return a.Title?.trim() ? a.Title.trim() : defaultTitleFromFilename(a.OriginalFilename);
+}
+
+function onAttachmentFilePick(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const f = input.files?.[0];
+  input.value = "";
+  if (f) void uploadAttachment(f);
+}
+
+function onAttachmentDrop(e: DragEvent) {
+  attachmentDragOver.value = false;
+  const f = e.dataTransfer?.files?.[0];
+  if (!f) return;
+  void uploadAttachment(f);
+}
+
+function onDropZoneDragLeave(e: DragEvent) {
+  const rel = e.relatedTarget as Node | null;
+  const box = e.currentTarget as HTMLElement;
+  if (rel && box.contains(rel)) return;
+  attachmentDragOver.value = false;
+}
+
+function openAttachmentPicker() {
+  attachmentInputRef.value?.click();
+}
+
+function clearAttachmentPick() {
+  attachmentDragOver.value = false;
+  if (attachmentInputRef.value) attachmentInputRef.value.value = "";
+}
+
+async function uploadAttachment(file: File) {
+  if (!item.value || attachmentBusy.value) return;
+  attachmentBusy.value = true;
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const title = defaultTitleFromFilename(file.name).trim();
+    fd.append("title", title);
+    await api("/api/items/" + id.value + "/attachments", { method: "POST", body: fd });
+    clearAttachmentPick();
+    await load();
+    toast.success(t("toast.documentUploaded"));
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : t("toast.documentUploadFailed"));
+  } finally {
+    attachmentBusy.value = false;
+  }
+}
+
+async function onAttachmentTitleBlur(a: ItemAttachment, ev: Event) {
+  if (!item.value || !isAdmin.value || !editMode.value || attachmentBusy.value) return;
+  const el = ev.target as HTMLInputElement;
+  const next = el.value.trim();
+  const prev = attachmentRowTitle(a);
+  if (next === prev) return;
+  attachmentBusy.value = true;
+  try {
+    await patchJson("/api/items/" + id.value + "/attachments/" + a.ID, { title: next });
+    await load();
+    toast.success(t("toast.documentTitleSaved"));
+  } catch (e) {
+    el.value = prev;
+    toast.error(e instanceof Error ? e.message : t("toast.documentSaveFailed"));
+  } finally {
+    attachmentBusy.value = false;
+  }
+}
+
+async function deleteAttachment(a: ItemAttachment) {
+  if (!item.value || attachmentBusy.value) return;
+  const ok = await confirmAlert({
+    title: t("itemDetail.documentDeleteTitle"),
+    message: t("itemDetail.documentDeleteMsg", { name: attachmentDisplayName(a) }),
+    confirmLabel: t("itemDetail.documentRemove"),
+    cancelLabel: t("common.cancel"),
+    variant: "danger",
+  });
+  if (!ok) return;
+  attachmentBusy.value = true;
+  try {
+    await api("/api/items/" + id.value + "/attachments/" + a.ID, { method: "DELETE" });
+    await load();
+    toast.success(t("toast.documentRemoved"));
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : t("toast.documentRemoveFailed"));
+  } finally {
+    attachmentBusy.value = false;
+  }
 }
 </script>
 
@@ -659,6 +803,110 @@ function removeCustomAttributeRow(i: number) {
         <p v-else class="text-sm text-zinc-400">{{ $t("itemDetail.noLabels") }}</p>
       </div>
     </div>
+
+    <section class="fx-card overflow-hidden p-0">
+      <div class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5">
+        <h2 class="text-sm font-semibold text-zinc-800">{{ $t("itemDetail.documentsTitle") }}</h2>
+        <p class="mt-1 text-xs text-zinc-500">{{ $t("itemDetail.documentsHint") }}</p>
+      </div>
+      <div
+        v-if="isAdmin && editMode"
+        class="border-b border-zinc-100 px-5 py-4 sm:px-6"
+        @dragover.prevent
+        @drop.prevent="onAttachmentDrop"
+      >
+        <div
+          class="rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors"
+          :class="
+            attachmentDragOver
+              ? 'border-sky-400 bg-sky-50/90 ring-2 ring-sky-200/60'
+              : 'border-zinc-200 bg-zinc-50/50 hover:border-zinc-300'
+          "
+          :aria-busy="attachmentBusy ? 'true' : 'false'"
+          @dragenter.prevent="attachmentDragOver = true"
+          @dragleave="onDropZoneDragLeave"
+          @click.self="!attachmentBusy && openAttachmentPicker()"
+        >
+          <input
+            ref="attachmentInputRef"
+            type="file"
+            class="sr-only"
+            accept="application/pdf,image/*"
+            :disabled="attachmentBusy"
+            @change="onAttachmentFilePick"
+          />
+          <FxSvg name="plus" class="mx-auto h-8 w-8 text-zinc-400" :class="attachmentBusy && 'animate-pulse text-sky-500'" aria-hidden="true" />
+          <p class="mt-2 text-sm text-zinc-600">{{ $t("itemDetail.documentDropHint") }}</p>
+          <p v-if="attachmentBusy" class="mt-1 text-xs font-medium text-sky-700">{{ $t("common.loading") }}</p>
+          <button
+            type="button"
+            class="mt-3 inline-flex items-center justify-center rounded-lg border border-zinc-200/90 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 disabled:cursor-not-allowed disabled:opacity-40"
+            :disabled="attachmentBusy"
+            @click.stop="openAttachmentPicker"
+          >
+            {{ $t("itemDetail.documentPickFile") }}
+          </button>
+        </div>
+      </div>
+      <div v-if="attachments.length" class="divide-y divide-zinc-100 border-t border-zinc-100">
+        <div
+          v-for="a in attachments"
+          :key="a.ID"
+          class="flex min-w-0 items-center gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-3"
+        >
+          <span class="shrink-0 text-zinc-500" :title="a.MimeType">
+            <FxSvg :name="attachmentMimeIcon(a.MimeType)" class="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div class="min-w-0 flex-1">
+            <template v-if="isAdmin && editMode">
+              <label class="sr-only" :for="'att-title-' + a.ID">{{ $t("itemDetail.documentTitlePh") }}</label>
+              <input
+                :id="'att-title-' + a.ID"
+                :key="a.ID + '-' + (a.Title || '') + '-' + a.OriginalFilename"
+                type="text"
+                maxlength="120"
+                class="fx-input mt-0 w-full min-w-0 text-sm font-medium leading-snug"
+                :defaultValue="attachmentRowTitle(a)"
+                :aria-label="$t('itemDetail.documentTitlePh')"
+                @blur="onAttachmentTitleBlur(a, $event)"
+              />
+            </template>
+            <template v-else>
+              <div class="break-words text-sm font-medium leading-snug text-zinc-800">{{ attachmentDisplayName(a) }}</div>
+            </template>
+          </div>
+          <span
+            class="shrink-0 whitespace-nowrap tabular-nums text-xs text-zinc-500 sm:text-sm"
+            :title="formatAttachmentBytes(a.SizeBytes)"
+          >{{ formatAttachmentBytes(a.SizeBytes) }}</span>
+          <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">
+            <a
+              :href="a.DownloadURL"
+              class="fx-icon-btn"
+              download
+              target="_blank"
+              rel="noopener"
+              :title="$t('itemDetail.documentDownload')"
+              :aria-label="$t('itemDetail.documentDownload')"
+            >
+              <FxSvg name="arrowDownTray" />
+            </a>
+            <button
+              v-if="isAdmin && editMode"
+              type="button"
+              class="fx-icon-btn-danger"
+              :disabled="attachmentBusy"
+              :title="$t('itemDetail.documentRemove')"
+              :aria-label="$t('itemDetail.documentRemove')"
+              @click="deleteAttachment(a)"
+            >
+              <FxSvg name="trash" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <p v-else class="px-5 py-6 text-sm text-zinc-500 sm:px-6">{{ $t("itemDetail.documentsEmpty") }}</p>
+    </section>
 
     <section v-if="attrRows.length && !editMode" class="fx-card overflow-hidden p-0">
       <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">{{ $t("itemDetail.details") }}</h2>

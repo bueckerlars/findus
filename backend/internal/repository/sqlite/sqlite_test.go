@@ -23,6 +23,11 @@ func TestOpenDBRunsMigrations(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, n)
 
+	var attTbl int
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='item_attachments'`).Scan(&attTbl)
+	require.NoError(t, err)
+	require.Equal(t, 1, attTbl)
+
 	var tc int
 	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM item_templates`).Scan(&tc)
 	require.NoError(t, err)

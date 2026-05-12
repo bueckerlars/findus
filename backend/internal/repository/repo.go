@@ -56,6 +56,15 @@ type ItemRepository interface {
 	MigrateItemPrimaryKeys(ctx context.Context, rows []domain.ItemIDMigration) error
 }
 
+// ItemAttachmentRepository stores per-item file attachments (metadata + relative storage path).
+type ItemAttachmentRepository interface {
+	ListByItemID(ctx context.Context, itemID string) ([]domain.ItemAttachment, error)
+	GetByID(ctx context.Context, id string) (*domain.ItemAttachment, error)
+	Create(ctx context.Context, a *domain.ItemAttachment) error
+	UpdateTitle(ctx context.Context, id string, title string) error
+	DeleteByID(ctx context.Context, id string) error
+}
+
 // ItemLabelPair is one item_labels row.
 type ItemLabelPair struct {
 	ItemID  string
