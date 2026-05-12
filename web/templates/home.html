@@ -81,17 +81,15 @@
       {{end}}
     </section>
 
-    <section class="fx-card items-view-scope overflow-hidden p-0" data-items-view-key="home_locations" aria-labelledby="home-locations">
+    <section class="fx-card overflow-hidden p-0" aria-labelledby="home-locations">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
         <h2 id="home-locations" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Locations</h2>
         <div class="flex flex-wrap items-center gap-2">
-          {{template "items_view_toggle" .}}
           <a href="/locations" class="text-sm font-medium text-sky-600 hover:text-sky-700">All locations</a>
         </div>
       </div>
       {{if .HomeLocations}}
-      <div class="items-view-list-only">
-        <ul class="divide-y divide-zinc-100" role="list">
+      <ul class="divide-y divide-zinc-100" role="list">
         {{range .HomeLocations}}
         <li>
           <a href="/locations/{{.Location.ID}}" class="group fx-home-loc-row flex items-center gap-3 px-5 py-3.5">
@@ -115,11 +113,7 @@
           </a>
         </li>
         {{end}}
-        </ul>
-      </div>
-      <div class="items-view-gallery-only grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-        {{range .HomeLocations}}{{template "home_location_tile_gallery" .}}{{end}}
-      </div>
+      </ul>
       {{else}}
       <div class="px-5 py-10 text-center">
         <p class="text-sm text-zinc-500">No locations yet.</p>

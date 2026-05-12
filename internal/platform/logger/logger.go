@@ -6,18 +6,48 @@ import (
 	"strings"
 )
 
-func New(level string) *slog.Logger {
-	var lvl slog.Level
+const defaultService = "findus"
+
+// Options configures the application slog.Logger.
+type Options struct {
+	Level   string // debug, info, warn, error
+	Format  string // text (default), json for structured logs
+	Service string // logical service name for log records
+}
+
+func parseLevel(level string) slog.Level {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "debug":
-		lvl = slog.LevelDebug
+		return slog.LevelDebug
 	case "warn", "warning":
-		lvl = slog.LevelWarn
+		return slog.LevelWarn
 	case "error":
-		lvl = slog.LevelError
+		return slog.LevelError
 	default:
-		lvl = slog.LevelInfo
+		return slog.LevelInfo
 	}
-	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
-	return slog.New(h)
+}
+
+// New returns a slog.Logger with text (human-readable) or JSON output and optional default attributes.
+func New(opts Options) *slog.Logger {
+	lvl := parseLevel(opts.Level)
+	service := strings.TrimSpace(opts.Service)
+	if service == "" {
+		service = defaultService
+	}
+	addSource := lvl == slog.LevelDebug
+	handlerOpts := &slog.HandlerOptions{
+		Level:     lvl,
+		AddSource: addSource,
+	}
+
+	var h slog.Handler
+	switch strings.ToLower(strings.TrimSpace(opts.Format)) {
+	case "json", "structured":
+		h = slog.NewJSONHandler(os.Stdout, handlerOpts)
+	default:
+		h = slog.NewTextHandler(os.Stdout, handlerOpts)
+	}
+
+	return slog.New(h).With(slog.String("service", service))
 }

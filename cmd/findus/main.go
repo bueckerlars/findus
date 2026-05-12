@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,7 +26,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log := logger.New(cfg.LogLevel)
+	log := logger.New(logger.Options{
+		Level:  cfg.LogLevel,
+		Format: cfg.LogFormat,
+	})
+	slog.SetDefault(log)
 
 	ctx := context.Background()
 	jwtSecret, err := secrets.LoadOrCreateJWTSecret(cfg.DataDir, cfg.JWTSecret)
@@ -38,6 +43,16 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+
+	log.Info("application starting",
+		slog.String("event", "startup"),
+		slog.Int("http.port", cfg.Port),
+		slog.String("data_dir", cfg.DataDir),
+		slog.String("base_url", cfg.BaseURL),
+		slog.Bool("cookie_secure", cfg.CookieSecure),
+		slog.String("log_level", cfg.LogLevel),
+		slog.String("log_format", cfg.LogFormat),
+	)
 
 	users := sqlite.NewUserRepo(db)
 	locs := sqlite.NewLocationRepo(db)
@@ -93,18 +108,70 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
-		log.Info("listening", "addr", addr)
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("server", "err", err)
-			os.Exit(1)
+			errCh <- err
+			return
 		}
+		errCh <- nil
 	}()
 
-	stop := make(chan os.Signal, 1)
+	log.Info("http server listening",
+		slog.String("event", "server_listen"),
+		slog.String("addr", addr),
+	)
+
+	stop := make(chan os.Signal, 2)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
+
+	select {
+	case sig := <-stop:
+		log.Info("shutdown signal received",
+			slog.String("event", "shutdown_signal"),
+			slog.String("signal", sig.String()),
+		)
+	case err := <-errCh:
+		signal.Stop(stop)
+		if err != nil {
+			log.Error("http server failed", slog.String("event", "server_error"), slog.Any("err", err))
+			_ = db.Close()
+			os.Exit(1)
+		}
+		// Server exited cleanly before any shutdown signal (unexpected in normal operation).
+		return
+	}
+
 	shCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_ = httpSrv.Shutdown(shCtx)
+
+	shutdownDone := make(chan error, 1)
+	go func() {
+		shutdownDone <- httpSrv.Shutdown(shCtx)
+	}()
+
+	select {
+	case err := <-shutdownDone:
+		signal.Stop(stop)
+		if err != nil {
+			log.Error("graceful shutdown error", slog.String("event", "shutdown_error"), slog.Any("err", err))
+		} else {
+			log.Info("http server stopped", slog.String("event", "server_stopped"))
+		}
+	case sig := <-stop:
+		log.Warn("shutdown signal during graceful stop; forcing close",
+			slog.String("event", "shutdown_force"),
+			slog.String("signal", sig.String()),
+		)
+		_ = httpSrv.Close()
+		err := <-shutdownDone
+		signal.Stop(stop)
+		if err != nil {
+			log.Warn("http server shutdown after force close",
+				slog.String("event", "shutdown_force_done"),
+				slog.Any("err", err),
+			)
+		}
+		log.Info("http server stopped", slog.String("event", "server_stopped"))
+	}
 }

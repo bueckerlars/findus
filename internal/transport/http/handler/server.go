@@ -1300,6 +1300,34 @@ func (s *Server) Search(w http.ResponseWriter, r *http.Request) {
 	s.render(w, http.StatusOK, "page_search_page", data)
 }
 
+// CommandSearchGet returns JSON hits for the command palette (items only).
+func (s *Server) CommandSearchGet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if q == "" {
+		_, _ = w.Write([]byte(`{"items":[]}`))
+		return
+	}
+	res, err := s.Items.Search(ctx, q, 12)
+	if err != nil {
+		http.Error(w, "server error", http.StatusInternalServerError)
+		return
+	}
+	type row struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+		Type string `json:"type"`
+	}
+	out := struct {
+		Items []row `json:"items"`
+	}{Items: make([]row, 0, len(res))}
+	for _, it := range res {
+		out.Items = append(out.Items, row{ID: it.ID, Name: it.Name, Type: string(it.TemplateType)})
+	}
+	_ = json.NewEncoder(w).Encode(out)
+}
+
 func (s *Server) AdminHome(w http.ResponseWriter, r *http.Request) {
 	sh := s.shell(r, "Admin")
 	s.render(w, http.StatusOK, "page_admin", sh)
@@ -1595,6 +1623,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.HandleFunc("GET /q/{token}", s.QRedirect)
 
 	mux.Handle("GET /search", auth(http.HandlerFunc(s.Search)))
+	mux.Handle("GET /command-search", auth(http.HandlerFunc(s.CommandSearchGet)))
 
 	mux.Handle("GET /labels", auth(http.HandlerFunc(s.LabelsList)))
 	mux.Handle("GET /labels/new", admin(http.HandlerFunc(s.LabelNewGet)))

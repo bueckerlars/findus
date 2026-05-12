@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret    string
 	CookieSecure bool
 	LogLevel     string
+	LogFormat    string // text (default), json
 }
 
 func Load() (Config, error) {
@@ -23,6 +24,7 @@ func Load() (Config, error) {
 		BaseURL:      "http://localhost:8080",
 		CookieSecure: false,
 		LogLevel:     "info",
+		LogFormat:    "text",
 	}
 	if v := os.Getenv("FINDUS_PORT"); v != "" {
 		p, err := strconv.Atoi(v)
@@ -49,6 +51,9 @@ func Load() (Config, error) {
 	}
 	if v := strings.TrimSpace(os.Getenv("FINDUS_LOG_LEVEL")); v != "" {
 		c.LogLevel = v
+	}
+	if v := strings.TrimSpace(os.Getenv("FINDUS_LOG_FORMAT")); v != "" {
+		c.LogFormat = v
 	}
 	return c, nil
 }

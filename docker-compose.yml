@@ -9,6 +9,7 @@ services:
       FINDUS_BASE_URL: http://localhost:8080
       FINDUS_COOKIE_SECURE: "false"
       FINDUS_LOG_LEVEL: info
+      FINDUS_LOG_FORMAT: json
     volumes:
       - findus_data:/data
 

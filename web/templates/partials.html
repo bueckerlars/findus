@@ -175,4 +175,95 @@ document.addEventListener('htmx:configRequest', (e) => {
   </footer>
   {{end}}
 </aside>
+{{template "command_palette" .}}
+{{end}}
+
+{{define "command_palette"}}
+{{if .User}}
+<dialog id="fx-command-dialog" class="fx-command-dialog m-auto w-[calc(100vw-1.5rem)] max-w-lg border-0 bg-transparent p-0 sm:w-[calc(100vw-2rem)]" aria-labelledby="fx-command-title">
+  <div class="fx-command-panel fx-command-glass">
+    <h2 id="fx-command-title" class="sr-only">Command palette</h2>
+    <div class="flex items-center gap-2 border-b border-zinc-400/15 px-3 py-2 sm:px-3.5">
+      <span class="fx-command-panel-search-icon" aria-hidden="true">{{template "icon_magnifying_glass" .}}</span>
+      <input id="fx-command-input" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search items, jump to a page…" class="min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-500 focus:ring-0"/>
+      <kbd class="fx-command-kbd pointer-events-none hidden shrink-0 select-none sm:inline-flex" aria-hidden="true"><span data-fx-cmd-mod>⌘</span>K</kbd>
+    </div>
+    <div id="fx-command-body" class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-1.5 pt-0.5 sm:px-2.5">
+      {{if isAdmin .User}}
+      <div data-fx-cmd-group="create" class="mb-2">
+        <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Create</p>
+        <div class="space-y-px" role="listbox" aria-label="Create">
+          <button type="button" data-cmd-item data-href="/items/new" data-keywords="new item add create" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_plus" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">New item</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/locations/new" data-keywords="new location place room shelf add create" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_plus" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">New location</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/labels/new" data-keywords="new label tag add create" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_plus" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">New label</span>
+          </button>
+        </div>
+      </div>
+      {{end}}
+      <div data-fx-cmd-group="go" class="mb-2{{if isAdmin .User}} border-t border-zinc-400/15 pt-2{{end}}">
+        <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Go to</p>
+        <div class="space-y-px" role="listbox" aria-label="Pages">
+          <button type="button" data-cmd-item data-href="/" data-keywords="home start dashboard" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_home" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Home</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/locations" data-keywords="locations places rooms shelves map tree" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_map_pin" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Locations</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/items" data-keywords="items inventory things stuff" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_cube" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Items</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/labels" data-keywords="labels tags categories" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_tag" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Labels</span>
+          </button>
+          <button type="button" data-cmd-item data-href="/search" data-keywords="search find lookup filter" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_magnifying_glass" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Search</span>
+          </button>
+          {{if isAdmin .User}}
+          <button type="button" data-cmd-item data-href="/admin" data-keywords="admin settings users invites backup templates" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_gear" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin</span>
+          </button>
+          {{end}}
+          <button type="button" data-cmd-item data-href="/profile" data-keywords="profile account user password avatar email" class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+            <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70">{{template "icon_users" .}}</span>
+            <span class="min-w-0 flex-1 font-medium text-zinc-900">Profile</span>
+          </button>
+        </div>
+      </div>
+      <div id="fx-command-search-wrap" data-fx-cmd-group="results" class="hidden border-t border-zinc-400/15 pt-2">
+        <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Items</p>
+        <div id="fx-command-search-results" class="space-y-px" role="listbox" aria-label="Matching items"></div>
+        <button type="button" id="fx-command-open-search" data-cmd-item class="fx-command-item mt-0.5 hidden flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25">
+          <span class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500">{{template "icon_magnifying_glass" .}}</span>
+          <span class="min-w-0 flex-1 font-medium text-zinc-900">Open full search<span id="fx-command-open-search-q" class="block truncate text-[11px] font-normal text-zinc-500"></span></span>
+        </button>
+      </div>
+    </div>
+    <div class="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-400/15 px-3 py-1.5 text-[10px] text-zinc-600 sm:px-3.5">
+      <span><span class="font-medium text-zinc-700">↑↓</span> select · <span class="font-medium text-zinc-700">↵</span> open · <span class="font-medium text-zinc-700">esc</span> close</span>
+      <span class="hidden text-zinc-500 sm:inline">Quick find</span>
+    </div>
+  </div>
+</dialog>
+<button type="button" id="fx-command-trigger" class="fx-command-trigger fx-command-glass sm:gap-2 sm:px-3 sm:py-1.5" aria-label="Open command palette" aria-haspopup="dialog" aria-controls="fx-command-dialog" aria-expanded="false" aria-keyshortcuts="Meta+K Control+K">
+  <span class="fx-command-trigger-icon" aria-hidden="true">{{template "icon_magnifying_glass" .}}</span>
+  <kbd class="fx-command-kbd pointer-events-none hidden min-[380px]:inline-flex" title="Keyboard shortcut">
+    <span data-fx-cmd-mod>⌘</span><span>K</span>
+  </kbd>
+</button>
+<script src="/static/js/command-palette.js" defer></script>
+{{end}}
 {{end}}

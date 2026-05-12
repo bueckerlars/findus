@@ -83,26 +83,6 @@
 </a>
 {{end}}
 
-{{define "home_location_tile_gallery"}}
-<a href="/locations/{{.Location.ID}}" class="group fx-item-gallery flex flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]">
-  <div class="fx-item-gallery-media aspect-square bg-gradient-to-br from-sky-50/90 via-zinc-50 to-zinc-100 ring-1 ring-zinc-100/80">
-    <div class="flex h-full items-center justify-center text-sky-500 transition-transform duration-300 ease-out group-hover:scale-110">
-      {{template "icon_map_pin" .}}
-    </div>
-    <div class="fx-item-gallery-shade" aria-hidden="true"></div>
-    <span class="fx-item-gallery-fab" aria-hidden="true">{{template "icon_chevron_right" .}}</span>
-  </div>
-  <div class="relative z-[1] flex min-h-0 flex-1 flex-col border-t border-zinc-100/90 p-3">
-    <div class="flex items-center justify-between gap-2">
-      <span class="line-clamp-2 min-w-0 flex-1 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{.Location.Name}}</span>
-      {{if gt .SubLocationCount 0}}
-      <span class="fx-home-loc-count-badge fx-home-loc-count-badge--sm shrink-0" aria-label="{{if eq .SubLocationCount 1}}1 sub-location{{else}}{{.SubLocationCount}} sub-locations{{end}}">{{.SubLocationCount}}</span>
-      {{end}}
-    </div>
-  </div>
-</a>
-{{end}}
-
 {{define "item_photo_placeholder_abstract"}}
 <svg class="fx-item-photo-placeholder-svg block h-full w-full min-h-[8rem] text-zinc-400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" role="presentation" aria-hidden="true">
   <defs>
