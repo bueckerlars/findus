@@ -7,7 +7,6 @@ import FxSvg from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
-import { dispatchItemsViewMode } from "../composables/itemsViewMode";
 import { buildContextCommands } from "./commandPaletteContext";
 
 const router = useRouter();
@@ -358,17 +357,6 @@ function handleCommandButton(btn: HTMLElement) {
     closePalette();
     return true;
   }
-  const ivk = btn.getAttribute("data-items-view-key");
-  const ivm = btn.getAttribute("data-items-view-mode");
-  if (ivk && (ivm === "list" || ivm === "gallery")) {
-    lastFocus = null;
-    const d = dialog.value;
-    const apply = () => dispatchItemsViewMode(ivk, ivm);
-    if (d?.open) d.addEventListener("close", () => nextTick(apply), { once: true });
-    else nextTick(apply);
-    closePalette();
-    return true;
-  }
 
   const create = btn.getAttribute("data-create");
   if (create === "item" || create === "location" || create === "label") {
@@ -445,7 +433,7 @@ function onInputKeydown(e: KeyboardEvent) {
 
 function onBodyClick(e: MouseEvent) {
   const btn = (e.target as HTMLElement)?.closest?.(
-    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url]",
   ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   if (!btn.hasAttribute("data-cmd-static") && !btn.hasAttribute("data-cmd-search-hit") && btn.id !== "fx-command-open-search")
@@ -456,7 +444,7 @@ function onBodyClick(e: MouseEvent) {
 
 function onBodyMousemove(e: MouseEvent) {
   const btn = (e.target as HTMLElement)?.closest?.(
-    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url]",
   ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   const items = visibleItems();
@@ -574,8 +562,6 @@ const createCommands = computed(() =>
               :data-external-href="cmd.externalHref"
               :data-download-url="cmd.downloadUrl"
               :data-download-filename="cmd.downloadFilename"
-              :data-items-view-key="cmd.itemsViewKey"
-              :data-items-view-mode="cmd.itemsViewMode"
               :data-create="cmd.createPreset?.kind"
               :data-create-location-id="cmd.createPreset?.locationId"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
