@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api } from "../api";
 import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
 import FxSvg from "./FxSvg.vue";
+
+const { t } = useI18n();
 
 type TemplateField = {
   key: string;
@@ -270,11 +273,11 @@ async function submit() {
       method: "POST",
       body: fd,
     });
-    toast.success("Item created.");
+    toast.success(t("toast.itemCreated"));
     close();
     await router.push(r.next);
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Save failed";
+    err.value = e instanceof Error ? e.message : t("common.saveFailed");
   } finally {
     busy.value = false;
   }
@@ -284,45 +287,45 @@ async function submit() {
 <template>
   <FxModal
     :model-value="modelValue"
-    title="New item"
+    :title="t('createItem.title')"
     max-width-class="max-w-2xl"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <p v-if="noLocations" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      Create a location before adding items.
+      {{ $t("createItem.needLocationFirst") }}
     </p>
     <template v-else>
       <p v-if="err" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
       <form id="fx-create-item-form" class="space-y-4" @submit.prevent="submit">
         <div>
-          <label class="fx-label" for="fx-create-item-name">Name</label>
+          <label class="fx-label" for="fx-create-item-name">{{ $t("labelForm.name") }}</label>
           <input id="fx-create-item-name" v-model="name" class="fx-input" required />
         </div>
         <div>
-          <label class="fx-label" for="fx-create-item-desc">Description</label>
+          <label class="fx-label" for="fx-create-item-desc">{{ $t("itemDetail.description") }}</label>
           <textarea id="fx-create-item-desc" v-model="description" class="fx-input min-h-[80px]" />
         </div>
         <div>
-          <label class="fx-label" for="fx-create-item-loc">Location</label>
+          <label class="fx-label" for="fx-create-item-loc">{{ $t("createItem.location") }}</label>
           <select id="fx-create-item-loc" v-model="locationId" class="fx-input" required>
             <option v-for="o in locations" :key="o.ID" :value="o.ID">{{ o.Label }}</option>
           </select>
         </div>
         <div>
-          <label class="fx-label" for="fx-create-item-tpl">Template</label>
+          <label class="fx-label" for="fx-create-item-tpl">{{ $t("createItem.template") }}</label>
           <select id="fx-create-item-tpl" v-model="templateType" class="fx-input" @change="onTplChange">
-            <option v-for="t in templates" :key="t.ID" :value="t.ID">{{ t.DisplayName || t.ID }}</option>
+            <option v-for="tpl in templates" :key="tpl.ID" :value="tpl.ID">{{ tpl.DisplayName || tpl.ID }}</option>
           </select>
         </div>
 
         <section class="fx-card overflow-hidden p-0">
-          <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">Details</h2>
+          <h2 class="border-b border-zinc-100 bg-zinc-50/80 px-5 py-3.5 text-sm font-semibold text-zinc-800">{{ $t("createItem.detailsSection") }}</h2>
           <div v-if="fields.length" class="overflow-x-auto">
             <table class="w-full min-w-[20rem] text-left text-sm">
               <thead>
                 <tr class="border-b border-zinc-200 bg-zinc-50/90">
-                  <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Field</th>
-                  <th scope="col" class="px-5 py-3 font-medium text-zinc-500">Value</th>
+                  <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("createItem.tableField") }}</th>
+                  <th scope="col" class="px-5 py-3 font-medium text-zinc-500">{{ $t("createItem.tableValue") }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-zinc-100">
@@ -337,7 +340,7 @@ async function submit() {
                       class="fx-input mt-0 py-2 text-sm"
                       :required="f.required"
                     >
-                      <option value="">—</option>
+                      <option value="">{{ $t("common.optionEmpty") }}</option>
                       <option v-for="opt in f.options || []" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                     </select>
                     <input
@@ -355,31 +358,31 @@ async function submit() {
           </div>
           <div class="px-5 py-4 sm:px-6" :class="fields.length ? 'border-t border-zinc-100' : ''">
             <div class="flex flex-wrap items-start justify-between gap-3">
-              <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Custom attributes</h2>
+              <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("createItem.customAttrs") }}</h2>
               <button
                 type="button"
                 class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/90 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-sky-200 hover:bg-sky-50/70 hover:text-sky-900"
                 @click="addCustomAttributeRow"
               >
                 <FxSvg name="plus" />
-                Add Field
+                {{ $t("createItem.addField") }}
               </button>
             </div>
-            <p class="mt-2 text-xs text-zinc-500">Extra keys not covered by the preset fields above.</p>
+            <p class="mt-2 text-xs text-zinc-500">{{ $t("createItem.customAttrsHelp") }}</p>
             <div v-if="addPairs.length" class="mt-3 space-y-2">
               <div
                 v-for="(row, i) in addPairs"
                 :key="i"
                 class="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-2 sm:pr-2"
               >
-                <input v-model="row.k" class="fx-input mt-0 flex-1 text-sm" placeholder="Key" />
-                <input v-model="row.v" class="fx-input mt-0 flex-1 text-sm" placeholder="Value" />
+                <input v-model="row.k" class="fx-input mt-0 flex-1 text-sm" :placeholder="$t('createItem.keyPh')" />
+                <input v-model="row.v" class="fx-input mt-0 flex-1 text-sm" :placeholder="$t('createItem.valuePh')" />
                 <button
                   type="button"
                   class="shrink-0 self-end rounded-lg px-2 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-red-50 hover:text-red-700 sm:self-center"
                   @click="removeCustomAttributeRow(i)"
                 >
-                  Remove
+                  {{ $t("common.remove") }}
                 </button>
               </div>
             </div>
@@ -387,7 +390,7 @@ async function submit() {
         </section>
         <div class="fx-card px-5 py-4 sm:px-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Labels</h2>
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("createItem.labelsSection") }}</h2>
             <div ref="labelPickerRoot" class="relative shrink-0">
               <button
                 type="button"
@@ -399,14 +402,14 @@ async function submit() {
                 @click="toggleLabelAddMenu"
               >
                 <FxSvg name="plus" />
-                Add label
+                {{ $t("createItem.addLabel") }}
               </button>
               <div
                 v-show="labelAddMenuOpen"
                 id="fx-create-item-label-add-dropdown"
                 class="absolute right-0 top-full z-[110] mt-2 max-h-56 w-[min(16rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-zinc-200/90 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
                 role="listbox"
-                aria-label="Labels to add"
+                :aria-label="$t('createItem.labelsToAdd')"
                 @click.stop
               >
                 <button
@@ -423,7 +426,7 @@ async function submit() {
               </div>
             </div>
           </div>
-          <p v-if="!allLabels.length" class="mt-2 text-sm text-zinc-500">Create labels first under Labels in the sidebar.</p>
+          <p v-if="!allLabels.length" class="mt-2 text-sm text-zinc-500">{{ $t("createItem.createLabelsFirst") }}</p>
           <div v-else class="mt-3 flex min-h-[2.25rem] flex-wrap items-center gap-2">
             <template v-if="selectedLabelsOrdered.length">
               <span
@@ -436,22 +439,21 @@ async function submit() {
                 <button
                   type="button"
                   class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-200/90 hover:text-zinc-800"
-                  :aria-label="'Remove label ' + lb.Name"
+                  :aria-label="$t('createItem.removeLabel', { name: lb.Name })"
                   @click="removeLabel(lb.ID)"
                 >
                   <span class="text-base leading-none" aria-hidden="true">×</span>
                 </button>
               </span>
             </template>
-            <p v-else class="text-sm text-zinc-400">No labels</p>
+            <p v-else class="text-sm text-zinc-400">{{ $t("createItem.noLabels") }}</p>
           </div>
         </div>
 
         <div class="fx-card px-5 py-4 sm:px-6">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Photo</h2>
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">{{ $t("createItem.photoSection") }}</h2>
           <p class="mt-1 text-xs leading-relaxed text-zinc-500">
-            Optional. Drag an image into the area below or click to browse. Common formats such as PNG, JPG, or WebP are
-            supported.
+            {{ $t("createItem.photoHelp") }}
           </p>
           <div
             class="group relative mt-4 flex min-h-[10.5rem] cursor-pointer flex-col overflow-hidden rounded-2xl transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 sm:min-h-[12rem]"
@@ -464,7 +466,7 @@ async function submit() {
             "
             role="button"
             tabindex="0"
-            :aria-label="photo ? 'Replace image — drop a file or click to browse' : 'Add image — drop a file or click to browse'"
+            :aria-label="photo ? $t('createItem.photoReplaceAria') : $t('createItem.photoAddAria')"
             @click="openPhotoPicker"
             @keydown.enter.prevent="openPhotoPicker"
             @keydown.space.prevent="openPhotoPicker"
@@ -492,7 +494,7 @@ async function submit() {
                 <div
                   class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950/60 via-zinc-950/25 to-transparent px-3 pb-2.5 pt-10 text-center"
                 >
-                  <p class="text-[11px] font-medium tracking-wide text-white/95 drop-shadow-sm">Drop or click to replace</p>
+                  <p class="text-[11px] font-medium tracking-wide text-white/95 drop-shadow-sm">{{ $t("createItem.photoDropOrReplace") }}</p>
                 </div>
               </div>
             </template>
@@ -503,8 +505,8 @@ async function submit() {
               >
                 <FxSvg name="photo" class="h-6 w-6" />
               </span>
-              <p class="text-sm font-semibold text-zinc-800">Drop image here</p>
-              <p class="max-w-sm text-xs leading-relaxed text-zinc-500">Or click anywhere in this area to choose a file</p>
+              <p class="text-sm font-semibold text-zinc-800">{{ $t("createItem.photoDropHere") }}</p>
+              <p class="max-w-sm text-xs leading-relaxed text-zinc-500">{{ $t("createItem.photoClickHint") }}</p>
             </div>
           </div>
           <div v-if="photo" class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100/90 pt-3">
@@ -514,7 +516,7 @@ async function submit() {
               class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-zinc-500 transition hover:bg-red-50 hover:text-red-700"
               @click.stop="clearPhoto"
             >
-              Remove
+              {{ $t("common.remove") }}
             </button>
           </div>
         </div>
@@ -523,7 +525,7 @@ async function submit() {
 
     <template #footer>
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="fx-btn-secondary w-full sm:w-auto" :disabled="busy" @click="close">Cancel</button>
+        <button type="button" class="fx-btn-secondary w-full sm:w-auto" :disabled="busy" @click="close">{{ $t("common.cancel") }}</button>
         <button
           v-if="!noLocations"
           type="submit"
@@ -531,7 +533,7 @@ async function submit() {
           class="fx-btn-primary w-full sm:w-auto"
           :disabled="busy"
         >
-          Save
+          {{ $t("common.save") }}
         </button>
       </div>
     </template>

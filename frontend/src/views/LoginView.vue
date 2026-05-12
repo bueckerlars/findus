@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import GuestNav from "../components/GuestNav.vue";
 import { postJson } from "../api";
 import { useSession } from "../session";
@@ -8,6 +9,7 @@ import { useSession } from "../session";
 const route = useRoute();
 const router = useRouter();
 const { refresh } = useSession();
+const { t } = useI18n();
 
 const username = ref("");
 const password = ref("");
@@ -25,7 +27,7 @@ async function submit() {
     await refresh();
     await router.push(r.next || "/");
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Sign in failed";
+    err.value = e instanceof Error ? e.message : t("common.signInFailed");
   }
 }
 </script>
@@ -35,18 +37,18 @@ async function submit() {
     <GuestNav />
     <main class="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-4 py-10 sm:px-6">
       <div class="fx-auth-card">
-        <h1 class="text-center text-2xl font-semibold tracking-tight text-zinc-900">Welcome back</h1>
-        <p class="mt-1 text-center text-sm text-zinc-500">Sign in to manage your inventory</p>
+        <h1 class="text-center text-2xl font-semibold tracking-tight text-zinc-900">{{ $t("auth.login.title") }}</h1>
+        <p class="mt-1 text-center text-sm text-zinc-500">{{ $t("auth.login.subtitle") }}</p>
         <p v-if="err" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
           {{ err }}
         </p>
         <form class="mt-8 space-y-5" @submit.prevent="submit">
           <div>
-            <label class="fx-label" for="username">Username</label>
-            <input id="username" v-model="username" class="fx-input" required autocomplete="username" placeholder="Your username" />
+            <label class="fx-label" for="username">{{ $t("auth.login.username") }}</label>
+            <input id="username" v-model="username" class="fx-input" required autocomplete="username" :placeholder="$t('auth.login.usernamePlaceholder')" />
           </div>
           <div>
-            <label class="fx-label" for="password">Password</label>
+            <label class="fx-label" for="password">{{ $t("auth.login.password") }}</label>
             <input
               id="password"
               v-model="password"
@@ -54,10 +56,10 @@ async function submit() {
               class="fx-input"
               required
               autocomplete="current-password"
-              placeholder="••••••••"
+              :placeholder="$t('auth.login.passwordMask')"
             />
           </div>
-          <button type="submit" class="fx-btn-primary w-full">Sign in</button>
+          <button type="submit" class="fx-btn-primary w-full">{{ $t("auth.login.submit") }}</button>
         </form>
       </div>
     </main>

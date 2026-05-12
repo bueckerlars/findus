@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import FxSvg from "./FxSvg.vue";
 import FxQrMenuButton from "./FxQrMenuButton.vue";
 import LocationTreeRow from "./LocationTreeRow.vue";
+
+const { t } = useI18n();
 
 export type LocationTreeNode = { ID: string; Name: string; children: LocationTreeNode[] };
 
@@ -34,7 +37,7 @@ function onExpandClick() {
         type="button"
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 outline-offset-2 transition hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline focus-visible:ring-2 focus-visible:ring-sky-300/50"
         :aria-expanded="open ? 'true' : 'false'"
-        :aria-label="open ? 'Collapse sub-locations' : 'Expand sub-locations'"
+        :aria-label="open ? t('locationTreeRow.collapse') : t('locationTreeRow.expand')"
         @click="onExpandClick"
       >
         <FxSvg
@@ -56,14 +59,14 @@ function onExpandClick() {
         <FxQrMenuButton
           :png-url="'/locations/' + node.ID + '/qr.png'"
           :download-name="node.Name"
-          hint="Scan to open this location on your phone (same account)."
+          :hint="t('locationDetail.qrHint')"
         />
         <RouterLink
           v-if="isAdmin"
           :to="'/locations/' + node.ID + '/edit'"
           class="fx-icon-btn"
-          :aria-label="'Edit ' + node.Name"
-          title="Edit location"
+          :aria-label="t('locationDetail.editLocation')"
+          :title="t('locationDetail.edit')"
         >
           <FxSvg name="pencilSquare" />
         </RouterLink>
@@ -74,7 +77,7 @@ function onExpandClick() {
       v-if="hasKids && open"
       class="divide-y divide-zinc-100/90 border-t border-zinc-100 bg-zinc-50/50"
       role="group"
-      :aria-label="'Sub-locations of ' + node.Name"
+      :aria-label="t('locationTreeRow.subLocationsOf', { name: node.Name })"
     >
       <LocationTreeRow
         v-for="ch in node.children"

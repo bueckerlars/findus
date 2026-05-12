@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { toast } from "../composables/useToast";
+
+const { t } = useI18n();
 
 type UserRow = {
   id: string;
@@ -35,7 +38,7 @@ async function load() {
     users.value = j.users;
     invites.value = j.invites;
   } catch (e) {
-    err.value = e instanceof Error ? e.message : "Load failed";
+    err.value = e instanceof Error ? e.message : t("common.loadFailed");
   }
 }
 
@@ -44,9 +47,9 @@ async function setRole(uid: string, role: string) {
   try {
     await postJson("/api/admin/users/" + uid + "/role", { role });
     await load();
-    toast.success("Role updated.");
+    toast.success(t("toast.roleUpdated"));
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Update failed";
+    const msg = e instanceof Error ? e.message : t("toast.updateFailed");
     err.value = msg;
     toast.error(msg);
   }
@@ -57,9 +60,9 @@ async function setActive(uid: string, active: boolean) {
   try {
     await postJson("/api/admin/users/" + uid + "/active", { active });
     await load();
-    toast.success(active ? "User activated." : "User deactivated.");
+    toast.success(active ? t("toast.userActivated") : t("toast.userDeactivated"));
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Update failed";
+    const msg = e instanceof Error ? e.message : t("toast.updateFailed");
     err.value = msg;
     toast.error(msg);
   }
@@ -76,9 +79,9 @@ async function createUser() {
     });
     newUser.value = { username: "", email: "", password: "", role: "user" };
     await load();
-    toast.success("User created.");
+    toast.success(t("toast.userCreated"));
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Create failed";
+    const msg = e instanceof Error ? e.message : t("toast.createFailed");
     err.value = msg;
     toast.error(msg);
   }
@@ -92,9 +95,9 @@ async function createInvite() {
       ttl_hours: newInvite.value.ttl_hours,
     });
     await load();
-    toast.success("Invite created.");
+    toast.success(t("toast.inviteCreated"));
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Create failed";
+    const msg = e instanceof Error ? e.message : t("toast.createFailed");
     err.value = msg;
     toast.error(msg);
   }
@@ -104,50 +107,60 @@ async function createInvite() {
 <template>
   <div class="max-w-4xl space-y-10">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold text-zinc-900">User management</h1>
-      <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">Download backup</a>
+      <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminUsers.pageTitle") }}</h1>
+      <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">{{ $t("common.downloadBackup") }}</a>
     </div>
     <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Create user</h2>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminUsers.createUserHeading") }}</h2>
       <form class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="createUser">
-        <input v-model="newUser.username" class="fx-input" placeholder="Username" required />
-        <input v-model="newUser.email" class="fx-input" type="email" placeholder="Email" required />
-        <input v-model="newUser.password" class="fx-input" type="password" placeholder="Password" required />
+        <input v-model="newUser.username" class="fx-input" :placeholder="$t('auth.login.username')" required />
+        <input v-model="newUser.email" class="fx-input" type="email" :placeholder="$t('auth.register.email')" required />
+        <input
+          v-model="newUser.password"
+          class="fx-input"
+          type="password"
+          :placeholder="$t('adminUsers.passPlaceholder')"
+          required
+        />
         <select v-model="newUser.role" class="fx-input">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          <option value="user">{{ $t("role.member") }}</option>
+          <option value="admin">{{ $t("role.administrator") }}</option>
         </select>
-        <button type="submit" class="fx-btn-primary sm:col-span-2">Create</button>
+        <button type="submit" class="fx-btn-primary sm:col-span-2">{{ $t("common.create") }}</button>
       </form>
     </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Invites</h2>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminUsers.invitesHeading") }}</h2>
       <form class="mt-4 flex flex-wrap items-end gap-3" @submit.prevent="createInvite">
         <select v-model="newInvite.role" class="fx-input">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
+          <option value="user">{{ $t("role.member") }}</option>
+          <option value="admin">{{ $t("role.administrator") }}</option>
         </select>
         <input v-model.number="newInvite.ttl_hours" type="number" min="1" class="fx-input w-32" />
-        <span class="text-sm text-zinc-500">hours</span>
-        <button type="submit" class="fx-btn-secondary text-sm">Create invite</button>
+        <span class="text-sm text-zinc-500">{{ $t("adminUsers.inviteHoursLabel") }}</span>
+        <button type="submit" class="fx-btn-secondary text-sm">{{ $t("adminUsers.createInvite") }}</button>
       </form>
       <ul class="mt-4 divide-y divide-zinc-100">
         <li v-for="inv in invites" :key="inv.ID" class="py-3 font-mono text-xs break-all">
-          <span class="font-sans text-sm text-zinc-700">{{ inv.Role }}</span>
-          · expires {{ inv.ExpiresAt }}
-          <RouterLink v-if="!inv.UsedAt" class="ml-2 text-sky-700" :to="'/register?invite=' + encodeURIComponent(inv.Token)">Open link</RouterLink>
+          <span class="font-sans text-sm text-zinc-700">{{
+            inv.Role === "admin" ? $t("role.administrator") : $t("role.member")
+          }}</span>
+          · {{ $t("common.expiresWord") }} {{ inv.ExpiresAt }}
+          <RouterLink v-if="!inv.UsedAt" class="ml-2 text-sky-700" :to="'/register?invite=' + encodeURIComponent(inv.Token)">{{
+            $t("common.openLink")
+          }}</RouterLink>
         </li>
       </ul>
     </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Users</h2>
+      <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminUsers.usersHeading") }}</h2>
       <table class="mt-4 w-full text-left text-sm">
         <thead>
           <tr class="border-b border-zinc-200 text-zinc-500">
-            <th class="py-2 pr-2">User</th>
-            <th class="py-2 pr-2">Role</th>
-            <th class="py-2 pr-2">Active</th>
+            <th class="py-2 pr-2">{{ $t("adminUsers.colUser") }}</th>
+            <th class="py-2 pr-2">{{ $t("adminUsers.colRole") }}</th>
+            <th class="py-2 pr-2">{{ $t("adminUsers.colActive") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -158,8 +171,8 @@ async function createInvite() {
             </td>
             <td class="py-2 pr-2">
               <select :value="u.role" class="fx-input py-1 text-xs" @change="setRole(u.id, ($event.target as HTMLSelectElement).value)">
-                <option value="user">user</option>
-                <option value="admin">admin</option>
+                <option value="user">{{ $t("role.member") }}</option>
+                <option value="admin">{{ $t("role.administrator") }}</option>
               </select>
             </td>
             <td class="py-2 pr-2">

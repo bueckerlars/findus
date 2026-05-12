@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { RouterLink, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api } from "../api";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
 import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
+
+const { t } = useI18n();
 
 type Item = { ID: string; Name: string; Description: string; location_name: string; PhotoPath?: string | null };
 
@@ -15,7 +18,7 @@ const q = ref(typeof route.query.q === "string" ? route.query.q : "");
 const results = ref<Item[]>([]);
 const searchLoading = ref(false);
 const searchError = ref<string | null>(null);
-let t: ReturnType<typeof setTimeout>;
+let debounceTimer: ReturnType<typeof setTimeout>;
 let fetchSeq = 0;
 
 function norm(s: string) {
@@ -43,15 +46,15 @@ async function run() {
   } catch (e) {
     if (seq !== fetchSeq) return;
     results.value = [];
-    searchError.value = (e as Error).message || "Search failed";
+    searchError.value = (e as Error).message || t("search.failed");
   } finally {
     if (seq === fetchSeq) searchLoading.value = false;
   }
 }
 
 watch(q, () => {
-  clearTimeout(t);
-  t = setTimeout(() => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
     void run();
   }, 300);
 });
@@ -70,7 +73,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  clearTimeout(t);
+  clearTimeout(debounceTimer);
   fetchSeq++;
 });
 </script>
@@ -79,12 +82,12 @@ onUnmounted(() => {
   <ItemsViewToggle storage-key="page_search" class="mx-auto max-w-2xl">
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold tracking-tight">Search</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ $t("search.title") }}</h1>
         <ItemsViewModeToolbar />
       </div>
-      <p class="mt-1 text-sm text-zinc-500">Results update as you type.</p>
+      <p class="mt-1 text-sm text-zinc-500">{{ $t("search.liveHint") }}</p>
       <div class="mt-6">
-        <label class="sr-only" for="q">Search query</label>
+        <label class="sr-only" for="q">{{ $t("search.queryLabel") }}</label>
         <div class="relative">
           <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden="true"
             ><FxSvg name="magnifyingGlass" class="fx-icon h-5 w-5"
@@ -94,7 +97,7 @@ onUnmounted(() => {
             ref="searchInputRef"
             v-model="q"
             type="search"
-            placeholder="Search items…"
+            :placeholder="$t('search.placeholderShort')"
             class="fx-input !mt-0 border-zinc-200 pl-11 text-base shadow-sm"
             autocomplete="off"
             :aria-busy="searchLoading && hasQuery()"
@@ -104,7 +107,7 @@ onUnmounted(() => {
     </template>
 
     <div class="mt-6">
-      <div class="items-view-list-only space-y-2" role="region" aria-label="Search results" :aria-busy="searchLoading && hasQuery()">
+      <div class="items-view-list-only space-y-2" role="region" :aria-label="$t('search.resultsAria')" :aria-busy="searchLoading && hasQuery()">
         <template v-if="searchLoading && hasQuery()">
           <div
             v-for="n in 3"
@@ -145,13 +148,13 @@ onUnmounted(() => {
           {{ searchError }}
         </div>
         <div v-else-if="hasQuery()" class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-          No matches — try another word.
+          {{ $t("search.noMatchesTry") }}
         </div>
         <div v-else class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
-          Type a search term to find items.
+          {{ $t("search.typeToFind") }}
         </div>
       </div>
-      <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" role="region" :aria-busy="searchLoading && hasQuery()">
+      <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" role="region" :aria-label="$t('search.resultsAria')" :aria-busy="searchLoading && hasQuery()">
         <template v-if="searchLoading && hasQuery()">
           <div
             v-for="n in 6"
@@ -203,10 +206,10 @@ onUnmounted(() => {
           {{ searchError }}
         </div>
         <div v-else-if="hasQuery()" class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-          No matches — try another word.
+          {{ $t("search.noMatchesTry") }}
         </div>
         <div v-else class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
-          Type a search term to find items.
+          {{ $t("search.typeToFind") }}
         </div>
       </div>
     </div>

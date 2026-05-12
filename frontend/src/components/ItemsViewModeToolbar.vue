@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { inject, type Ref } from "vue";
+import { useI18n } from "vue-i18n";
 import FxSvg from "./FxSvg.vue";
+
+const { t } = useI18n();
 
 const mode = inject<Ref<"list" | "gallery">>("itemsViewMode")!;
 const setMode = inject<(m: "list" | "gallery") => void>("itemsViewSetMode")!;
@@ -10,14 +13,14 @@ const setMode = inject<(m: "list" | "gallery") => void>("itemsViewSetMode")!;
   <div
     class="inline-flex rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 shadow-inner"
     role="toolbar"
-    aria-label="Item layout"
+    :aria-label="t('itemsView.toolbarAria')"
   >
     <button
       type="button"
       class="items-view-mode-btn"
       data-items-view-mode="list"
-      title="List view"
-      aria-label="List view"
+      :title="t('itemsView.listView')"
+      :aria-label="t('itemsView.listView')"
       :aria-pressed="mode === 'list' ? 'true' : 'false'"
       @click="setMode('list')"
     >
@@ -27,8 +30,8 @@ const setMode = inject<(m: "list" | "gallery") => void>("itemsViewSetMode")!;
       type="button"
       class="items-view-mode-btn"
       data-items-view-mode="gallery"
-      title="Gallery view"
-      aria-label="Gallery view"
+      :title="t('itemsView.galleryView')"
+      :aria-label="t('itemsView.galleryView')"
       :aria-pressed="mode === 'gallery' ? 'true' : 'false'"
       @click="setMode('gallery')"
     >

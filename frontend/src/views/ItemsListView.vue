@@ -33,13 +33,13 @@ onMounted(async () => {
     <template #header>
       <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">Items</h1>
-          <p class="mt-1 text-sm text-zinc-500">Everything you track. Use search to find something quickly.</p>
+          <h1 class="text-2xl font-semibold tracking-tight">{{ $t("items.title") }}</h1>
+          <p class="mt-1 text-sm text-zinc-500">{{ $t("items.subtitle") }}</p>
         </div>
         <div class="flex shrink-0 flex-wrap items-center gap-2">
           <ItemsViewModeToolbar />
-          <button v-if="isAdmin" type="button" class="fx-btn-primary text-sm" @click="openCreateItem()">New item</button>
-          <RouterLink to="/search" class="fx-btn-secondary text-sm">Search</RouterLink>
+          <button v-if="isAdmin" type="button" class="fx-btn-primary text-sm" @click="openCreateItem()">{{ $t("items.newItem") }}</button>
+          <RouterLink to="/search" class="fx-btn-secondary text-sm">{{ $t("common.search") }}</RouterLink>
         </div>
       </div>
     </template>
@@ -97,8 +97,8 @@ onMounted(async () => {
       </div>
     </div>
     <div v-else class="fx-card px-5 py-12 text-center">
-      <p class="text-zinc-500">No items yet.</p>
-      <button v-if="isAdmin" type="button" class="mt-4 inline-flex fx-btn-primary" @click="openCreateItem()">Add your first item</button>
+      <p class="text-zinc-500">{{ $t("items.noItems") }}</p>
+      <button v-if="isAdmin" type="button" class="mt-4 inline-flex fx-btn-primary" @click="openCreateItem()">{{ $t("items.addFirst") }}</button>
     </div>
   </ItemsViewToggle>
 </template>

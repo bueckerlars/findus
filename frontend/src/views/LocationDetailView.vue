@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
 import { toast } from "../composables/useToast";
@@ -21,6 +22,7 @@ const route = useRoute();
 const router = useRouter();
 const { isAdmin } = useSession();
 const { openCreateItem, openCreateLocation } = useCreateModals();
+const { t, locale } = useI18n();
 
 const loc = ref<Location | null>(null);
 const children = ref<Location[]>([]);
@@ -28,6 +30,11 @@ const items = ref<Item[]>([]);
 const breadcrumb = ref<Crumb[]>([]);
 const backHref = ref("/locations");
 const backLabel = ref("All locations");
+
+const displayBackLabel = computed(() => {
+  void locale.value;
+  return backLabel.value === "All locations" ? t("home.allLocations") : backLabel.value;
+});
 
 const id = computed(() => route.params.id as string);
 const itemsViewKey = computed(() => "location_items_" + id.value);
@@ -108,28 +115,28 @@ onUnmounted(() => {
 
 async function del() {
   const ok = await confirmAlert({
-    title: "Delete this location?",
-    message: "Only empty locations can be deleted. This cannot be undone.",
-    confirmLabel: "Delete",
+    title: t("locationDetail.deleteTitle"),
+    message: t("locationDetail.deleteMsg"),
+    confirmLabel: t("common.delete"),
     variant: "danger",
   });
   if (!ok) return;
   try {
     await postJson("/api/locations/" + id.value + "/delete", {});
-    toast.success("Location deleted.");
+    toast.success(t("toast.locationDeleted"));
     await router.push("/locations");
   } catch (e) {
-    toast.error(e instanceof Error ? e.message : "Delete failed");
+    toast.error(e instanceof Error ? e.message : t("common.deleteFailed"));
   }
 }
 </script>
 
 <template>
-  <div v-if="!loc" class="text-zinc-500">Loading…</div>
+  <div v-if="!loc" class="text-zinc-500">{{ $t("common.loading") }}</div>
   <div v-else class="mx-auto max-w-3xl">
-    <RouterLink :to="backHref" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">{{ backLabel }}</RouterLink>
+    <RouterLink :to="backHref" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">{{ displayBackLabel }}</RouterLink>
 
-    <nav class="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-500" aria-label="Breadcrumb">
+    <nav class="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm text-zinc-500" :aria-label="$t('common.breadcrumb')">
       <template v-for="(c, i) in breadcrumb" :key="c.ID">
         <span v-if="i > 0" class="text-zinc-300">/</span>
         <RouterLink class="hover:text-sky-600" :to="'/locations/' + c.ID">{{ c.Name }}</RouterLink>
@@ -141,19 +148,19 @@ async function del() {
         <div class="min-w-0 flex-1">
           <h1 class="text-2xl font-semibold tracking-tight text-zinc-900">{{ loc.Name }}</h1>
           <p v-if="loc.Description" class="mt-3 whitespace-pre-wrap text-zinc-600">{{ loc.Description }}</p>
-          <p v-else class="mt-3 text-sm italic text-zinc-400">No description</p>
+          <p v-else class="mt-3 text-sm italic text-zinc-400">{{ $t("common.noDescription") }}</p>
         </div>
         <div class="flex shrink-0 flex-row flex-wrap items-center gap-2 sm:justify-end">
           <FxQrMenuButton
             :png-url="'/locations/' + loc.ID + '/qr.png'"
             :download-name="loc.Name"
-            hint="Scan to open this location on your phone (same account)."
+            :hint="$t('locationDetail.qrHint')"
           />
           <template v-if="isAdmin">
-            <RouterLink :to="'/locations/' + loc.ID + '/edit'" class="fx-icon-btn" aria-label="Edit location" title="Edit">
+            <RouterLink :to="'/locations/' + loc.ID + '/edit'" class="fx-icon-btn" :aria-label="$t('locationDetail.editLocation')" :title="$t('locationDetail.edit')">
               <FxSvg name="pencilSquare" />
             </RouterLink>
-            <button type="button" class="fx-icon-btn-danger" aria-label="Delete location" title="Delete" @click="del">
+            <button type="button" class="fx-icon-btn-danger" :aria-label="$t('locationDetail.deleteLocation')" :title="$t('locationDetail.delete')" @click="del">
               <FxSvg name="trash" />
             </button>
           </template>
@@ -163,14 +170,14 @@ async function del() {
 
     <section class="mt-6 fx-card p-6">
       <div class="flex items-center justify-between gap-3">
-        <h2 class="text-base font-semibold text-zinc-900">Inside this location</h2>
+        <h2 class="text-base font-semibold text-zinc-900">{{ $t("locationDetail.inside") }}</h2>
         <button
           v-if="isAdmin"
           type="button"
           class="text-sm font-medium text-sky-600 hover:text-sky-700"
           @click="openCreateLocation({ parentId: loc.ID })"
         >
-          + Add sub-location
+          {{ $t("locationDetail.addSub") }}
         </button>
       </div>
       <ul class="mt-4 space-y-2">
@@ -184,7 +191,7 @@ async function del() {
           v-if="!children.length"
           class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500"
         >
-          No sub-locations
+          {{ $t("locationDetail.noSub") }}
         </li>
       </ul>
     </section>
@@ -192,7 +199,7 @@ async function del() {
     <ItemsViewToggle :storage-key="itemsViewKey" class="mt-4 fx-card p-6">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-base font-semibold text-zinc-900">Items here</h2>
+          <h2 class="text-base font-semibold text-zinc-900">{{ $t("locationDetail.itemsHere") }}</h2>
           <div class="flex flex-wrap items-center gap-2">
             <ItemsViewModeToolbar />
             <button
@@ -201,7 +208,7 @@ async function del() {
               class="text-sm font-medium text-sky-600 hover:text-sky-700"
               @click="openCreateItem({ locationId: loc.ID })"
             >
-              + Add item
+              {{ $t("locationDetail.addItem") }}
             </button>
           </div>
         </div>
@@ -247,7 +254,7 @@ async function del() {
         </div>
       </div>
       <p v-else class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-        No items in this place yet
+        {{ $t("locationDetail.emptyItemsHere") }}
       </p>
     </ItemsViewToggle>
   </div>
