@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"findus/backend/internal/domain"
@@ -59,6 +58,7 @@ func (r *ItemRepo) Update(ctx context.Context, it *domain.Item) error {
 }
 
 func (r *ItemRepo) Delete(ctx context.Context, id string) error {
+	_ = r.deleteSubstrFTSForItemID(ctx, id)
 	res, err := r.db.ExecContext(ctx, `DELETE FROM items WHERE id = ?`, id)
 	if err != nil {
 		return err
@@ -89,67 +89,7 @@ func (r *ItemRepo) ListByLocation(ctx context.Context, locationID string) ([]dom
 }
 
 func (r *ItemRepo) Search(ctx context.Context, q string, limit int) ([]domain.Item, error) {
-	q = strings.TrimSpace(q)
-	if q == "" {
-		return nil, nil
-	}
-	if limit <= 0 || limit > 200 {
-		limit = 50
-	}
-	match := ftsMatchQuery(q)
-	if match == "" {
-		return nil, nil
-	}
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT i.id, i.name, i.description, i.location_id, i.template_type, i.template_data, i.additional_data, i.photo_path, i.qr_token, i.created_at, i.updated_at
-		FROM items i
-		INNER JOIN items_fts ON i.rowid = items_fts.rowid
-		WHERE items_fts MATCH ?
-		ORDER BY i.name
-		LIMIT ?`, match, limit)
-	if err != nil {
-		return r.searchLike(ctx, q, limit)
-	}
-	defer rows.Close()
-	var out []domain.Item
-	for rows.Next() {
-		it, err := scanItem(rows)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, *it)
-	}
-	if err := rows.Err(); err != nil {
-		return r.searchLike(ctx, q, limit)
-	}
-	return out, nil
-}
-
-func (r *ItemRepo) searchLike(ctx context.Context, q string, limit int) ([]domain.Item, error) {
-	pat := "%" + strings.ReplaceAll(q, "%", "\\%") + "%"
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT DISTINCT i.id, i.name, i.description, i.location_id, i.template_type, i.template_data, i.additional_data, i.photo_path, i.qr_token, i.created_at, i.updated_at
-		FROM items i
-		WHERE i.name LIKE ? ESCAPE '\\' OR i.description LIKE ? ESCAPE '\\'
-		OR i.additional_data LIKE ? ESCAPE '\\'
-		OR EXISTS (
-			SELECT 1 FROM item_labels il INNER JOIN labels lb ON lb.id = il.label_id
-			WHERE il.item_id = i.id AND lb.name LIKE ? ESCAPE '\\'
-		)
-		ORDER BY i.name LIMIT ?`, pat, pat, pat, pat, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var out []domain.Item
-	for rows.Next() {
-		it, err := scanItem(rows)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, *it)
-	}
-	return out, rows.Err()
+	return r.searchItemsAdvanced(ctx, q, limit)
 }
 
 func (r *ItemRepo) ListAll(ctx context.Context, limit int) ([]domain.Item, error) {
@@ -244,25 +184,6 @@ func (r *ItemRepo) ListLabelsForItem(ctx context.Context, itemID string) ([]doma
 	return out, rows.Err()
 }
 
-func ftsMatchQuery(q string) string {
-	parts := strings.Fields(q)
-	if len(parts) == 0 {
-		return ""
-	}
-	var b strings.Builder
-	for i, p := range parts {
-		p = strings.ReplaceAll(p, `"`, `""`)
-		if i > 0 {
-			b.WriteString(" OR ")
-		}
-		b.WriteByte('"')
-		b.WriteString(p)
-		b.WriteByte('*')
-		b.WriteByte('"')
-	}
-	return b.String()
-}
-
 func scanItem(sc interface {
 	Scan(dest ...any) error
 }) (*domain.Item, error) {
@@ -303,8 +224,31 @@ func (r *ItemRepo) CountByTemplateType(ctx context.Context, templateType string)
 // ReassignTemplateType moves all items from fromID to toID and resets template_data to {}.
 func (r *ItemRepo) ReassignTemplateType(ctx context.Context, fromID, toID string) error {
 	now := formatTime(time.Now().UTC())
-	_, err := r.db.ExecContext(ctx, `
+	rows, err := r.db.QueryContext(ctx, `SELECT id FROM items WHERE template_type = ?`, fromID)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			_ = rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	if _, err := r.db.ExecContext(ctx, `
 		UPDATE items SET template_type = ?, template_data = '{}', updated_at = ? WHERE template_type = ?`,
-		toID, now, fromID)
-	return err
+		toID, now, fromID); err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if err := r.upsertSubstrFTS(ctx, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }

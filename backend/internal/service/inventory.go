@@ -76,6 +76,9 @@ func (s *Inventory) UpdateLocation(ctx context.Context, id, name, description st
 	if err := s.Locations.Update(ctx, l); err != nil {
 		return nil, err
 	}
+	if err := s.refreshSearchLocationsForSubtree(ctx, l.ID); err != nil {
+		return nil, err
+	}
 	return l, nil
 }
 
@@ -170,6 +173,9 @@ func (s *Inventory) CreateItem(ctx context.Context, name, description, locationI
 	if err := s.Items.ReplaceItemLabels(ctx, it.ID, ids); err != nil {
 		return nil, err
 	}
+	if err := s.refreshItemSearchDenorm(ctx, it.ID); err != nil {
+		return nil, err
+	}
 	return it, nil
 }
 
@@ -209,6 +215,9 @@ func (s *Inventory) UpdateItem(ctx context.Context, id, name, description, locat
 		return nil, err
 	}
 	if err := s.Items.ReplaceItemLabels(ctx, it.ID, ids); err != nil {
+		return nil, err
+	}
+	if err := s.refreshItemSearchDenorm(ctx, it.ID); err != nil {
 		return nil, err
 	}
 	return it, nil

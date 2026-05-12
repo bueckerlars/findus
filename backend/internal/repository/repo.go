@@ -47,6 +47,8 @@ type ItemRepository interface {
 	ListLabelsForItem(ctx context.Context, itemID string) ([]domain.Label, error)
 	CountByTemplateType(ctx context.Context, templateType string) (int64, error)
 	ReassignTemplateType(ctx context.Context, fromID, toID string) error
+	UpdateItemSearchDenorm(ctx context.Context, itemID, searchLabels, searchLocation, searchBody string) error
+	UpdateSearchLocationForItemsAtLocation(ctx context.Context, locationID, searchLocation string) error
 }
 
 type ItemTemplateRepository interface {
