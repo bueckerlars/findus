@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from "vue";
+import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { api } from "../api";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
@@ -13,16 +13,47 @@ const route = useRoute();
 const searchInputRef = ref<HTMLInputElement | null>(null);
 const q = ref(typeof route.query.q === "string" ? route.query.q : "");
 const results = ref<Item[]>([]);
+const searchLoading = ref(false);
+const searchError = ref<string | null>(null);
 let t: ReturnType<typeof setTimeout>;
+let fetchSeq = 0;
+
+function norm(s: string) {
+  return (s || "").toLowerCase().trim();
+}
+
+const hasQuery = () => norm(q.value).length > 0;
 
 async function run() {
-  const r = await api<{ query: string; results: Item[] }>("/api/search?q=" + encodeURIComponent(q.value));
-  results.value = r.results ?? [];
+  const query = q.value;
+  if (!norm(query)) {
+    fetchSeq++;
+    searchLoading.value = false;
+    searchError.value = null;
+    results.value = [];
+    return;
+  }
+  const seq = ++fetchSeq;
+  searchLoading.value = true;
+  searchError.value = null;
+  try {
+    const r = await api<{ query: string; results: Item[] }>("/api/search?q=" + encodeURIComponent(query));
+    if (seq !== fetchSeq) return;
+    results.value = r.results ?? [];
+  } catch (e) {
+    if (seq !== fetchSeq) return;
+    results.value = [];
+    searchError.value = (e as Error).message || "Search failed";
+  } finally {
+    if (seq === fetchSeq) searchLoading.value = false;
+  }
 }
 
 watch(q, () => {
   clearTimeout(t);
-  t = setTimeout(run, 300);
+  t = setTimeout(() => {
+    void run();
+  }, 300);
 });
 watch(
   () => route.query.q,
@@ -36,6 +67,11 @@ onMounted(() => {
   nextTick(() => {
     searchInputRef.value?.focus();
   });
+});
+
+onUnmounted(() => {
+  clearTimeout(t);
+  fetchSeq++;
 });
 </script>
 
@@ -61,14 +97,28 @@ onMounted(() => {
             placeholder="Search items…"
             class="fx-input !mt-0 border-zinc-200 pl-11 text-base shadow-sm"
             autocomplete="off"
+            :aria-busy="searchLoading && hasQuery()"
           />
         </div>
       </div>
     </template>
 
     <div class="mt-6">
-      <div class="items-view-list-only space-y-2">
-        <template v-if="results.length">
+      <div class="items-view-list-only space-y-2" role="region" aria-label="Search results" :aria-busy="searchLoading && hasQuery()">
+        <template v-if="searchLoading && hasQuery()">
+          <div
+            v-for="n in 3"
+            :key="'sk-list-' + n"
+            class="fx-item-row fx-list-row animate-pulse border border-zinc-100/90 bg-zinc-50/90"
+            aria-hidden="true"
+          >
+            <div class="relative z-[1] min-w-0 flex-1 space-y-2 py-0.5">
+              <div class="h-4 w-48 max-w-[70%] rounded-md bg-zinc-200/90"></div>
+              <div class="h-3 w-36 max-w-[55%] rounded-md bg-zinc-200/70"></div>
+            </div>
+          </div>
+        </template>
+        <template v-else-if="results.length">
           <RouterLink
             v-for="it in results"
             :key="it.ID"
@@ -88,12 +138,35 @@ onMounted(() => {
             <span class="fx-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon" /></span>
           </RouterLink>
         </template>
-        <div v-else class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+        <div
+          v-else-if="hasQuery() && searchError"
+          class="rounded-xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-8 text-center text-sm text-amber-900"
+        >
+          {{ searchError }}
+        </div>
+        <div v-else-if="hasQuery()" class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
           No matches — try another word.
         </div>
+        <div v-else class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
+          Type a search term to find items.
+        </div>
       </div>
-      <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        <template v-if="results.length">
+      <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" role="region" :aria-busy="searchLoading && hasQuery()">
+        <template v-if="searchLoading && hasQuery()">
+          <div
+            v-for="n in 6"
+            :key="'sk-gal-' + n"
+            class="flex flex-col overflow-hidden rounded-xl border border-zinc-100/90 bg-zinc-50/90 shadow-sm ring-1 ring-zinc-950/[0.03]"
+            aria-hidden="true"
+          >
+            <div class="aspect-square animate-pulse bg-gradient-to-br from-zinc-100 to-zinc-200/90"></div>
+            <div class="space-y-2 border-t border-zinc-100/90 p-3">
+              <div class="h-4 w-full rounded-md bg-zinc-200/90"></div>
+              <div class="h-3 w-[80%] max-w-[12rem] rounded-md bg-zinc-200/70"></div>
+            </div>
+          </div>
+        </template>
+        <template v-else-if="results.length">
           <RouterLink
             v-for="it in results"
             :key="it.ID + '-g'"
@@ -123,8 +196,17 @@ onMounted(() => {
             </div>
           </RouterLink>
         </template>
-        <div v-else class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
+        <div
+          v-else-if="hasQuery() && searchError"
+          class="col-span-full rounded-xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-8 text-center text-sm text-amber-900"
+        >
+          {{ searchError }}
+        </div>
+        <div v-else-if="hasQuery()" class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
           No matches — try another word.
+        </div>
+        <div v-else class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
+          Type a search term to find items.
         </div>
       </div>
     </div>
