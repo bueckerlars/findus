@@ -71,6 +71,7 @@ const router = createRouter({
           redirect: "/admin/users",
           children: [
             { path: "users", component: () => import("../views/AdminUsersView.vue") },
+            { path: "settings", component: () => import("../views/AdminSettingsView.vue") },
             { path: "templates", component: () => import("../views/AdminTemplatesView.vue") },
             { path: "templates/new", component: () => import("../views/AdminTemplateFormView.vue") },
             { path: "templates/:id/edit", component: () => import("../views/AdminTemplateFormView.vue") },

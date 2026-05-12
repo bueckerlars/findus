@@ -55,12 +55,12 @@ func CSRF(secure bool) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			if err := parseRequestForCSRF(r); err != nil {
-				http.Error(w, "bad request", http.StatusBadRequest)
-				return
-			}
 			got := strings.TrimSpace(r.Header.Get(csrfHeaderName))
 			if got == "" {
+				if err := parseRequestForCSRF(r); err != nil {
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
+				}
 				got = strings.TrimSpace(r.FormValue(csrfFormName))
 			}
 			if got == "" || token == "" || !strings.EqualFold(got, token) {
@@ -83,13 +83,13 @@ func shouldSkipCSRF(r *http.Request) bool {
 }
 
 func parseRequestForCSRF(r *http.Request) error {
-	ct := r.Header.Get("Content-Type")
-	// JSON API uses X-CSRF-Token only; do not parse/consume the body here.
-	if strings.HasPrefix(ct, "application/json") {
-		return nil
-	}
+	ct := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type")))
 	if strings.HasPrefix(ct, "multipart/form-data") {
 		return r.ParseMultipartForm(32 << 20)
 	}
-	return r.ParseForm()
+	if strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
+		return r.ParseForm()
+	}
+	// Opaque or JSON bodies: do not read the stream (callers that use X-CSRF-Token skip this).
+	return nil
 }

@@ -49,6 +49,8 @@ type ItemRepository interface {
 	ReassignTemplateType(ctx context.Context, fromID, toID string) error
 	UpdateItemSearchDenorm(ctx context.Context, itemID, searchLabels, searchLocation, searchBody string) error
 	UpdateSearchLocationForItemsAtLocation(ctx context.Context, locationID, searchLocation string) error
+	// MigrateItemPrimaryKeys runs inside a new DB transaction (PRAGMA foreign_keys=OFF) and updates item_labels then items.
+	MigrateItemPrimaryKeys(ctx context.Context, rows []domain.ItemIDMigration) error
 }
 
 type ItemTemplateRepository interface {

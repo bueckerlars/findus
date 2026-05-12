@@ -17,6 +17,7 @@ type Inventory struct {
 	Items     repository.ItemRepository
 	Labels    repository.LabelRepository
 	Templates repository.ItemTemplateRepository
+	Settings  repository.SettingsRepository
 }
 
 func (s *Inventory) CreateLocation(ctx context.Context, name, description string, parentID *string) (*domain.Location, error) {
@@ -155,20 +156,42 @@ func (s *Inventory) CreateItem(ctx context.Context, name, description, locationI
 		return nil, err
 	}
 	now := time.Now().UTC()
-	it := &domain.Item{
-		ID:             newID(),
-		Name:           name,
-		Description:    trim(description, 0, 5000),
-		LocationID:     locationID,
-		TemplateType:   tt,
-		TemplateData:   td,
-		AdditionalData: additional,
-		QRToken:        newID(),
-		CreatedAt:      now,
-		UpdatedAt:      now,
+	var it *domain.Item
+	var createErr error
+	for attempt := 0; attempt < 24; attempt++ {
+		itemID, err := s.allocateNextItemID(ctx)
+		if err != nil {
+			return nil, err
+		}
+		cand := &domain.Item{
+			ID:             itemID,
+			Name:           name,
+			Description:    trim(description, 0, 5000),
+			LocationID:     locationID,
+			TemplateType:   tt,
+			TemplateData:   td,
+			AdditionalData: additional,
+			QRToken:        newID(),
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		createErr = s.Items.Create(ctx, cand)
+		if createErr == nil {
+			it = cand
+			if err := s.sequentialBumpAfterSuccessfulCreate(ctx, itemID); err != nil {
+				return nil, err
+			}
+			break
+		}
+		if !isSQLiteUniqueViolation(createErr) {
+			return nil, createErr
+		}
 	}
-	if err := s.Items.Create(ctx, it); err != nil {
-		return nil, err
+	if it == nil {
+		if createErr == nil {
+			createErr = fmt.Errorf("%w: item id", domain.ErrValidation)
+		}
+		return nil, createErr
 	}
 	if err := s.Items.ReplaceItemLabels(ctx, it.ID, ids); err != nil {
 		return nil, err

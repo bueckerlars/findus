@@ -243,7 +243,7 @@ func (r *ItemRepo) upsertSubstrFTS(ctx context.Context, itemID string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := r.db.ExecContext(ctx, `INSERT INTO items_fts_substr(items_fts_substr, rowid) VALUES ('delete', ?)`, rowid); err != nil {
+	if _, err := r.db.ExecContext(ctx, `DELETE FROM items_fts_substr WHERE rowid = ?`, rowid); err != nil {
 		return err
 	}
 	_, err = r.db.ExecContext(ctx, `INSERT INTO items_fts_substr(rowid, body) VALUES (?, ?)`, rowid, body)
@@ -260,7 +260,7 @@ func (r *ItemRepo) deleteSubstrFTSForItemID(ctx context.Context, itemID string) 
 	if err != nil {
 		return nil
 	}
-	_, err = r.db.ExecContext(ctx, `INSERT INTO items_fts_substr(items_fts_substr, rowid) VALUES ('delete', ?)`, rowid)
+	_, err = r.db.ExecContext(ctx, `DELETE FROM items_fts_substr WHERE rowid = ?`, rowid)
 	return err
 }
 

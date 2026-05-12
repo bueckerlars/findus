@@ -86,11 +86,11 @@ async function load() {
     system_rows: { label: string; value: string }[];
   }>("/api/items/" + id.value);
   item.value = r.item;
-  labels.value = r.labels;
+  labels.value = r.labels ?? [];
   photoUrl.value = r.photo_url;
-  locationPath.value = r.location_path || [];
-  attrRows.value = r.attr_rows || [];
-  systemRows.value = r.system_rows || [];
+  locationPath.value = r.location_path ?? [];
+  attrRows.value = r.attr_rows ?? [];
+  systemRows.value = r.system_rows ?? [];
 }
 
 function applyMergedRows(rows: KV[]) {
@@ -124,8 +124,8 @@ async function loadEditForm() {
   draftName.value = r.item.Name;
   draftDesc.value = r.item.Description;
   draftLocationId.value = r.item.LocationID;
-  locationsEdit.value = r.locations;
-  allLabelsEdit.value = r.all_labels;
+  locationsEdit.value = r.locations ?? [];
+  allLabelsEdit.value = r.all_labels ?? [];
   const sl: Record<string, boolean> = {};
   for (const lb of r.all_labels) {
     sl[lb.ID] = !!r.selected_labels?.[lb.ID];
@@ -134,7 +134,7 @@ async function loadEditForm() {
   const ft = await api<{ fields: TemplateField[] }>(
     "/api/items/new/fields?template_type=" + encodeURIComponent(r.item.TemplateType),
   );
-  fieldsEdit.value = ft.fields;
+  fieldsEdit.value = ft.fields ?? [];
   fieldValsEdit.value = {};
   for (const f of ft.fields) {
     fieldValsEdit.value[f.key] = "";

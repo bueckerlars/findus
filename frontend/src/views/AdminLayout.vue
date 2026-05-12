@@ -3,7 +3,15 @@ import { computed } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 
 const route = useRoute();
-const templatesSection = computed(() => route.path.startsWith("/admin/templates"));
+const usersActive = computed(() => route.path === "/admin/users");
+const settingsActive = computed(() => route.path === "/admin/settings");
+const templatesActive = computed(() => route.path.startsWith("/admin/templates"));
+
+function tabClass(active: boolean) {
+  return active
+    ? "border-zinc-200/90 border-b-white bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-950/[0.04]"
+    : "border-transparent";
+}
 </script>
 
 <template>
@@ -12,23 +20,22 @@ const templatesSection = computed(() => route.path.startsWith("/admin/templates"
       <nav class="-mb-px flex flex-wrap gap-1" aria-label="Admin sections">
         <RouterLink
           to="/admin/users"
-          class="inline-flex items-center rounded-t-lg border border-transparent px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
-          :class="
-            !templatesSection
-              ? 'border-zinc-200/90 border-b-white bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-950/[0.04]'
-              : ''
-          "
+          class="inline-flex items-center rounded-t-lg border px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+          :class="tabClass(usersActive)"
         >
           User management
         </RouterLink>
         <RouterLink
+          to="/admin/settings"
+          class="inline-flex items-center rounded-t-lg border px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+          :class="tabClass(settingsActive)"
+        >
+          Application settings
+        </RouterLink>
+        <RouterLink
           to="/admin/templates"
-          class="inline-flex items-center rounded-t-lg border border-transparent px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
-          :class="
-            templatesSection
-              ? 'border-zinc-200/90 border-b-white bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-950/[0.04]'
-              : ''
-          "
+          class="inline-flex items-center rounded-t-lg border px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+          :class="tabClass(templatesActive)"
         >
           Templates
         </RouterLink>

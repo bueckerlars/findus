@@ -20,7 +20,6 @@ type Invite = {
 
 const users = ref<UserRow[]>([]);
 const invites = ref<Invite[]>([]);
-const registrationMode = ref("admin_only");
 const err = ref("");
 
 const newUser = ref({ username: "", email: "", password: "", role: "user" });
@@ -31,10 +30,9 @@ onMounted(load);
 async function load() {
   err.value = "";
   try {
-    const j = await api<{ users: UserRow[]; invites: Invite[]; registration_mode: string }>("/api/admin/users");
+    const j = await api<{ users: UserRow[]; invites: Invite[] }>("/api/admin/users");
     users.value = j.users;
     invites.value = j.invites;
-    registrationMode.value = j.registration_mode;
   } catch (e) {
     err.value = e instanceof Error ? e.message : "Load failed";
   }
@@ -68,11 +66,6 @@ async function createInvite() {
   });
   await load();
 }
-
-async function saveRegistrationMode() {
-  await postJson("/api/admin/settings/registration", { mode: registrationMode.value });
-  await load();
-}
 </script>
 
 <template>
@@ -82,17 +75,6 @@ async function saveRegistrationMode() {
       <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">Download backup</a>
     </div>
     <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
-    <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-zinc-900">Registration mode</h2>
-      <div class="mt-4 flex flex-wrap items-end gap-3">
-        <select v-model="registrationMode" class="fx-input max-w-xs">
-          <option value="admin_only">Admin only</option>
-          <option value="invite">Invite</option>
-          <option value="open">Open</option>
-        </select>
-        <button type="button" class="fx-btn-primary text-sm" @click="saveRegistrationMode">Save</button>
-      </div>
-    </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <h2 class="text-lg font-semibold text-zinc-900">Create user</h2>
       <form class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="createUser">

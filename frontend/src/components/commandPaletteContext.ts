@@ -296,6 +296,13 @@ export function buildContextCommands(route: RouteLocationNormalizedLoaded, d: Co
   if (path === "/admin/users") {
     out.push(
       {
+        id: "ctx-admin-settings",
+        label: "Application settings",
+        keywords: "registration item ids sequential ulid uuid policy",
+        icon: "gear",
+        href: "/admin/settings",
+      },
+      {
         id: "ctx-admin-backup",
         label: "Download backup (ZIP)",
         keywords: "backup export zip archive download data",
@@ -314,8 +321,43 @@ export function buildContextCommands(route: RouteLocationNormalizedLoaded, d: Co
     return out;
   }
 
+  if (path === "/admin/settings") {
+    out.push(
+      {
+        id: "ctx-settings-users",
+        label: "User management",
+        keywords: "admin users invites",
+        icon: "users",
+        href: "/admin/users",
+      },
+      {
+        id: "ctx-settings-backup",
+        label: "Download backup (ZIP)",
+        keywords: "backup export zip archive download data",
+        icon: "gear",
+        externalHref: "/admin/backup.zip",
+      },
+      {
+        id: "ctx-settings-tpl",
+        label: "Templates",
+        keywords: "item template fields editor",
+        icon: "gear",
+        href: "/admin/templates",
+      },
+      { id: "ctx-settings-home", label: "Home", keywords: "dashboard", icon: "home", href: "/" },
+    );
+    return out;
+  }
+
   if (path === "/admin/templates") {
     out.push(
+      {
+        id: "ctx-tpl-settings",
+        label: "Application settings",
+        keywords: "registration item ids policy",
+        icon: "gear",
+        href: "/admin/settings",
+      },
       {
         id: "ctx-tpl-users",
         label: "Users",

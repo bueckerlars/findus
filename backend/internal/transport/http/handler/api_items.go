@@ -189,6 +189,21 @@ func (s *Server) itemDetailJSON(ctx context.Context, it *domain.Item, editMode b
 		{"label": "Template", "value": tplCaption},
 	}
 	locPath, _ := s.Locs.PathFromRoot(ctx, it.LocationID)
+	if labels == nil {
+		labels = []domain.Label{}
+	}
+	if locPath == nil {
+		locPath = []domain.LocationPathElement{}
+	}
+	if attrRows == nil {
+		attrRows = []service.ItemPropertyDetailRow{}
+	}
+	if opts == nil {
+		opts = []locOpt{}
+	}
+	if allLabels == nil {
+		allLabels = []domain.Label{}
+	}
 	photo := ""
 	if it.PhotoPath != nil && *it.PhotoPath != "" {
 		photo = "/items/" + it.ID + "/photo"
@@ -223,6 +238,12 @@ func (s *Server) APIItemEdit(w http.ResponseWriter, r *http.Request) {
 		selected[lb.ID] = true
 	}
 	allLabels, _ := s.Inventory.ListLabels(ctx)
+	if opts == nil {
+		opts = []locOpt{}
+	}
+	if allLabels == nil {
+		allLabels = []domain.Label{}
+	}
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"item": it, "locations": opts, "all_labels": allLabels, "selected_labels": selected,
 		"additional_rows": additionalFieldPairs(mergedAdditionalForEdit(it)),

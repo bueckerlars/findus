@@ -6,6 +6,7 @@ require (
 	github.com/HugoSmits86/nativewebp v0.9.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/uuid v1.6.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/pressly/goose/v3 v3.22.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -17,7 +18,6 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
