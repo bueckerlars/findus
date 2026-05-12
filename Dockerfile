@@ -1,11 +1,12 @@
-# --- Tailwind CSS ---
+# --- Vue + Vite + Tailwind (production assets) ---
 FROM node:20-alpine AS assets
 WORKDIR /src/frontend
-COPY frontend/package.json frontend/tailwind.config.js ./
-COPY frontend/templates ./templates
-COPY frontend/static/css/input.css ./static/css/input.css
-RUN npm install \
-  && npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/vite.config.ts frontend/tsconfig.json frontend/tailwind.config.js frontend/postcss.config.js ./
+COPY frontend/index.html ./
+COPY frontend/src ./src
+RUN npm run build
 
 # --- Go binary ---
 FROM golang:1.23-alpine AS build
@@ -14,7 +15,7 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-COPY --from=assets /src/frontend/static/css/output.css ./frontend/static/css/output.css
+COPY --from=assets /src/frontend/dist ./frontend/dist
 ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags="-s -w" -o /out/findus ./backend/app
 

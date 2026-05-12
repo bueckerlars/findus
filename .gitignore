@@ -28,3 +28,4 @@ package-lock.json
 .vscode/
 *.swp
 .DS_Store
+.todo.md

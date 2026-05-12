@@ -15,6 +15,8 @@ func skipAccessLog(path string) bool {
 		return true
 	case strings.HasPrefix(path, "/static/"):
 		return true
+	case strings.HasPrefix(path, "/assets/"):
+		return true
 	default:
 		return false
 	}

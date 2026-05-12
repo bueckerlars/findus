@@ -5,7 +5,7 @@ This page is for contributors and anyone running Findus **without** Docker from 
 ## Prerequisites
 
 - **Go** 1.23 or newer
-- **Node.js** 20+ (only for building Tailwind CSS in `frontend/`; not required at runtime for `go run` if `output.css` is already present)
+- **Node.js** 20+ and npm (for `frontend/` — Vite + Vue + Tailwind). A production binary embeds the built `frontend/dist` assets; you need a client build before `go build` succeeds.
 
 ## Common commands
 
@@ -14,10 +14,10 @@ The [Makefile](../Makefile) wraps the usual tasks:
 | Target | Purpose |
 |--------|---------|
 | `make tidy` | `go mod tidy` |
-| `make css` | `npm install` in `frontend/` and build minified Tailwind to `frontend/static/css/output.css` |
-| `make run` | Run the app with `go run ./backend/app` |
-| `make dev` | Debug log level + [Air](https://github.com/air-verse/air) hot reload (rebuild on Go/HTML/CSS/SQL changes; see `.air.toml`) |
-| `make build` | Build CSS then compile static binary to `./bin/findus` |
+| `make frontend-dist` | `npm install` and `npm run build` in `frontend/` (writes `frontend/dist/`) |
+| `make run` | Run the app with `go run ./backend/app` (expects `frontend/dist` to exist) |
+| `make dev` | Debug log level + [Air](https://github.com/air-verse/air) hot reload (rebuild on Go/Vue/TS/CSS/SQL changes; see `.air.toml`) |
+| `make build` | Client build then compile static binary to `./bin/findus` |
 | `make test` | `go test ./...` |
 | `make docker-build` | Build container image `findus:dev` (same tag as `docker-compose.yml.dev`) |
 | `make db-reset` | **Destructive**: remove local `findus.db*` and `images/` under `FINDUS_DATA_DIR` (default `./data`) |
@@ -26,16 +26,15 @@ The [Makefile](../Makefile) wraps the usual tasks:
 
 ```bash
 go mod tidy
-( cd frontend && npm install \
-  && npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify )
+make frontend-dist
 go run ./backend/app
 ```
 
-Or: `make css` then `make run`.
+Or: `make build` then run `./bin/findus`.
 
 ## Hot reload
 
-`make dev` runs Air with `FINDUS_LOG_LEVEL=debug`. The config file `.air.toml` watches `go`, `html`, `tmpl`, `tpl`, `css`, and `sql` files and rebuilds `./tmp/findus`. Template or static changes may still need a browser refresh.
+`make dev` runs Air with `FINDUS_LOG_LEVEL=debug`. The config file `.air.toml` watches Go sources plus `vue` and `ts` under the repo. After changing the SPA, either let Air rebuild the Go binary (embed picks up `frontend/dist`) or run `make frontend-dist` manually if you skipped the client build.
 
 ## Tests and formatting
 
@@ -54,9 +53,9 @@ go fmt ./...
 | `backend/internal/repository` | Persistence interfaces and SQLite |
 | `backend/internal/service` | Application services |
 | `backend/internal/transport/http` | HTTP server, handlers, middleware |
-| `frontend/templates` | HTML templates |
-| `frontend/static` | CSS and static files (Tailwind input/output) |
-| `frontend/embed.go` | `go:embed` of templates and static assets |
+| `frontend/src` | Vue 3 SPA (Vite, Vue Router, Tailwind) |
+| `frontend/dist` | Production build output (embedded into the Go binary) |
+| `frontend/embed.go` | `go:embed all:dist` |
 
 ## Docker from this repo
 

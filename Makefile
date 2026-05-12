@@ -1,4 +1,4 @@
-.PHONY: tidy build test run dev css docker-build db-reset lint hooks-install hooks-uninstall
+.PHONY: tidy build test run dev frontend-dist docker-build db-reset lint hooks-install hooks-uninstall
 
 # Pinned for reproducible `make dev` (hot reload via Air).
 AIR := go run github.com/air-verse/air@v1.65.1
@@ -17,10 +17,10 @@ db-reset:
 	@rm -rf $(FINDUS_DATA_DIR)/images
 	@echo "Database reset at $(FINDUS_DATA_DIR)"
 
-css:
-	cd frontend && npm install && npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+frontend-dist:
+	cd frontend && npm install && npm run build
 
-build: css
+build: frontend-dist
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bin/findus ./backend/app
 
 test:

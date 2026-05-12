@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,8 +16,6 @@ import (
 	"findus/backend/internal/secrets"
 	"findus/backend/internal/service"
 	"findus/backend/internal/transport/http/handler"
-	"findus/backend/internal/transport/http/render"
-	"findus/frontend"
 )
 
 func main() {
@@ -67,15 +64,6 @@ func main() {
 	invSvc := &service.Inventory{Locations: locs, Items: items, Labels: labels, Templates: templates}
 	qrSvc := &service.QR{BaseURL: cfg.BaseURL}
 
-	tplFS, err := fs.Sub(frontend.Assets, "templates")
-	if err != nil {
-		panic(err)
-	}
-	tpl, err := render.Parse(tplFS)
-	if err != nil {
-		panic(err)
-	}
-
 	srv := &handler.Server{
 		Log:       log,
 		Config:    cfg,
@@ -93,7 +81,6 @@ func main() {
 		QR:        qrSvc,
 		Backup:    &service.Backup{DataDir: cfg.DataDir},
 		JWTSecret: jwtSecret,
-		Tpl:       tpl,
 	}
 
 	h, err := srv.Handler()

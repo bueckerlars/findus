@@ -73,7 +73,7 @@ func CSRF(secure bool) func(http.Handler) http.Handler {
 }
 
 func shouldSkipCSRF(r *http.Request) bool {
-	if strings.HasPrefix(r.URL.Path, "/static/") {
+	if strings.HasPrefix(r.URL.Path, "/static/") || strings.HasPrefix(r.URL.Path, "/assets/") {
 		return true
 	}
 	if r.URL.Path == "/healthz" {
@@ -84,6 +84,10 @@ func shouldSkipCSRF(r *http.Request) bool {
 
 func parseRequestForCSRF(r *http.Request) error {
 	ct := r.Header.Get("Content-Type")
+	// JSON API uses X-CSRF-Token only; do not parse/consume the body here.
+	if strings.HasPrefix(ct, "application/json") {
+		return nil
+	}
 	if strings.HasPrefix(ct, "multipart/form-data") {
 		return r.ParseMultipartForm(32 << 20)
 	}

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./templates/**/*.html", "./static/css/input.css"],
+export default {
+  content: ["./index.html", "./src/**/*.{vue,ts}"],
   theme: {
     extend: {
       fontFamily: {
