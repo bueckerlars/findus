@@ -9,11 +9,15 @@ import (
 	"time"
 
 	"findus/backend/internal/domain"
+	"findus/backend/internal/repository"
 )
 
-type ItemRepo struct{ db *sql.DB }
+type ItemRepo struct{ db DBConn }
 
 func NewItemRepo(db *sql.DB) *ItemRepo { return &ItemRepo{db: db} }
+
+// NewItemRepoConn wraps any DBConn (e.g. *sql.Tx) for transactional operations.
+func NewItemRepoConn(c DBConn) *ItemRepo { return &ItemRepo{db: c} }
 
 func (r *ItemRepo) Create(ctx context.Context, it *domain.Item) error {
 	ad := it.AdditionalData
@@ -114,6 +118,44 @@ func (r *ItemRepo) ListAll(ctx context.Context, limit int) ([]domain.Item, error
 	return out, rows.Err()
 }
 
+// ListAllExport returns all items (admin export); no row cap.
+func (r *ItemRepo) ListAllExport(ctx context.Context) ([]domain.Item, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, name, description, location_id, template_type, template_data, additional_data, photo_path, qr_token, created_at, updated_at
+		FROM items ORDER BY id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.Item
+	for rows.Next() {
+		it, err := scanItem(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *it)
+	}
+	return out, rows.Err()
+}
+
+// ListItemLabelPairs returns all (item_id, label_id) rows for bulk export.
+func (r *ItemRepo) ListItemLabelPairs(ctx context.Context) ([]repository.ItemLabelPair, error) {
+	rows, err := r.db.QueryContext(ctx, `SELECT item_id, label_id FROM item_labels ORDER BY item_id, label_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []repository.ItemLabelPair
+	for rows.Next() {
+		var p repository.ItemLabelPair
+		if err := rows.Scan(&p.ItemID, &p.LabelID); err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
 func (r *ItemRepo) ListRecentByUpdated(ctx context.Context, limit int) ([]domain.Item, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 12
@@ -143,23 +185,18 @@ func (r *ItemRepo) Count(ctx context.Context) (int64, error) {
 }
 
 func (r *ItemRepo) ReplaceItemLabels(ctx context.Context, itemID string, labelIDs []string) error {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
-	if _, err := tx.ExecContext(ctx, `DELETE FROM item_labels WHERE item_id = ?`, itemID); err != nil {
+	if _, err := r.db.ExecContext(ctx, `DELETE FROM item_labels WHERE item_id = ?`, itemID); err != nil {
 		return err
 	}
 	for _, lid := range labelIDs {
 		if lid == "" {
 			continue
 		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO item_labels (item_id, label_id) VALUES (?, ?)`, itemID, lid); err != nil {
+		if _, err := r.db.ExecContext(ctx, `INSERT INTO item_labels (item_id, label_id) VALUES (?, ?)`, itemID, lid); err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (r *ItemRepo) ListLabelsForItem(ctx context.Context, itemID string) ([]domain.Label, error) {
@@ -302,7 +339,11 @@ func (r *ItemRepo) MigrateItemPrimaryKeys(ctx context.Context, rows []domain.Ite
 	if err := validateItemIDMigrationRows(rows); err != nil {
 		return err
 	}
-	conn, err := r.db.Conn(ctx)
+	dbPool, ok := r.db.(*sql.DB)
+	if !ok {
+		return fmt.Errorf("MigrateItemPrimaryKeys requires *sql.DB pool")
+	}
+	conn, err := dbPool.Conn(ctx)
 	if err != nil {
 		return err
 	}

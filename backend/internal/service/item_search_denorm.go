@@ -35,7 +35,7 @@ func (s *Inventory) collectDescendantLocationIDs(ctx context.Context, rootID str
 	return out, nil
 }
 
-func (s *Inventory) refreshItemSearchDenorm(ctx context.Context, itemID string) error {
+func (s *Inventory) RefreshItemSearchDenorm(ctx context.Context, itemID string) error {
 	it, err := s.Items.GetByID(ctx, itemID)
 	if err != nil {
 		return err
@@ -59,6 +59,14 @@ func (s *Inventory) refreshItemSearchDenorm(ctx context.Context, itemID string) 
 	searchLoc := locationPathString(path)
 	body := strings.TrimSpace(search.FlattenJSON(it.TemplateData) + " " + search.FlattenJSON(it.AdditionalData))
 	return s.Items.UpdateItemSearchDenorm(ctx, itemID, searchLabels, searchLoc, body)
+}
+
+func (s *Inventory) refreshItemSearchDenorm(ctx context.Context, itemID string) error {
+	return s.RefreshItemSearchDenorm(ctx, itemID)
+}
+
+func (s *Inventory) RefreshSearchLocationsForSubtree(ctx context.Context, rootLocationID string) error {
+	return s.refreshSearchLocationsForSubtree(ctx, rootLocationID)
 }
 
 func (s *Inventory) refreshSearchLocationsForSubtree(ctx context.Context, rootLocationID string) error {

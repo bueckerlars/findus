@@ -87,6 +87,8 @@ func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.Handle("POST /api/admin/settings/registration", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsRegistration))))
 	mux.Handle("GET /api/admin/settings/item-ids", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsItemIDsGet))))
 	mux.Handle("POST /api/admin/settings/item-ids", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsItemIDsPost))))
+	mux.Handle("GET /api/admin/inventory-export", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminInventoryExport))))
+	mux.Handle("POST /api/admin/inventory-import", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminInventoryImport))))
 
 	mux.Handle("GET /api/admin/templates", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminTemplates))))
 	mux.Handle("GET /api/admin/templates/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminTemplateNewEmpty))))

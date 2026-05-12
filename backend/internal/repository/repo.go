@@ -27,6 +27,7 @@ type LocationRepository interface {
 	PathFromRoot(ctx context.Context, id string) ([]domain.LocationPathElement, error)
 	ListRecentByUpdated(ctx context.Context, limit int) ([]domain.Location, error)
 	ListAll(ctx context.Context, limit int) ([]domain.Location, error)
+	ListAllExport(ctx context.Context) ([]domain.Location, error)
 	// ChildCountsByParentID returns how many locations have each parent_id (direct children only).
 	ChildCountsByParentID(ctx context.Context) (map[string]int64, error)
 	Count(ctx context.Context) (int64, error)
@@ -41,6 +42,8 @@ type ItemRepository interface {
 	ListByLocation(ctx context.Context, locationID string) ([]domain.Item, error)
 	Search(ctx context.Context, q string, limit int) ([]domain.Item, error)
 	ListAll(ctx context.Context, limit int) ([]domain.Item, error)
+	ListAllExport(ctx context.Context) ([]domain.Item, error)
+	ListItemLabelPairs(ctx context.Context) ([]ItemLabelPair, error)
 	ListRecentByUpdated(ctx context.Context, limit int) ([]domain.Item, error)
 	Count(ctx context.Context) (int64, error)
 	ReplaceItemLabels(ctx context.Context, itemID string, labelIDs []string) error
@@ -51,6 +54,12 @@ type ItemRepository interface {
 	UpdateSearchLocationForItemsAtLocation(ctx context.Context, locationID, searchLocation string) error
 	// MigrateItemPrimaryKeys runs inside a new DB transaction (PRAGMA foreign_keys=OFF) and updates item_labels then items.
 	MigrateItemPrimaryKeys(ctx context.Context, rows []domain.ItemIDMigration) error
+}
+
+// ItemLabelPair is one item_labels row.
+type ItemLabelPair struct {
+	ItemID  string
+	LabelID string
 }
 
 type ItemTemplateRepository interface {

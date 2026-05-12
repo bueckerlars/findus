@@ -10,9 +10,12 @@ import (
 	"findus/backend/internal/domain"
 )
 
-type LabelRepo struct{ db *sql.DB }
+type LabelRepo struct{ db DBConn }
 
 func NewLabelRepo(db *sql.DB) *LabelRepo { return &LabelRepo{db: db} }
+
+// NewLabelRepoConn wraps any DBConn (e.g. *sql.Tx).
+func NewLabelRepoConn(c DBConn) *LabelRepo { return &LabelRepo{db: c} }
 
 func (r *LabelRepo) ListAll(ctx context.Context) ([]domain.Label, error) {
 	rows, err := r.db.QueryContext(ctx, `
