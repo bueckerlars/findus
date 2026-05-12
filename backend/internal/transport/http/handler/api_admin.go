@@ -163,7 +163,7 @@ func (s *Server) APIAdminSettingsRegistration(w http.ResponseWriter, r *http.Req
 }
 
 type apiTemplateListRow struct {
-	Template            domain.ItemTemplate `json:"template"`
+	Template        domain.ItemTemplate `json:"template"`
 	Count           int64               `json:"count"`
 	HasAlternate    bool                `json:"has_alternate"`
 	FallbackDisplay string              `json:"fallback_display"`
