@@ -252,3 +252,170 @@ func (r *ItemRepo) ReassignTemplateType(ctx context.Context, fromID, toID string
 	}
 	return nil
 }
+
+const itemPKTempPrefix = "!migr_tmp:"
+
+func itemIDMigrationNeedsTwoPhase(rows []domain.ItemIDMigration) bool {
+	oldSet := make(map[string]struct{}, len(rows))
+	for _, rw := range rows {
+		oldSet[rw.OldID] = struct{}{}
+	}
+	for _, rw := range rows {
+		if rw.OldID == rw.NewID {
+			continue
+		}
+		if _, ok := oldSet[rw.NewID]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func validateItemIDMigrationRows(rows []domain.ItemIDMigration) error {
+	seenOld := make(map[string]struct{}, len(rows))
+	seenNew := make(map[string]struct{}, len(rows))
+	for _, rw := range rows {
+		if rw.OldID == "" || rw.NewID == "" {
+			return fmt.Errorf("empty id in migration row")
+		}
+		if _, ok := seenOld[rw.OldID]; ok {
+			return fmt.Errorf("duplicate old id %q", rw.OldID)
+		}
+		seenOld[rw.OldID] = struct{}{}
+		if rw.OldID == rw.NewID {
+			continue
+		}
+		if _, ok := seenNew[rw.NewID]; ok {
+			return fmt.Errorf("duplicate new id %q", rw.NewID)
+		}
+		seenNew[rw.NewID] = struct{}{}
+	}
+	return nil
+}
+
+// MigrateItemPrimaryKeys updates item_labels then items (id, photo_path, updated_at) inside a transaction.
+// Uses PRAGMA foreign_keys=OFF because item_labels does not use ON UPDATE CASCADE.
+func (r *ItemRepo) MigrateItemPrimaryKeys(ctx context.Context, rows []domain.ItemIDMigration) error {
+	if len(rows) == 0 {
+		return nil
+	}
+	if err := validateItemIDMigrationRows(rows); err != nil {
+		return err
+	}
+	conn, err := r.db.Conn(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	if _, err := conn.ExecContext(ctx, `PRAGMA foreign_keys=OFF`, nil); err != nil {
+		return err
+	}
+	defer func() { _, _ = conn.ExecContext(ctx, `PRAGMA foreign_keys=ON`, nil) }()
+
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var migErr error
+	if itemIDMigrationNeedsTwoPhase(rows) {
+		migErr = migrateItemPKTwoPhase(ctx, tx, rows)
+	} else {
+		migErr = migrateItemPKSinglePhase(ctx, tx, rows)
+	}
+	if migErr != nil {
+		return migErr
+	}
+	return tx.Commit()
+}
+
+func migrateItemPKSinglePhase(ctx context.Context, tx *sql.Tx, rows []domain.ItemIDMigration) error {
+	for _, rw := range rows {
+		if rw.OldID == rw.NewID {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE item_labels SET item_id = ? WHERE item_id = ?`, rw.NewID, rw.OldID); err != nil {
+			return err
+		}
+	}
+	now := formatTime(time.Now().UTC())
+	for _, rw := range rows {
+		if rw.OldID == rw.NewID {
+			if rw.NewPhotoPath != nil {
+				if _, err := tx.ExecContext(ctx, `UPDATE items SET photo_path = ?, updated_at = ? WHERE id = ?`, strPtr(rw.NewPhotoPath), now, rw.OldID); err != nil {
+					return err
+				}
+			}
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE items SET id = ?, photo_path = ?, updated_at = ? WHERE id = ?`,
+			rw.NewID, strPtr(rw.NewPhotoPath), now, rw.OldID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func migrateItemPKTwoPhase(ctx context.Context, tx *sql.Tx, rows []domain.ItemIDMigration) error {
+	type step struct {
+		old, tmp, new string
+		photo         *string
+	}
+	steps := make([]step, 0, len(rows))
+	for _, rw := range rows {
+		if rw.OldID == rw.NewID {
+			continue
+		}
+		steps = append(steps, step{old: rw.OldID, tmp: itemPKTempPrefix + rw.OldID, new: rw.NewID, photo: rw.NewPhotoPath})
+	}
+	now := formatTime(time.Now().UTC())
+	// Phase 1: old -> tmp
+	for _, s := range steps {
+		if s.old == s.new {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE item_labels SET item_id = ? WHERE item_id = ?`, s.tmp, s.old); err != nil {
+			return err
+		}
+	}
+	for _, s := range steps {
+		if s.old == s.new {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE items SET id = ?, updated_at = ? WHERE id = ?`, s.tmp, now, s.old); err != nil {
+			return err
+		}
+	}
+	// Phase 2: tmp -> new
+	for _, s := range steps {
+		if s.old == s.new {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE item_labels SET item_id = ? WHERE item_id = ?`, s.new, s.tmp); err != nil {
+			return err
+		}
+	}
+	for _, s := range steps {
+		if s.old == s.new {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE items SET id = ?, photo_path = ?, updated_at = ? WHERE id = ?`,
+			s.new, strPtr(s.photo), now, s.tmp); err != nil {
+			return err
+		}
+	}
+	// Same-ID rows (photo-only)
+	for _, rw := range rows {
+		if rw.OldID != rw.NewID {
+			continue
+		}
+		if rw.NewPhotoPath != nil {
+			if _, err := tx.ExecContext(ctx, `UPDATE items SET photo_path = ?, updated_at = ? WHERE id = ?`, strPtr(rw.NewPhotoPath), now, rw.OldID); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

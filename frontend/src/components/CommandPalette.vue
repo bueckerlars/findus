@@ -680,14 +680,28 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/admin/users"
-              data-keywords="admin users user management invites registration backup settings"
+              data-keywords="admin users user management invites backup"
+              class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
+            >
+              <span
+                class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
+                ><FxSvg name="users" class="h-3.5 w-3.5 shrink-0"
+              /></span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Users</span>
+            </button>
+            <button
+              v-if="isAdmin"
+              type="button"
+              data-cmd-static
+              data-href="/admin/settings"
+              data-keywords="admin application settings registration item ids sequential ulid uuid policy"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="gear" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Users</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">Admin · Settings</span>
             </button>
             <button
               v-if="isAdmin"

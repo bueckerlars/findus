@@ -83,7 +83,10 @@ func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.Handle("POST /api/admin/users/{id}/role", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUserRole))))
 	mux.Handle("POST /api/admin/users/{id}/active", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUserActive))))
 	mux.Handle("POST /api/admin/invites", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminInvitesCreate))))
+	mux.Handle("GET /api/admin/settings/registration", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsRegistrationGet))))
 	mux.Handle("POST /api/admin/settings/registration", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsRegistration))))
+	mux.Handle("GET /api/admin/settings/item-ids", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsItemIDsGet))))
+	mux.Handle("POST /api/admin/settings/item-ids", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsItemIDsPost))))
 
 	mux.Handle("GET /api/admin/templates", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminTemplates))))
 	mux.Handle("GET /api/admin/templates/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminTemplateNewEmpty))))

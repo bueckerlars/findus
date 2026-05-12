@@ -1,4 +1,4 @@
-.PHONY: tidy build test run dev frontend-dist docker-build db-reset lint hooks-install hooks-uninstall
+.PHONY: tidy build test run dev frontend-dist docker-build db-reset lint format hooks-install hooks-uninstall hooks-run
 
 # Pinned for reproducible `make dev` (hot reload via Air).
 AIR := go run github.com/air-verse/air@v1.65.1
@@ -30,6 +30,10 @@ lint:
 	go vet ./...
 	$(GOLANGCI_LINT) run ./...
 
+# Format all Go sources in the module (matches pre-commit gofmt, but whole tree).
+format:
+	go fmt ./...
+
 hooks-install:
 	@command -v lefthook >/dev/null 2>&1 || { \
 		echo "Installing lefthook to $$(go env GOPATH)/bin ..."; \
@@ -40,6 +44,10 @@ hooks-install:
 
 hooks-uninstall:
 	$(LEFTHOOK) uninstall
+
+# Run the same checks as git pre-commit (gofmt + lint) on all tracked Go files.
+hooks-run:
+	$(LEFTHOOK) run pre-commit --all-files
 
 run:
 	go run ./backend/app

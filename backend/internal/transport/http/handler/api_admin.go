@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -159,7 +160,88 @@ func (s *Server) APIAdminSettingsRegistration(w http.ResponseWriter, r *http.Req
 		s.writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/users"})
+	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/settings"})
+}
+
+func (s *Server) APIAdminSettingsRegistrationGet(w http.ResponseWriter, r *http.Request) {
+	_ = r
+	ctx := r.Context()
+	mode, err := s.Admin.GetRegistrationMode(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"registration_mode": string(mode)})
+}
+
+func (s *Server) APIAdminSettingsItemIDsGet(w http.ResponseWriter, r *http.Request) {
+	_ = r
+	ctx := r.Context()
+	pol, err := s.Inventory.GetItemIDPolicy(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	n, err := s.Items.Count(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"policy": pol, "item_count": n})
+}
+
+type apiAdminItemIDPolicyReq struct {
+	Kind    string  `json:"kind"`
+	Prefix  string  `json:"prefix"`
+	Width   float64 `json:"width"`
+	NextSeq int64   `json:"next_seq,omitempty"` // accepted for forward-compatible clients; ignored here
+}
+
+func (s *Server) APIAdminSettingsItemIDsPost(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req apiAdminItemIDPolicyReq
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	var want domain.ItemIDPolicy
+	switch strings.TrimSpace(strings.ToLower(req.Kind)) {
+	case "ulid":
+		want.Kind = domain.ItemIDKindULID
+	case "uuid":
+		want.Kind = domain.ItemIDKindUUID
+	case "sequential":
+		want.Kind = domain.ItemIDKindSequential
+	default:
+		s.writeJSONError(w, http.StatusBadRequest, "bad kind")
+		return
+	}
+	want.Prefix = strings.TrimSpace(req.Prefix)
+	if req.Width < 0 || req.Width > 64 {
+		s.writeJSONError(w, http.StatusBadRequest, "bad width")
+		return
+	}
+	want.Width = int(req.Width)
+	cur, err := s.Inventory.GetItemIDPolicy(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	want = want.Normalize()
+	cur = cur.Normalize()
+	if cur.EffectiveKey() == want.EffectiveKey() {
+		want.NextSeq = cur.NextSeq
+	}
+	if err := want.Validate(); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := s.Inventory.SetItemIDPolicy(ctx, s.Config.DataDir, want); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/settings"})
 }
 
 type apiTemplateListRow struct {
