@@ -67,6 +67,10 @@ func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.Handle("GET /api/items/{id}/edit", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemEdit))))
 	mux.Handle("POST /api/items/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemUpdate))))
 	mux.Handle("POST /api/items/{id}/delete", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemDelete))))
+	mux.Handle("GET /api/items/{id}/attachments", middleware.RequireAuth(http.HandlerFunc(s.APIItemAttachmentsList)))
+	mux.Handle("POST /api/items/{id}/attachments", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentCreate))))
+	mux.Handle("PATCH /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentPatch))))
+	mux.Handle("DELETE /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentDelete))))
 
 	mux.Handle("GET /api/search", middleware.RequireAuth(http.HandlerFunc(s.APISearch)))
 	mux.Handle("GET /api/command-search", middleware.RequireAuth(http.HandlerFunc(s.CommandSearchGet)))
@@ -116,6 +120,7 @@ func (s *Server) Handler() (http.Handler, error) {
 
 	mux.Handle("GET /profile/photo", auth(s.ProfilePhoto))
 	mux.Handle("GET /items/{id}/photo", auth(s.ItemPhoto))
+	mux.Handle("GET /items/{id}/attachments/{attachmentId}", auth(s.ItemAttachmentDownload))
 	mux.Handle("GET /items/{id}/qr.png", auth(s.ItemQR))
 	mux.Handle("GET /locations/{id}/qr.png", auth(s.LocationQR))
 	mux.Handle("GET /admin/backup.zip", admin(s.AdminBackup))

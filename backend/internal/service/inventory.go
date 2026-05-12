@@ -18,6 +18,11 @@ type Inventory struct {
 	Labels    repository.LabelRepository
 	Templates repository.ItemTemplateRepository
 	Settings  repository.SettingsRepository
+
+	// ItemAttachments is optional for tests; when nil, attachment APIs should not be registered.
+	ItemAttachments repository.ItemAttachmentRepository
+	// AttachmentPostProcessor optional hook after successful create (e.g. OCR); nil uses a no-op.
+	AttachmentPostProcessor AttachmentPostProcessor
 }
 
 func (s *Inventory) CreateLocation(ctx context.Context, name, description string, parentID *string) (*domain.Location, error) {

@@ -17,6 +17,9 @@ func OpenDB(ctx context.Context, dataDir string) (*sql.DB, error) {
 	if err := os.MkdirAll(filepath.Join(dataDir, "images"), 0o755); err != nil {
 		return nil, fmt.Errorf("mkdir images: %w", err)
 	}
+	if err := os.MkdirAll(filepath.Join(dataDir, "item-attachments"), 0o755); err != nil {
+		return nil, fmt.Errorf("mkdir item-attachments: %w", err)
+	}
 	dbPath := filepath.Join(dataDir, "findus.db")
 	dsn := fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)", dbPath)
 	db, err := sql.Open("sqlite", dsn)

@@ -208,10 +208,16 @@ func (s *Server) itemDetailJSON(ctx context.Context, it *domain.Item, editMode b
 	if it.PhotoPath != nil && *it.PhotoPath != "" {
 		photo = "/items/" + it.ID + "/photo"
 	}
+	atts, err := s.itemAttachmentsPayload(ctx, it.ID)
+	if err != nil {
+		s.Log.Error("attachments payload", "err", err)
+		atts = []map[string]any{}
+	}
 	return map[string]any{
 		"item": it, "labels": labels, "photo_url": photo, "location_path": locPath,
 		"edit_mode": editMode, "attr_rows": attrRows, "system_rows": systemRows,
 		"locations": opts, "all_labels": allLabels, "selected_labels": selectedLabels,
+		"attachments": atts,
 	}
 }
 
@@ -310,6 +316,7 @@ func (s *Server) APIItemDelete(w http.ResponseWriter, r *http.Request) {
 		s.writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	_ = service.RemoveItemAttachmentDir(s.Config.DataDir, id)
 	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/items"})
 }
 
