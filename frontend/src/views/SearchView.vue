@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { api } from "../api";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
@@ -10,6 +10,7 @@ import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
 type Item = { ID: string; Name: string; Description: string; location_name: string; PhotoPath?: string | null };
 
 const route = useRoute();
+const searchInputRef = ref<HTMLInputElement | null>(null);
 const q = ref(typeof route.query.q === "string" ? route.query.q : "");
 const results = ref<Item[]>([]);
 let t: ReturnType<typeof setTimeout>;
@@ -30,6 +31,12 @@ watch(
   },
 );
 void run();
+
+onMounted(() => {
+  nextTick(() => {
+    searchInputRef.value?.focus();
+  });
+});
 </script>
 
 <template>
@@ -48,6 +55,7 @@ void run();
           /></span>
           <input
             id="q"
+            ref="searchInputRef"
             v-model="q"
             type="search"
             placeholder="Search items…"
