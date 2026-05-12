@@ -4,7 +4,7 @@ function storageKeyPart(storageKey: string) {
   return storageKey && storageKey.length ? storageKey : "default";
 }
 
-export function itemsViewStorageKey(storageKey: string) {
+function itemsViewStorageKey(storageKey: string) {
   return "findus_items_view::" + storageKeyPart(storageKey);
 }
 

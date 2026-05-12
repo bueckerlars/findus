@@ -53,7 +53,6 @@ export function useCreateModals() {
     openCreateItem,
     openCreateLocation,
     openCreateLabel,
-    closeAll,
     setPending,
     consumePending,
   };

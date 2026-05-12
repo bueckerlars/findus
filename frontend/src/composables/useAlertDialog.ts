@@ -33,10 +33,7 @@ function finish(result: boolean) {
 /** Opens the global alert dialog and resolves true if the user confirms. */
 export function confirmAlert(options: AlertDialogOptions): Promise<boolean> {
   if (pendingResolve) {
-    pendingResolve(false);
-    pendingResolve = null;
-    visible.value = false;
-    dialogState.value = null;
+    finish(false);
   }
   dialogState.value = {
     title: options.title,
