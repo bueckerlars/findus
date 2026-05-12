@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from "vue";
+import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
 import { useCreateModals } from "../composables/useCreateModals";
+import { setLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
 import { useSession } from "../session";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
@@ -50,6 +51,58 @@ async function load() {
   backHref.value = r.back_href;
   backLabel.value = r.back_label;
 }
+
+function qrDownloadFilename(): string {
+  const raw = (loc.value?.Name || "location").replace(/[^\w\-._\s]+/g, "").trim().replace(/\s+/g, "-");
+  const base = raw.length ? raw.slice(0, 80) : "location";
+  return `findus-${base}-qr.png`;
+}
+
+function downloadLocationQrPng() {
+  if (!loc.value) return;
+  const a = document.createElement("a");
+  a.href = "/locations/" + loc.value.ID + "/qr.png";
+  a.download = qrDownloadFilename();
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function copyLocationPageLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+  } catch {
+    /* ignore */
+  }
+}
+
+watch(
+  () => ({ l: loc.value, ad: isAdmin.value }),
+  () => {
+    if (!loc.value) {
+      setLocationDetailCommandHandlers(null);
+      return;
+    }
+    const shared = {
+      downloadQrPng: downloadLocationQrPng,
+      copyPageLink: copyLocationPageLink,
+    };
+    if (isAdmin.value) {
+      setLocationDetailCommandHandlers({
+        ...shared,
+        deleteLocation: () => del(),
+      });
+    } else {
+      setLocationDetailCommandHandlers(shared);
+    }
+  },
+  { flush: "post" },
+);
+
+onUnmounted(() => {
+  setLocationDetailCommandHandlers(null);
+});
 
 async function del() {
   const ok = await confirmAlert({

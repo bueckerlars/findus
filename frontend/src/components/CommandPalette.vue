@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import { useSession } from "../session";
 import FxSvg from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
+import { useItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
+import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
+import { dispatchItemsViewMode } from "../composables/itemsViewMode";
+import { buildContextCommands } from "./commandPaletteContext";
 
 const router = useRouter();
+const route = useRoute();
 const { isAdmin } = useSession();
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
+const itemDetailHandlers = useItemDetailCommandHandlers();
+const locationDetailHandlers = useLocationDetailCommandHandlers();
 
 const dialog = ref<HTMLDialogElement | null>(null);
 const inputEl = ref<HTMLInputElement | null>(null);
@@ -204,28 +211,192 @@ function closePalette() {
 }
 
 function goHref(href: string) {
-  closePalette();
-  void router.push(href);
+  lastFocus = null;
+  const d = dialog.value;
+  const navigate = () => {
+    void router.push(href);
+  };
+  if (d?.open) {
+    d.addEventListener("close", () => nextTick(navigate), { once: true });
+    closePalette();
+  } else {
+    closePalette();
+    nextTick(navigate);
+  }
 }
 
-function goCreate(kind: "item" | "location" | "label") {
+function focusTargetAfterModal(sel: string) {
+  const apply = () => {
+    nextTick(() => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      el?.focus();
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        try {
+          el.select();
+        } catch {
+          /* ignore */
+        }
+      }
+    });
+  };
+  const d = dialog.value;
+  if (d?.open) {
+    d.addEventListener("close", apply, { once: true });
+  } else {
+    apply();
+  }
+}
+
+function runCmdAction(action: string) {
+  if (!action) return;
+  if (action.startsWith("focus:")) {
+    const sel = action.slice("focus:".length).trim();
+    lastFocus = null;
+    focusTargetAfterModal(sel);
+    closePalette();
+    return;
+  }
+  if (action.startsWith("tab:")) {
+    const url = action.slice(4);
+    lastFocus = null;
+    const d = dialog.value;
+    const open = () => window.open(url, "_blank", "noopener,noreferrer");
+    if (d?.open) d.addEventListener("close", () => nextTick(open), { once: true });
+    else nextTick(open);
+    closePalette();
+    return;
+  }
+  if (action.startsWith("item-detail:")) {
+    const sub = action.slice("item-detail:".length);
+    const h = itemDetailHandlers.value;
+    if (!h) return;
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      if (sub === "save" && h.save) void h.save();
+      else if (sub === "cancel" && h.cancel) void h.cancel();
+      else if (sub === "delete" && h.deleteItem) void h.deleteItem();
+      else if (sub === "download-qr" && h.downloadQrPng) void h.downloadQrPng();
+      else if (sub === "copy-link" && h.copyPageLink) void h.copyPageLink();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return;
+  }
+  if (action.startsWith("loc-detail:")) {
+    const sub = action.slice("loc-detail:".length);
+    const h = locationDetailHandlers.value;
+    if (!h) return;
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      if (sub === "delete" && h.deleteLocation) void h.deleteLocation();
+      else if (sub === "download-qr" && h.downloadQrPng) void h.downloadQrPng();
+      else if (sub === "copy-link" && h.copyPageLink) void h.copyPageLink();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return;
+  }
   closePalette();
-  if (kind === "item") openCreateItem();
-  else if (kind === "location") openCreateLocation();
+  if (action === "back") {
+    nextTick(() => void router.back());
+  }
+}
+
+function goCreate(
+  kind: "item" | "location" | "label",
+  opts?: { itemLocationId?: string; locationParentId?: string },
+) {
+  closePalette();
+  if (kind === "item") openCreateItem(opts?.itemLocationId ? { locationId: opts.itemLocationId } : undefined);
+  else if (kind === "location") openCreateLocation(opts?.locationParentId ? { parentId: opts.locationParentId } : undefined);
   else openCreateLabel();
+}
+
+function handleCommandButton(btn: HTMLElement) {
+  const clipboard = btn.getAttribute("data-clipboard");
+  if (clipboard) {
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => void navigator.clipboard.writeText(clipboard).catch(() => {});
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return true;
+  }
+  const ext = btn.getAttribute("data-external-href");
+  if (ext) {
+    lastFocus = null;
+    const d = dialog.value;
+    const go = () => {
+      window.location.href = ext;
+    };
+    if (d?.open) d.addEventListener("close", go, { once: true });
+    else go();
+    closePalette();
+    return true;
+  }
+  const durl = btn.getAttribute("data-download-url");
+  if (durl) {
+    const fn = btn.getAttribute("data-download-filename") || "download.png";
+    lastFocus = null;
+    const d = dialog.value;
+    const run = () => {
+      const a = document.createElement("a");
+      a.href = durl;
+      a.download = fn;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+    if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+    else nextTick(run);
+    closePalette();
+    return true;
+  }
+  const ivk = btn.getAttribute("data-items-view-key");
+  const ivm = btn.getAttribute("data-items-view-mode");
+  if (ivk && (ivm === "list" || ivm === "gallery")) {
+    lastFocus = null;
+    const d = dialog.value;
+    const apply = () => dispatchItemsViewMode(ivk, ivm);
+    if (d?.open) d.addEventListener("close", () => nextTick(apply), { once: true });
+    else nextTick(apply);
+    closePalette();
+    return true;
+  }
+
+  const create = btn.getAttribute("data-create");
+  if (create === "item" || create === "location" || create === "label") {
+    const itemLoc = btn.getAttribute("data-create-location-id");
+    const locParent = btn.getAttribute("data-create-parent-id");
+    if (create === "item" && itemLoc) goCreate("item", { itemLocationId: itemLoc });
+    else if (create === "location" && locParent) goCreate("location", { locationParentId: locParent });
+    else goCreate(create);
+    return true;
+  }
+  const cmdAction = btn.getAttribute("data-cmd-action");
+  if (cmdAction) {
+    runCmdAction(cmdAction);
+    return true;
+  }
+  const href = btn.getAttribute("data-href");
+  if (href) {
+    goHref(href);
+    return true;
+  }
+  return false;
 }
 
 function activateSelected() {
   const items = visibleItems();
   const el = items[selectedIdx.value];
   if (!el) return;
-  const create = el.getAttribute("data-create");
-  if (create === "item" || create === "location" || create === "label") {
-    goCreate(create);
-    return;
-  }
-  const href = el.getAttribute("data-href");
-  if (href) goHref(href);
+  void handleCommandButton(el);
 }
 
 function onGlobalKeydown(e: KeyboardEvent) {
@@ -273,22 +444,20 @@ function onInputKeydown(e: KeyboardEvent) {
 }
 
 function onBodyClick(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.(
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+  ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   if (!btn.hasAttribute("data-cmd-static") && !btn.hasAttribute("data-cmd-search-hit") && btn.id !== "fx-command-open-search")
     return;
   e.preventDefault();
-  const create = btn.getAttribute("data-create");
-  if (create === "item" || create === "location" || create === "label") {
-    goCreate(create);
-    return;
-  }
-  const href = btn.getAttribute("data-href");
-  if (href) goHref(href);
+  void handleCommandButton(btn);
 }
 
 function onBodyMousemove(e: MouseEvent) {
-  const btn = (e.target as HTMLElement)?.closest?.("[data-href], [data-create]") as HTMLElement | null;
+  const btn = (e.target as HTMLElement)?.closest?.(
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+  ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   const items = visibleItems();
   const idx = items.indexOf(btn as HTMLElement);
@@ -308,6 +477,49 @@ onUnmounted(() => {
 watch(q, () => scheduleSearch());
 
 const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.value.trim()}”` : ""));
+
+const inputPlaceholder = computed(() =>
+  route.path === "/search" ? "Filter or jump to a page…" : "Search items, jump to a page…",
+);
+
+const contextCommands = computed(() =>
+  buildContextCommands(route, {
+    isAdmin: isAdmin.value,
+    itemDetail: itemDetailHandlers.value,
+    locationDetail: locationDetailHandlers.value,
+  }),
+);
+
+type CreateKind = "item" | "location" | "label";
+
+const createKindMeta: Record<CreateKind, { label: string; keywords: string }> = {
+  item: { label: "New item", keywords: "new item add create" },
+  location: { label: "New location", keywords: "new location place room shelf add create" },
+  label: { label: "New label", keywords: "new label tag add create" },
+};
+
+const DEFAULT_CREATE_ORDER: CreateKind[] = ["item", "location", "label"];
+
+const createCommandOrder = computed((): CreateKind[] => {
+  const path = route.path;
+  if (path === "/locations" || path.startsWith("/locations/")) {
+    return ["location", "item", "label"];
+  }
+  if (path === "/items" || path.startsWith("/items/")) {
+    return ["item", "location", "label"];
+  }
+  if (path === "/labels" || path.startsWith("/labels/")) {
+    return ["label", "item", "location"];
+  }
+  return DEFAULT_CREATE_ORDER;
+});
+
+const createCommands = computed(() =>
+  createCommandOrder.value.map((kind) => ({
+    kind,
+    ...createKindMeta[kind],
+  })),
+);
 </script>
 
 <template>
@@ -332,7 +544,7 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
           autocomplete="off"
           autocorrect="off"
           spellcheck="false"
-          placeholder="Search items, jump to a page…"
+          :placeholder="inputPlaceholder"
           class="min-w-0 flex-1 border-0 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-500 focus:ring-0"
           @keydown="onInputKeydown"
         />
@@ -347,51 +559,56 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
         @click="onBodyClick"
         @mousemove="onBodyMousemove"
       >
-        <div v-if="isAdmin" data-fx-cmd-group="create" class="mb-2">
-          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Create</p>
-          <div class="space-y-px" role="listbox" aria-label="Create">
+        <div v-if="contextCommands.length" data-fx-cmd-group="context" class="mb-2">
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">On this page</p>
+          <div class="space-y-px" role="listbox" aria-label="On this page">
             <button
+              v-for="cmd in contextCommands"
+              :key="cmd.id"
               type="button"
               data-cmd-static
-              data-create="item"
-              data-keywords="new item add create"
+              :data-keywords="cmd.keywords"
+              :data-href="cmd.href"
+              :data-cmd-action="cmd.action"
+              :data-clipboard="cmd.clipboard"
+              :data-external-href="cmd.externalHref"
+              :data-download-url="cmd.downloadUrl"
+              :data-download-filename="cmd.downloadFilename"
+              :data-items-view-key="cmd.itemsViewKey"
+              :data-items-view-mode="cmd.itemsViewMode"
+              :data-create="cmd.createPreset?.kind"
+              :data-create-location-id="cmd.createPreset?.locationId"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
-                ><FxSvg name="plus" class="h-3.5 w-3.5 shrink-0"
+                ><FxSvg :name="cmd.icon" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">New item</span>
-            </button>
-            <button
-              type="button"
-              data-cmd-static
-              data-create="location"
-              data-keywords="new location place room shelf add create"
-              class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
-            >
-              <span
-                class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
-                ><FxSvg name="plus" class="h-3.5 w-3.5 shrink-0"
-              /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">New location</span>
-            </button>
-            <button
-              type="button"
-              data-cmd-static
-              data-create="label"
-              data-keywords="new label tag add create"
-              class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
-            >
-              <span
-                class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
-                ><FxSvg name="plus" class="h-3.5 w-3.5 shrink-0"
-              /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">New label</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ cmd.label }}</span>
             </button>
           </div>
         </div>
-        <div data-fx-cmd-group="go" :class="['mb-2', isAdmin ? 'border-t border-zinc-400/15 pt-2' : '']">
+        <div v-if="isAdmin" data-fx-cmd-group="create" :class="['mb-2', contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
+          <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Create</p>
+          <div class="space-y-px" role="listbox" aria-label="Create">
+            <button
+              v-for="row in createCommands"
+              :key="row.kind"
+              type="button"
+              data-cmd-static
+              :data-create="row.kind"
+              :data-keywords="row.keywords"
+              class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
+            >
+              <span
+                class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
+                ><FxSvg name="plus" class="h-3.5 w-3.5 shrink-0"
+              /></span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ row.label }}</span>
+            </button>
+          </div>
+        </div>
+        <div data-fx-cmd-group="go" :class="['mb-2', isAdmin || contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
           <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Go to</p>
           <div class="space-y-px" role="listbox" aria-label="Pages">
             <button
