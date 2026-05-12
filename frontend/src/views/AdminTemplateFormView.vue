@@ -3,6 +3,8 @@ import { onMounted, ref, computed } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
+import TemplateFieldsEditor from "../components/TemplateFieldsEditor.vue";
+import { parseTemplateFieldsJson, validateTemplateFields } from "../types/templateFields";
 
 const route = useRoute();
 const router = useRouter();
@@ -33,6 +35,16 @@ onMounted(async () => {
 
 async function save() {
   err.value = "";
+  const parsed = parseTemplateFieldsJson(fieldsJson.value);
+  if (!parsed.ok) {
+    err.value = parsed.error;
+    return;
+  }
+  const ve = validateTemplateFields(parsed.fields);
+  if (ve) {
+    err.value = ve;
+    return;
+  }
   try {
     if (isNew.value) {
       await postJson("/api/admin/templates", {
@@ -92,9 +104,9 @@ async function del() {
         <label class="fx-label" for="tso">Sort order</label>
         <input id="tso" v-model.number="sortOrder" type="number" class="fx-input w-32" />
       </div>
-      <div>
-        <label class="fx-label" for="tfj">Fields JSON</label>
-        <textarea id="tfj" v-model="fieldsJson" class="fx-input min-h-[220px] font-mono text-xs" spellcheck="false" />
+      <div id="tfe-root">
+        <label class="fx-label">Template fields</label>
+        <TemplateFieldsEditor v-model="fieldsJson" />
       </div>
       <div class="flex gap-2">
         <button type="submit" class="fx-btn-primary">Save</button>

@@ -478,7 +478,7 @@ const openSearchQText = computed(() => (norm(q.value).length > 0 ? ` for “${q.
               type="button"
               data-cmd-static
               data-href="/admin/templates"
-              data-keywords="admin templates item template fields json editor"
+              data-keywords="admin templates item template fields editor"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
