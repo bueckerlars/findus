@@ -39,6 +39,3 @@ Thumbs.db
 
 # Personal / scratch
 .todo.md
-
-# Lockfiles (optional; remove these lines if you want lockfiles tracked)
-package-lock.json
