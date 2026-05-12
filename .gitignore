@@ -7,9 +7,15 @@
 
 # Go
 coverage.out
+coverage/
+vendor/
 
 # Air (hot reload)
 tmp/
+
+# Frontend (Vite / npm)
+frontend/dist/
+node_modules/
 
 # Data (local dev)
 /data/*
@@ -18,14 +24,21 @@ tmp/
 # Env
 .env
 .env.local
+.env.*.local
 
-# Node (Tailwind build)
-node_modules/
-package-lock.json
-
-# IDE
+# IDE / editors
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Personal / scratch
 .todo.md
+
+# Lockfiles (optional; remove these lines if you want lockfiles tracked)
+package-lock.json
