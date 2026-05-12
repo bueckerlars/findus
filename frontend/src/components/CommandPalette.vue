@@ -7,7 +7,6 @@ import FxSvg from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
-import { dispatchItemsViewMode } from "../composables/itemsViewMode";
 import { buildContextCommands } from "./commandPaletteContext";
 
 const router = useRouter();
@@ -24,8 +23,10 @@ const q = ref("");
 const selectedIdx = ref(0);
 const searchItems = ref<{ id: string; name: string; location_name: string }[]>([]);
 const showResultsWrap = ref(false);
+const commandSearchLoading = ref(false);
 let debounceTimer: ReturnType<typeof setTimeout>;
 let fetchAbort: AbortController | null = null;
+let searchReq = 0;
 let lastFocus: Element | null = null;
 
 const COMMAND_CLOSE_FALLBACK_MS = 320;
@@ -124,27 +125,35 @@ async function runSearch(query: string) {
   if (fetchAbort) fetchAbort.abort();
   const nq = norm(query);
   if (!nq) {
+    searchReq++;
+    commandSearchLoading.value = false;
     searchItems.value = [];
     showResultsWrap.value = false;
     filterStatic("");
     clampSelection();
     return;
   }
+  const myReq = ++searchReq;
+  commandSearchLoading.value = true;
   fetchAbort = new AbortController();
   try {
     const data = await api<{ items: { id: string; name: string; location_name: string }[] }>(
       "/api/command-search?q=" + encodeURIComponent(query.trim()),
       { signal: fetchAbort.signal },
     );
+    if (myReq !== searchReq) return;
     const items = data?.items || [];
     filterStatic(query);
     renderSearchItems(items, query);
     clampSelection();
   } catch (e) {
     if ((e as Error).name === "AbortError") return;
+    if (myReq !== searchReq) return;
     filterStatic(query);
     renderSearchItems([], query);
     clampSelection();
+  } finally {
+    if (myReq === searchReq) commandSearchLoading.value = false;
   }
 }
 
@@ -163,6 +172,8 @@ function openPalette() {
   dialog.value?.showModal();
   triggerBtn.value?.setAttribute("aria-expanded", "true");
   q.value = "";
+  searchReq++;
+  commandSearchLoading.value = false;
   filterStatic("");
   searchItems.value = [];
   showResultsWrap.value = false;
@@ -200,7 +211,8 @@ function closePalette() {
     if (d.open) d.close();
   };
 
-  const onTransitionEnd = (e: TransitionEvent) => {
+  const onTransitionEnd = (e: Event) => {
+    if (!(e instanceof TransitionEvent)) return;
     if (e.target !== panel) return;
     if (e.propertyName !== "opacity") return;
     cleanup();
@@ -358,17 +370,6 @@ function handleCommandButton(btn: HTMLElement) {
     closePalette();
     return true;
   }
-  const ivk = btn.getAttribute("data-items-view-key");
-  const ivm = btn.getAttribute("data-items-view-mode");
-  if (ivk && (ivm === "list" || ivm === "gallery")) {
-    lastFocus = null;
-    const d = dialog.value;
-    const apply = () => dispatchItemsViewMode(ivk, ivm);
-    if (d?.open) d.addEventListener("close", () => nextTick(apply), { once: true });
-    else nextTick(apply);
-    closePalette();
-    return true;
-  }
 
   const create = btn.getAttribute("data-create");
   if (create === "item" || create === "location" || create === "label") {
@@ -445,7 +446,7 @@ function onInputKeydown(e: KeyboardEvent) {
 
 function onBodyClick(e: MouseEvent) {
   const btn = (e.target as HTMLElement)?.closest?.(
-    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url]",
   ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   if (!btn.hasAttribute("data-cmd-static") && !btn.hasAttribute("data-cmd-search-hit") && btn.id !== "fx-command-open-search")
@@ -456,7 +457,7 @@ function onBodyClick(e: MouseEvent) {
 
 function onBodyMousemove(e: MouseEvent) {
   const btn = (e.target as HTMLElement)?.closest?.(
-    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url], [data-items-view-key]",
+    "[data-href], [data-create], [data-cmd-action], [data-clipboard], [data-external-href], [data-download-url]",
   ) as HTMLElement | null;
   if (!btn || !dialog.value?.contains(btn)) return;
   const items = visibleItems();
@@ -574,8 +575,6 @@ const createCommands = computed(() =>
               :data-external-href="cmd.externalHref"
               :data-download-url="cmd.downloadUrl"
               :data-download-filename="cmd.downloadFilename"
-              :data-items-view-key="cmd.itemsViewKey"
-              :data-items-view-mode="cmd.itemsViewMode"
               :data-create="cmd.createPreset?.kind"
               :data-create-location-id="cmd.createPreset?.locationId"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
@@ -726,27 +725,49 @@ const createCommands = computed(() =>
           :class="{ hidden: !showResultsWrap }"
         >
           <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Items</p>
-          <div id="fx-command-search-results" class="space-y-px" role="listbox" aria-label="Matching items">
-            <button
-              v-for="it in searchItems"
-              :key="it.id"
-              type="button"
-              data-cmd-search-hit
-              :data-href="'/items/' + it.id"
-              class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
-            >
-              <span
-                class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
-                ><FxSvg name="cube" class="h-3.5 w-3.5 shrink-0"
-              /></span>
-              <span class="min-w-0 flex-1">
-                <span class="block truncate font-medium text-zinc-900">{{ it.name }}</span>
-                <span class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] font-medium leading-snug text-zinc-500">
-                  <FxSvg name="mapPin" class="h-3 w-3 shrink-0 text-sky-600/90" aria-hidden="true" />
-                  <span class="truncate">{{ it.location_name }}</span>
+          <div
+            id="fx-command-search-results"
+            class="space-y-px"
+            role="listbox"
+            aria-label="Matching items"
+            :aria-busy="commandSearchLoading && norm(q).length > 0"
+          >
+            <template v-if="commandSearchLoading && norm(q).length > 0">
+              <div
+                v-for="n in 3"
+                :key="'cmd-sk-' + n"
+                class="fx-command-item flex w-full items-center gap-2 rounded-lg px-2 py-1.5"
+                aria-hidden="true"
+              >
+                <span class="flex h-7 w-7 shrink-0 animate-pulse rounded-md bg-zinc-200/80"></span>
+                <span class="min-w-0 flex-1 space-y-1.5">
+                  <span class="block h-3.5 w-[min(12rem,55%)] animate-pulse rounded bg-zinc-200/90"></span>
+                  <span class="block h-3 w-[min(9rem,45%)] animate-pulse rounded bg-zinc-200/70"></span>
                 </span>
-              </span>
-            </button>
+              </div>
+            </template>
+            <template v-else>
+              <button
+                v-for="it in searchItems"
+                :key="it.id"
+                type="button"
+                data-cmd-search-hit
+                :data-href="'/items/' + it.id"
+                class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
+              >
+                <span
+                  class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
+                  ><FxSvg name="cube" class="h-3.5 w-3.5 shrink-0"
+                /></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate font-medium text-zinc-900">{{ it.name }}</span>
+                  <span class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] font-medium leading-snug text-zinc-500">
+                    <FxSvg name="mapPin" class="h-3 w-3 shrink-0 text-sky-600/90" aria-hidden="true" />
+                    <span class="truncate">{{ it.location_name }}</span>
+                  </span>
+                </span>
+              </button>
+            </template>
           </div>
           <button
             id="fx-command-open-search"

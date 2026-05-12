@@ -17,9 +17,6 @@ export type ContextCommand = {
   /** Trigger file download for same-origin PNG URL. */
   downloadUrl?: string;
   downloadFilename?: string;
-  /** Scoped list/gallery layout (see `itemsViewMode` composable keys). */
-  itemsViewKey?: string;
-  itemsViewMode?: "list" | "gallery";
   /** Open create modal with preset (same as page buttons). */
   createPreset?: { kind: "item"; locationId: string };
 };
@@ -227,24 +224,6 @@ export function buildContextCommands(route: RouteLocationNormalizedLoaded, d: Co
 
   if (path === "/items") {
     out.push(
-      {
-        id: "ctx-items-gallery",
-        label: "Items: gallery view",
-        keywords: "gallery grid cards layout",
-        icon: "viewGrid",
-        itemsViewKey: "page_items",
-        itemsViewMode: "gallery",
-        action: "items-view-mode",
-      },
-      {
-        id: "ctx-items-list",
-        label: "Items: list view",
-        keywords: "list rows layout",
-        icon: "viewList",
-        itemsViewKey: "page_items",
-        itemsViewMode: "list",
-        action: "items-view-mode",
-      },
       { id: "ctx-items-search", label: "Open search", keywords: "search find lookup filter", icon: "magnifyingGlass", href: "/search" },
       { id: "ctx-items-locations", label: "Locations", keywords: "places rooms map", icon: "mapPin", href: "/locations" },
     );
@@ -253,24 +232,6 @@ export function buildContextCommands(route: RouteLocationNormalizedLoaded, d: Co
 
   if (path === "/") {
     out.push(
-      {
-        id: "ctx-home-recent-gallery",
-        label: "Recent items: gallery",
-        keywords: "home recent gallery grid",
-        icon: "viewGrid",
-        itemsViewKey: "home_recent_items",
-        itemsViewMode: "gallery",
-        action: "items-view-mode",
-      },
-      {
-        id: "ctx-home-recent-list",
-        label: "Recent items: list",
-        keywords: "home recent list rows",
-        icon: "viewList",
-        itemsViewKey: "home_recent_items",
-        itemsViewMode: "list",
-        action: "items-view-mode",
-      },
       { id: "ctx-home-search", label: "Open search", keywords: "search find lookup filter", icon: "magnifyingGlass", href: "/search" },
       { id: "ctx-home-items", label: "All items", keywords: "items inventory", icon: "cube", href: "/items" },
       { id: "ctx-home-locations", label: "All locations", keywords: "locations map places", icon: "mapPin", href: "/locations" },
@@ -287,24 +248,6 @@ export function buildContextCommands(route: RouteLocationNormalizedLoaded, d: Co
         keywords: "focus type query input cursor",
         icon: "magnifyingGlass",
         action: "focus:#q",
-      },
-      {
-        id: "ctx-search-gallery",
-        label: "Results: gallery view",
-        keywords: "gallery grid layout",
-        icon: "viewGrid",
-        itemsViewKey: "page_search",
-        itemsViewMode: "gallery",
-        action: "items-view-mode",
-      },
-      {
-        id: "ctx-search-list",
-        label: "Results: list view",
-        keywords: "list rows layout",
-        icon: "viewList",
-        itemsViewKey: "page_search",
-        itemsViewMode: "list",
-        action: "items-view-mode",
       },
       { id: "ctx-search-home", label: "Home", keywords: "dashboard start", icon: "home", href: "/" },
       { id: "ctx-search-items", label: "All items", keywords: "items browse", icon: "cube", href: "/items" },
