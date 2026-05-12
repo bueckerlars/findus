@@ -1,0 +1,575 @@
+/**
+ * When html[data-fx-scheme="dark"] is set (see useFxTheme), remap common Tailwind
+ * zinc / white utilities so the Vue templates read correctly without per-file dark: classes.
+ */
+
+html[data-fx-scheme="dark"] {
+  color-scheme: dark;
+}
+
+/* ---- Typography (zinc) ---- */
+html[data-fx-scheme="dark"] .text-zinc-950 {
+  color: rgb(250 250 250);
+}
+html[data-fx-scheme="dark"] .text-zinc-900 {
+  color: rgb(244 244 245);
+}
+html[data-fx-scheme="dark"] .text-zinc-800 {
+  color: rgb(228 228 231);
+}
+html[data-fx-scheme="dark"] .text-zinc-700 {
+  color: rgb(212 212 216);
+}
+html[data-fx-scheme="dark"] .text-zinc-600 {
+  color: rgb(161 161 170);
+}
+html[data-fx-scheme="dark"] .text-zinc-500 {
+  color: rgb(161 161 170);
+}
+html[data-fx-scheme="dark"] .text-zinc-400 {
+  color: rgb(113 113 122);
+}
+html[data-fx-scheme="dark"] .text-zinc-300 {
+  color: rgb(82 82 91);
+}
+
+/* ---- Sky text hovers ---- */
+html[data-fx-scheme="dark"] .text-sky-600 {
+  color: rgb(125 211 252);
+}
+html[data-fx-scheme="dark"] .text-sky-700 {
+  color: rgb(186 230 253);
+}
+html[data-fx-scheme="dark"] .text-sky-800 {
+  color: rgb(224 242 254);
+}
+html[data-fx-scheme="dark"] .text-sky-900 {
+  color: rgb(224 242 254);
+}
+html[data-fx-scheme="dark"] .text-sky-950 {
+  color: rgb(240 249 255);
+}
+
+html[data-fx-scheme="dark"] .hover\:text-sky-700:hover {
+  color: rgb(186 230 253);
+}
+html[data-fx-scheme="dark"] .hover\:text-sky-800:hover {
+  color: rgb(186 230 253);
+}
+html[data-fx-scheme="dark"] .hover\:text-sky-900:hover {
+  color: rgb(224 242 254);
+}
+
+html[data-fx-scheme="dark"] .group:hover .group-hover\:text-sky-900 {
+  color: rgb(186 230 253);
+}
+html[data-fx-scheme="dark"] .group:hover .group-hover\:text-sky-950 {
+  color: rgb(224 242 254);
+}
+
+html[data-fx-scheme="dark"] .group:hover .group-hover\:text-zinc-800 {
+  color: rgb(228 228 231);
+}
+html[data-fx-scheme="dark"] .group:hover .group-hover\:text-zinc-500 {
+  color: rgb(161 161 170);
+}
+
+html[data-fx-scheme="dark"] .placeholder\:text-zinc-400::placeholder {
+  color: rgb(113 113 122);
+}
+
+/* ---- Surfaces ---- */
+html[data-fx-scheme="dark"] .bg-white {
+  background-color: rgb(24 24 27);
+}
+html[data-fx-scheme="dark"] .bg-white\/95 {
+  background-color: rgb(24 24 27 / 0.95);
+}
+html[data-fx-scheme="dark"] .bg-white\/90 {
+  background-color: rgb(24 24 27 / 0.9);
+}
+html[data-fx-scheme="dark"] .bg-white\/70 {
+  background-color: rgb(24 24 27 / 0.7);
+}
+html[data-fx-scheme="dark"] .bg-white\/60 {
+  background-color: rgb(24 24 27 / 0.6);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50 {
+  background-color: rgb(39 39 42);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50\/80 {
+  background-color: rgb(39 39 42 / 0.8);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50\/90 {
+  background-color: rgb(39 39 42 / 0.9);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50\/50 {
+  background-color: rgb(39 39 42 / 0.5);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50\/60 {
+  background-color: rgb(39 39 42 / 0.6);
+}
+html[data-fx-scheme="dark"] .bg-zinc-50\/40 {
+  background-color: rgb(39 39 42 / 0.4);
+}
+html[data-fx-scheme="dark"] .bg-zinc-100 {
+  background-color: rgb(63 63 70);
+}
+html[data-fx-scheme="dark"] .bg-zinc-100\/80 {
+  background-color: rgb(63 63 70 / 0.8);
+}
+html[data-fx-scheme="dark"] .bg-zinc-100\/40 {
+  background-color: rgb(63 63 70 / 0.4);
+}
+html[data-fx-scheme="dark"] .bg-zinc-100\/90 {
+  background-color: rgb(63 63 70 / 0.9);
+}
+html[data-fx-scheme="dark"] .bg-zinc-200\/90 {
+  background-color: rgb(82 82 91 / 0.9);
+}
+
+html[data-fx-scheme="dark"] .from-zinc-50 {
+  --tw-gradient-from: rgb(39 39 42) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(39 39 42 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+html[data-fx-scheme="dark"] .to-zinc-100 {
+  --tw-gradient-to: rgb(63 63 70) var(--tw-gradient-to-position);
+}
+html[data-fx-scheme="dark"] .to-zinc-100\/35 {
+  --tw-gradient-to: rgb(63 63 70 / 0.35) var(--tw-gradient-to-position);
+}
+html[data-fx-scheme="dark"] .from-zinc-50\/90 {
+  --tw-gradient-from: rgb(39 39 42 / 0.9) var(--tw-gradient-from-position);
+}
+html[data-fx-scheme="dark"] .from-sky-50\/90 {
+  --tw-gradient-from: rgb(24 24 27 / 0.94) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(24 24 27 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+html[data-fx-scheme="dark"] .via-white {
+  --tw-gradient-via: rgb(39 39 42) var(--tw-gradient-via-position);
+}
+html[data-fx-scheme="dark"] .to-sky-50\/40 {
+  --tw-gradient-to: rgb(30 41 59 / 0.5) var(--tw-gradient-to-position);
+}
+html[data-fx-scheme="dark"] .to-indigo-50\/40 {
+  --tw-gradient-to: rgb(30 27 75 / 0.22) var(--tw-gradient-to-position);
+}
+html[data-fx-scheme="dark"] .from-zinc-100 {
+  --tw-gradient-from: rgb(63 63 70) var(--tw-gradient-from-position);
+}
+
+/* ---- Borders / divide / ring ---- */
+html[data-fx-scheme="dark"] .border-zinc-100 {
+  border-color: rgb(39 39 42);
+}
+html[data-fx-scheme="dark"] .border-zinc-100\/90 {
+  border-color: rgb(39 39 42 / 0.9);
+}
+html[data-fx-scheme="dark"] .border-zinc-200 {
+  border-color: rgb(63 63 70);
+}
+html[data-fx-scheme="dark"] .border-zinc-200\/80 {
+  border-color: rgb(63 63 70 / 0.8);
+}
+html[data-fx-scheme="dark"] .border-zinc-200\/90 {
+  border-color: rgb(63 63 70 / 0.9);
+}
+html[data-fx-scheme="dark"] .border-zinc-200\/60 {
+  border-color: rgb(63 63 70 / 0.6);
+}
+html[data-fx-scheme="dark"] .border-zinc-300 {
+  border-color: rgb(82 82 91);
+}
+html[data-fx-scheme="dark"] .border-zinc-300\/90 {
+  border-color: rgb(82 82 91 / 0.9);
+}
+html[data-fx-scheme="dark"] .border-dashed.border-zinc-200,
+html[data-fx-scheme="dark"] .border-zinc-200.border-dashed {
+  border-color: rgb(63 63 70);
+}
+
+html[data-fx-scheme="dark"] .divide-zinc-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(39 39 42);
+}
+
+html[data-fx-scheme="dark"] .ring-zinc-100\/80 {
+  --tw-ring-color: rgb(63 63 70 / 0.8);
+}
+html[data-fx-scheme="dark"] .ring-white {
+  --tw-ring-color: rgb(63 63 70);
+}
+html[data-fx-scheme="dark"] .ring-sky-200\/80 {
+  --tw-ring-color: rgb(56 189 248 / 0.35);
+}
+html[data-fx-scheme="dark"] .ring-emerald-200\/80 {
+  --tw-ring-color: rgb(52 211 153 / 0.35);
+}
+
+html[data-fx-scheme="dark"] .ring-zinc-200\/70 {
+  --tw-ring-color: rgb(63 63 70 / 0.7);
+}
+html[data-fx-scheme="dark"] .ring-zinc-200\/80 {
+  --tw-ring-color: rgb(63 63 70 / 0.8);
+}
+html[data-fx-scheme="dark"] .ring-zinc-300\/80 {
+  --tw-ring-color: rgb(82 82 91 / 0.8);
+}
+html[data-fx-scheme="dark"] .ring-white\/90 {
+  --tw-ring-color: rgb(63 63 70 / 0.9);
+}
+html[data-fx-scheme="dark"] .ring-white\/20 {
+  --tw-ring-color: rgb(255 255 255 / 0.12);
+}
+
+html[data-fx-scheme="dark"] .ring-zinc-950\/\[0\.03\] {
+  --tw-ring-color: rgb(255 255 255 / 0.06);
+}
+html[data-fx-scheme="dark"] .ring-zinc-950\/\[0\.04\] {
+  --tw-ring-color: rgb(255 255 255 / 0.08);
+}
+html[data-fx-scheme="dark"] .ring-zinc-950\/\[0\.05\] {
+  --tw-ring-color: rgb(255 255 255 / 0.08);
+}
+html[data-fx-scheme="dark"] .ring-zinc-950\/5 {
+  --tw-ring-color: rgb(255 255 255 / 0.06);
+}
+
+/* ---- Sky soft fills ---- */
+html[data-fx-scheme="dark"] .bg-sky-50 {
+  background-color: rgb(30 41 59);
+}
+html[data-fx-scheme="dark"] .bg-sky-50\/80 {
+  background-color: rgb(30 41 59 / 0.8);
+}
+html[data-fx-scheme="dark"] .bg-sky-50\/70 {
+  background-color: rgb(30 41 59 / 0.7);
+}
+html[data-fx-scheme="dark"] .bg-sky-50\/50 {
+  background-color: rgb(30 41 59 / 0.5);
+}
+html[data-fx-scheme="dark"] .hover\:bg-sky-50\/80:hover {
+  background-color: rgb(30 41 59 / 0.85);
+}
+html[data-fx-scheme="dark"] .hover\:bg-sky-50\/70:hover {
+  background-color: rgb(30 41 59 / 0.75);
+}
+html[data-fx-scheme="dark"] .hover\:bg-sky-50\/50:hover {
+  background-color: rgb(30 41 59 / 0.55);
+}
+html[data-fx-scheme="dark"] .hover\:border-sky-200:hover {
+  border-color: rgb(56 189 248 / 0.45);
+}
+html[data-fx-scheme="dark"] .hover\:border-sky-200\/80:hover {
+  border-color: rgb(56 189 248 / 0.4);
+}
+html[data-fx-scheme="dark"] .hover\:border-sky-300:hover {
+  border-color: rgb(56 189 248 / 0.55);
+}
+html[data-fx-scheme="dark"] .hover\:ring-sky-200\/70:hover {
+  --tw-ring-color: rgb(56 189 248 / 0.35);
+}
+
+html[data-fx-scheme="dark"] .focus\:border-sky-400:focus {
+  border-color: rgb(56 189 248);
+}
+html[data-fx-scheme="dark"] .focus\:ring-sky-100:focus {
+  --tw-ring-color: rgb(30 58 86 / 0.9);
+}
+
+html[data-fx-scheme="dark"] .focus-visible\:ring-offset-zinc-50:focus-visible {
+  --tw-ring-offset-color: rgb(24 24 27);
+}
+
+/* ---- Amber / emerald chips (home “Updated”, profile status, alerts) ---- */
+html[data-fx-scheme="dark"] .bg-amber-50 {
+  background-color: rgb(69 26 3 / 0.55);
+}
+html[data-fx-scheme="dark"] .bg-amber-50\/80 {
+  background-color: rgb(69 26 3 / 0.42);
+}
+html[data-fx-scheme="dark"] .text-amber-800 {
+  color: rgb(253 230 138);
+}
+html[data-fx-scheme="dark"] .text-amber-900 {
+  color: rgb(254 243 199);
+}
+html[data-fx-scheme="dark"] .border-amber-200 {
+  border-color: rgb(180 83 9 / 0.42);
+}
+
+html[data-fx-scheme="dark"] .bg-emerald-50 {
+  background-color: rgb(6 78 59 / 0.45);
+}
+html[data-fx-scheme="dark"] .text-emerald-800 {
+  color: rgb(167 243 208);
+}
+
+html[data-fx-scheme="dark"] .hover\:bg-white:hover {
+  background-color: rgb(39 39 42);
+}
+
+/* ---- Red soft (errors / destructive hovers) ---- */
+html[data-fx-scheme="dark"] .hover\:bg-red-50:hover {
+  background-color: rgb(69 10 10 / 0.5);
+}
+html[data-fx-scheme="dark"] .hover\:bg-red-50\/90:hover {
+  background-color: rgb(69 10 10 / 0.55);
+}
+html[data-fx-scheme="dark"] .hover\:text-red-700:hover {
+  color: rgb(252 165 165);
+}
+html[data-fx-scheme="dark"] .hover\:text-red-800:hover {
+  color: rgb(254 202 202);
+}
+html[data-fx-scheme="dark"] .text-red-700\/90 {
+  color: rgb(252 165 165 / 0.95);
+}
+
+/* ---- fx-icon ---- */
+html[data-fx-scheme="dark"] .fx-icon {
+  color: rgb(161 161 170);
+}
+
+/* ---- fx-* @apply-only surfaces (compiled CSS has no .bg-white class on the element) ---- */
+html[data-fx-scheme="dark"] .fx-card {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.85);
+  --tw-ring-color: rgb(255 255 255 / 0.06);
+}
+
+html[data-fx-scheme="dark"] .fx-label {
+  color: rgb(212 212 216);
+}
+
+html[data-fx-scheme="dark"] .fx-input {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70);
+  color: rgb(244 244 245);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.22);
+}
+
+html[data-fx-scheme="dark"] .fx-btn-secondary {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.95);
+  color: rgb(228 228 231);
+}
+html[data-fx-scheme="dark"] .fx-btn-secondary:hover {
+  background-color: rgb(39 39 42);
+  border-color: rgb(82 82 91);
+  color: rgb(244 244 245);
+}
+
+html[data-fx-scheme="dark"] .fx-icon-btn {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.95);
+  color: rgb(212 212 216);
+}
+html[data-fx-scheme="dark"] .fx-icon-btn:hover {
+  background-color: rgb(39 39 42);
+  border-color: rgb(82 82 91);
+  color: rgb(244 244 245);
+}
+
+html[data-fx-scheme="dark"] .fx-btn-danger {
+  background-color: rgb(69 10 10 / 0.45);
+  border-color: rgb(127 29 29 / 0.75);
+  color: rgb(254 202 202);
+}
+html[data-fx-scheme="dark"] .fx-btn-danger:hover {
+  background-color: rgb(127 29 29 / 0.55);
+  border-color: rgb(185 28 28);
+  color: rgb(254 226 226);
+}
+
+html[data-fx-scheme="dark"] .fx-icon-btn-danger {
+  background-color: rgb(69 10 10 / 0.45);
+  border-color: rgb(127 29 29 / 0.75);
+  color: rgb(252 165 165);
+}
+html[data-fx-scheme="dark"] .fx-icon-btn-danger:hover {
+  background-color: rgb(127 29 29 / 0.5);
+  border-color: rgb(185 28 28);
+  color: rgb(254 202 202);
+}
+
+html[data-fx-scheme="dark"] .fx-sidebar-link {
+  color: rgb(212 212 216);
+}
+html[data-fx-scheme="dark"] .fx-sidebar-link:hover {
+  background-color: rgb(39 39 42 / 0.95);
+  color: rgb(244 244 245);
+}
+html[data-fx-scheme="dark"] .fx-sidebar-link-icon {
+  background-color: rgb(39 39 42 / 0.95);
+  color: rgb(161 161 170);
+}
+html[data-fx-scheme="dark"] .fx-sidebar-link:hover .fx-sidebar-link-icon {
+  background-color: rgb(24 24 27);
+  --tw-ring-color: rgb(63 63 70 / 0.85);
+  color: rgb(var(--fx-sidebar-hover-icon-text-rgb) / 1);
+}
+
+html[data-fx-scheme="dark"] .fx-home-stat-icon {
+  background-image: linear-gradient(to bottom right, rgb(39 39 42), rgb(63 63 70));
+  color: rgb(161 161 170);
+  --tw-ring-color: rgb(82 82 91 / 0.65);
+}
+
+html[data-fx-scheme="dark"] .items-view-mode-btn:hover {
+  background-color: rgb(24 24 27);
+  color: rgb(244 244 245);
+}
+html[data-fx-scheme="dark"] .items-view-scope[data-items-view="list"] .items-view-mode-btn[data-items-view-mode="list"],
+html[data-fx-scheme="dark"] .items-view-scope[data-items-view="gallery"] .items-view-mode-btn[data-items-view-mode="gallery"] {
+  background-color: rgb(24 24 27);
+  --tw-ring-color: rgb(63 63 70 / 0.85);
+  color: rgb(var(--fx-accent-text-rgb) / 1);
+}
+
+html[data-fx-scheme="dark"] .fx-home-label-chip {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.9);
+  color: rgb(244 244 245);
+  --tw-ring-color: rgb(255 255 255 / 0.05);
+}
+
+html[data-fx-scheme="dark"] .fx-list-row {
+  background-color: rgb(24 24 27);
+  border-color: rgb(39 39 42 / 0.95);
+}
+
+html[data-fx-scheme="dark"] .fx-item-gallery-fab {
+  background-color: rgb(24 24 27 / 0.96);
+  --tw-ring-color: rgb(63 63 70 / 0.85);
+}
+
+html[data-fx-scheme="dark"] .fx-command-panel {
+  color: rgb(212 212 216);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-card {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.9);
+  --tw-ring-color: rgb(255 255 255 / 0.06);
+}
+
+html[data-fx-scheme="dark"] .fx-item-gallery-badge {
+  background-color: rgb(39 39 42);
+  color: rgb(212 212 216);
+  border-color: transparent;
+}
+
+html[data-fx-scheme="dark"] .fx-item-detail-photo-slot {
+  --tw-ring-color: rgb(63 63 70 / 0.65);
+}
+
+/* ---- Profile theme tiles ---- */
+html[data-fx-scheme="dark"] .fx-profile-theme-tile {
+  border-color: rgb(63 63 70 / 0.95);
+  background-color: rgb(24 24 27);
+}
+html[data-fx-scheme="dark"] .fx-profile-theme-tile:hover {
+  border-color: rgb(82 82 91);
+  background-color: rgb(39 39 42 / 0.85);
+}
+
+/* ---- Guest auth shell ---- */
+html[data-fx-scheme="dark"] .fx-auth-shell {
+  background-image: linear-gradient(
+    to bottom,
+    rgb(39 39 42),
+    rgb(24 24 27),
+    rgb(30 41 59 / 0.35)
+  );
+}
+
+/* ---- fx-* rows / command glass (still use light gradients in CSS) ---- */
+html[data-fx-scheme="dark"] .fx-list-row:hover {
+  background-image: linear-gradient(
+    to right,
+    rgb(var(--fx-accent-soft-rgb) / 0.42),
+    rgb(24 24 27 / 1)
+  );
+}
+
+html[data-fx-scheme="dark"] .fx-home-label-chip:hover {
+  background-image: linear-gradient(
+    to right,
+    rgb(var(--fx-accent-soft-rgb) / 0.55),
+    rgb(24 24 27 / 1)
+  );
+}
+
+html[data-fx-scheme="dark"] .fx-command-glass {
+  border-color: rgba(82, 82, 91, 0.55);
+  background-color: rgba(24, 24, 27, 0.88);
+  background-image: linear-gradient(
+    168deg,
+    rgba(39, 39, 42, 0.95) 0%,
+    rgba(24, 24, 27, 0.92) 45%,
+    rgba(9, 9, 11, 0.9) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    0 20px 48px rgba(0, 0, 0, 0.45);
+}
+
+/* ⌘K trigger: lift off dark page + accent rim (panel still uses .fx-command-glass only) */
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass {
+  border-color: rgb(var(--fx-accent-muted-rgb) / 0.55);
+  background-color: rgba(52, 52, 58, 0.97);
+  background-image:
+    linear-gradient(
+      168deg,
+      rgba(82, 82, 91, 0.72) 0%,
+      rgba(52, 52, 58, 0.97) 38%,
+      rgba(32, 32, 36, 0.99) 100%
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/%3E%3C/svg%3E");
+  background-size: auto, 96px 96px;
+  background-repeat: no-repeat, repeat;
+  background-blend-mode: normal, soft-light;
+  color: rgb(252 252 252);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgb(var(--fx-accent-rgb) / 0.34),
+    0 2px 10px rgba(0, 0, 0, 0.45),
+    0 14px 36px rgba(0, 0, 0, 0.5),
+    0 0 56px -8px rgb(var(--fx-accent-rgb) / 0.3);
+}
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass .fx-command-trigger-icon,
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass .fx-command-kbd {
+  color: rgb(250 250 250);
+}
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover {
+  border-color: rgb(var(--fx-accent-muted-rgb) / 0.72);
+  background-color: rgba(72, 72, 78, 0.98);
+  background-image:
+    linear-gradient(
+      168deg,
+      rgba(100, 100, 108, 0.78) 0%,
+      rgba(68, 68, 74, 0.98) 38%,
+      rgba(42, 42, 48, 1) 100%
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+  background-size: auto, 96px 96px;
+  background-repeat: no-repeat, repeat;
+  background-blend-mode: normal, soft-light;
+  color: rgb(255 255 255);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgb(var(--fx-accent-rgb) / 0.42),
+    0 3px 12px rgba(0, 0, 0, 0.4),
+    0 16px 40px rgba(0, 0, 0, 0.52),
+    0 0 64px -6px rgb(var(--fx-accent-rgb) / 0.38);
+}
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover .fx-command-trigger-icon,
+html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover .fx-command-kbd {
+  color: rgb(255 255 255);
+}

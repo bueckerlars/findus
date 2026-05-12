@@ -24,7 +24,12 @@ CREATE TABLE locations (
 CREATE INDEX idx_locations_parent ON locations(parent_id);
 
 INSERT INTO locations (id, name, parent_id, description, qr_token, created_at, updated_at) VALUES
-('loc_default', 'Default', NULL, 'Starter location - add more under Locations.', 'seed00000001locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z');
+('loc_basement', 'Basement', NULL, '', 'seed00000001locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z'),
+('loc_office', 'Office', NULL, '', 'seed00000002locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z'),
+('loc_livingroom', 'Livingroom', NULL, '', 'seed00000003locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z'),
+('loc_bedroom', 'Bedroom', NULL, '', 'seed00000004locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z'),
+('loc_bathroom', 'Bathroom', NULL, '', 'seed00000005locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z'),
+('loc_garage', 'Garage', NULL, '', 'seed00000006locqr', '2020-01-01T00:00:00Z', '2020-01-01T00:00:00Z');
 
 CREATE TABLE items (
     id TEXT PRIMARY KEY,

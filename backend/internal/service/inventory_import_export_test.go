@@ -50,7 +50,7 @@ func TestInventoryExportImportRoundtripJSON(t *testing.T) {
 	t.Cleanup(func() { _ = db1.Close() })
 
 	inv1 := newTestInventory(db1)
-	parent := "loc_default"
+	parent := "loc_basement"
 	_, err = inv1.CreateLocation(ctx, "ZetaImportChild", "import test child", &parent)
 	require.NoError(t, err)
 
@@ -110,7 +110,7 @@ func TestInventoryImportItemWithLabels(t *testing.T) {
 	require.NotEmpty(t, lbs)
 	labelID := lbs[0].ID
 
-	parent := "loc_default"
+	parent := "loc_basement"
 	loc, err := inv1.CreateLocation(ctx, "LabelImportLoc", "x", &parent)
 	require.NoError(t, err)
 

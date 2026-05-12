@@ -16,6 +16,7 @@ type apiUser struct {
 	Email      string    `json:"email"`
 	Role       string    `json:"role"`
 	IsActive   bool      `json:"is_active"`
+	Theme      string    `json:"theme"`
 	AvatarPath *string   `json:"avatar_path,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -28,6 +29,7 @@ func apiUserFrom(u *domain.User) apiUser {
 	return apiUser{
 		ID: u.ID, Username: u.Username, Email: u.Email,
 		Role: string(u.Role), IsActive: u.IsActive,
+		Theme:      domain.NormalizeUITheme(u.UITheme),
 		AvatarPath: u.AvatarPath,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,

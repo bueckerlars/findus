@@ -111,7 +111,7 @@ onMounted(async () => {
                   >
                   <span
                     v-else
-                    class="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
+                    class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
                     >Updated</span
                   >
                 </div>
@@ -170,7 +170,7 @@ onMounted(async () => {
                 >
                 <span
                   v-else
-                  class="inline-flex rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
+                  class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
                   >Updated</span
                 >
               </div>
@@ -207,7 +207,7 @@ onMounted(async () => {
                 >
                 <span
                   v-else
-                  class="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-[1.02]"
+                  class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-[1.02]"
                   >Updated</span
                 >
               </div>

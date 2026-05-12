@@ -49,6 +49,7 @@ func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.Handle("GET /api/home", middleware.RequireAuth(http.HandlerFunc(s.APIHome)))
 	mux.Handle("GET /api/profile", middleware.RequireAuth(http.HandlerFunc(s.APIProfileGet)))
 	mux.Handle("POST /api/profile", middleware.RequireAuth(http.HandlerFunc(s.APIProfilePost)))
+	mux.Handle("PATCH /api/profile/theme", middleware.RequireAuth(http.HandlerFunc(s.APIProfileThemePatch)))
 
 	mux.Handle("GET /api/locations", middleware.RequireAuth(http.HandlerFunc(s.APILocationsList)))
 	mux.Handle("GET /api/locations/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationNew))))

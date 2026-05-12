@@ -127,6 +127,16 @@ func (s *Server) APILocationGet(w http.ResponseWriter, r *http.Request) {
 		s.writeJSONError(w, http.StatusInternalServerError, "server error")
 		return
 	}
+	// Nil slices encode as JSON null; clients expect arrays for list fields.
+	if crumb == nil {
+		crumb = []domain.LocationPathElement{}
+	}
+	if ch == nil {
+		ch = []domain.Location{}
+	}
+	if items == nil {
+		items = []domain.Item{}
+	}
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"location": loc, "breadcrumb": crumb, "children": ch, "items": items,
 		"back_href": backHref, "back_label": backLabel,

@@ -46,9 +46,10 @@ async function load() {
     back_label: string;
   }>("/api/locations/" + id.value);
   loc.value = r.location;
-  children.value = r.children;
-  items.value = r.items;
-  breadcrumb.value = r.breadcrumb;
+  // Backend JSON encodes empty Go slices as null; normalize for template .length / v-for.
+  children.value = r.children ?? [];
+  items.value = r.items ?? [];
+  breadcrumb.value = r.breadcrumb ?? [];
   backHref.value = r.back_href;
   backLabel.value = r.back_label;
 }

@@ -94,6 +94,7 @@ func (a *Auth) Register(ctx context.Context, username, email, password, inviteTo
 		IsActive:     true,
 		CreatedAt:    now,
 		UpdatedAt:    now,
+		UITheme:      domain.DefaultUITheme,
 	}
 	if err := a.Users.Create(ctx, u); err != nil {
 		return nil, err

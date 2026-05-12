@@ -92,6 +92,7 @@ func (a *Admin) CreateUser(ctx context.Context, username, email, password string
 		IsActive:     true,
 		CreatedAt:    now,
 		UpdatedAt:    now,
+		UITheme:      domain.DefaultUITheme,
 	}
 	if err := a.Users.Create(ctx, u); err != nil {
 		return nil, err
