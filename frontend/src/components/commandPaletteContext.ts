@@ -434,6 +434,13 @@ export function buildContextCommands(
         href: "/admin/templates",
       },
       {
+        id: "ctx-admin-label-gen",
+        label: ctxCmd(t, "ctx-admin-label-gen", "l"),
+        keywords: ctxCmd(t, "ctx-admin-label-gen", "k"),
+        icon: "qr",
+        href: "/admin/label-generator",
+      },
+      {
         id: "ctx-admin-home",
         label: ctxCmd(t, "ctx-admin-home", "l"),
         keywords: ctxCmd(t, "ctx-admin-home", "k"),
@@ -466,6 +473,13 @@ export function buildContextCommands(
         keywords: ctxCmd(t, "ctx-settings-tpl", "k"),
         icon: "gear",
         href: "/admin/templates",
+      },
+      {
+        id: "ctx-settings-label-gen",
+        label: ctxCmd(t, "ctx-settings-label-gen", "l"),
+        keywords: ctxCmd(t, "ctx-settings-label-gen", "k"),
+        icon: "qr",
+        href: "/admin/label-generator",
       },
       {
         id: "ctx-settings-home",
@@ -502,6 +516,13 @@ export function buildContextCommands(
         href: "/admin/templates/new",
       },
       {
+        id: "ctx-tpl-label-gen",
+        label: ctxCmd(t, "ctx-tpl-label-gen", "l"),
+        keywords: ctxCmd(t, "ctx-tpl-label-gen", "k"),
+        icon: "qr",
+        href: "/admin/label-generator",
+      },
+      {
         id: "ctx-tpl-home",
         label: ctxCmd(t, "ctx-tpl-home", "l"),
         keywords: ctxCmd(t, "ctx-tpl-home", "k"),
@@ -520,6 +541,33 @@ export function buildContextCommands(
       icon: "gear",
       href: "/admin/templates",
     });
+    return out;
+  }
+
+  if (path === "/admin/label-generator") {
+    out.push(
+      {
+        id: "ctx-labelgen-settings",
+        label: ctxCmd(t, "ctx-labelgen-settings", "l"),
+        keywords: ctxCmd(t, "ctx-labelgen-settings", "k"),
+        icon: "gear",
+        href: "/admin/settings",
+      },
+      {
+        id: "ctx-labelgen-users",
+        label: ctxCmd(t, "ctx-labelgen-users", "l"),
+        keywords: ctxCmd(t, "ctx-labelgen-users", "k"),
+        icon: "users",
+        href: "/admin/users",
+      },
+      {
+        id: "ctx-labelgen-tpl",
+        label: ctxCmd(t, "ctx-labelgen-tpl", "l"),
+        keywords: ctxCmd(t, "ctx-labelgen-tpl", "k"),
+        icon: "gear",
+        href: "/admin/templates",
+      },
+    );
     return out;
   }
 

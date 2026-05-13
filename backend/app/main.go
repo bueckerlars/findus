@@ -54,6 +54,7 @@ func main() {
 	users := sqlite.NewUserRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	items := sqlite.NewItemRepo(db)
+	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
 	templates := sqlite.NewItemTemplateRepo(db)
 	invites := sqlite.NewInviteRepo(db)
 	settings := sqlite.NewSettingsRepo(db)
@@ -62,26 +63,27 @@ func main() {
 	adminSvc := &service.Admin{Users: users, Settings: settings, Invites: invites}
 	labels := sqlite.NewLabelRepo(db)
 	attachments := sqlite.NewItemAttachmentRepo(db)
-	invSvc := &service.Inventory{Locations: locs, Items: items, Labels: labels, Templates: templates, Settings: settings, ItemAttachments: attachments}
+	invSvc := &service.Inventory{Locations: locs, Items: items, ItemQRTokens: itemQRTokens, Labels: labels, Templates: templates, Settings: settings, ItemAttachments: attachments}
 	qrSvc := &service.QR{BaseURL: cfg.BaseURL}
 
 	srv := &handler.Server{
-		Log:       log,
-		Config:    cfg,
-		DB:        db,
-		Users:     users,
-		Locs:      locs,
-		Items:     items,
-		Labels:    labels,
-		Templates: templates,
-		Invites:   invites,
-		Settings:  settings,
-		Auth:      authSvc,
-		Admin:     adminSvc,
-		Inventory: invSvc,
-		QR:        qrSvc,
-		Backup:    &service.Backup{DataDir: cfg.DataDir},
-		JWTSecret: jwtSecret,
+		Log:          log,
+		Config:       cfg,
+		DB:           db,
+		Users:        users,
+		Locs:         locs,
+		Items:        items,
+		ItemQRTokens: itemQRTokens,
+		Labels:       labels,
+		Templates:    templates,
+		Invites:      invites,
+		Settings:     settings,
+		Auth:         authSvc,
+		Admin:        adminSvc,
+		Inventory:    invSvc,
+		QR:           qrSvc,
+		Backup:       &service.Backup{DataDir: cfg.DataDir},
+		JWTSecret:    jwtSecret,
 	}
 
 	h, err := srv.Handler()

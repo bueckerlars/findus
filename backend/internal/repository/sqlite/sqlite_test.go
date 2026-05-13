@@ -28,6 +28,11 @@ func TestOpenDBRunsMigrations(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, attTbl)
 
+	var qrResTbl int
+	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='item_qr_token_reservations'`).Scan(&qrResTbl)
+	require.NoError(t, err)
+	require.Equal(t, 1, qrResTbl)
+
 	var tc int
 	err = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM item_templates`).Scan(&tc)
 	require.NoError(t, err)
@@ -55,6 +60,27 @@ func TestOpenDBRunsMigrations(t *testing.T) {
 		_, err = domain.ParseTemplateFieldsJSON([]byte(fj))
 		require.NoError(t, err, id)
 	}
+}
+
+func TestItemQRTokenReservationRepoRoundtrip(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	db, err := sqlite.OpenDB(ctx, dir)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	repo := sqlite.NewItemQRTokenReservationRepo(db)
+	require.NoError(t, repo.Reserve(ctx, "item_0001", "tok_reserved_1"))
+
+	token, ok, err := repo.GetTokenByItemID(ctx, "item_0001")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "tok_reserved_1", token)
+
+	itemID, ok, err := repo.GetItemIDByToken(ctx, "tok_reserved_1")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "item_0001", itemID)
 }
 
 func TestItemRepoSearchFTSMatchQuery(t *testing.T) {

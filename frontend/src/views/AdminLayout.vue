@@ -7,6 +7,7 @@ const route = useRoute();
 const { t } = useI18n();
 const usersActive = computed(() => route.path === "/admin/users");
 const settingsActive = computed(() => route.path === "/admin/settings");
+const labelsActive = computed(() => route.path === "/admin/label-generator");
 const templatesActive = computed(() => route.path.startsWith("/admin/templates"));
 
 function tabClass(active: boolean) {
@@ -33,6 +34,13 @@ function tabClass(active: boolean) {
           :class="tabClass(settingsActive)"
         >
           {{ t("adminLayout.tabSettings") }}
+        </RouterLink>
+        <RouterLink
+          to="/admin/label-generator"
+          class="inline-flex items-center rounded-t-lg border px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+          :class="tabClass(labelsActive)"
+        >
+          {{ t("adminLayout.tabLabelGenerator") }}
         </RouterLink>
         <RouterLink
           to="/admin/templates"

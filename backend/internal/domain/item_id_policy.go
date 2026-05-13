@@ -6,9 +6,6 @@ import (
 	"regexp"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/google/uuid"
-	"github.com/oklog/ulid/v2"
 )
 
 const SettingItemIDPolicy = "item_id_policy"
@@ -17,8 +14,6 @@ const SettingItemIDPolicy = "item_id_policy"
 type ItemIDKind string
 
 const (
-	ItemIDKindULID       ItemIDKind = "ulid"
-	ItemIDKindUUID       ItemIDKind = "uuid"
 	ItemIDKindSequential ItemIDKind = "sequential"
 )
 
@@ -40,25 +35,15 @@ func DefaultItemIDPolicy() ItemIDPolicy {
 	}
 }
 
-// EffectiveKey returns a comparable tuple for "did display/id scheme change" (ignores next_seq drift when kind is not sequential).
+// EffectiveKey returns a comparable tuple for "did display/id scheme change".
 func (p ItemIDPolicy) EffectiveKey() string {
 	p = p.Normalize()
-	switch p.Kind {
-	case ItemIDKindSequential:
-		return string(p.Kind) + "\x00" + p.Prefix + "\x00" + fmt.Sprintf("%d", p.Width)
-	default:
-		return string(p.Kind)
-	}
+	return string(p.Kind) + "\x00" + p.Prefix + "\x00" + fmt.Sprintf("%d", p.Width)
 }
 
 // Normalize fills defaults after JSON parse.
 func (p ItemIDPolicy) Normalize() ItemIDPolicy {
 	switch p.Kind {
-	case ItemIDKindULID, ItemIDKindUUID:
-		if p.NextSeq < 1 {
-			p.NextSeq = 1
-		}
-		return p
 	case ItemIDKindSequential:
 		if p.Width < 1 {
 			p.Width = 1
@@ -84,8 +69,6 @@ const (
 func (p ItemIDPolicy) Validate() error {
 	p = p.Normalize()
 	switch p.Kind {
-	case ItemIDKindULID, ItemIDKindUUID:
-		return nil
 	case ItemIDKindSequential:
 		prefix := strings.TrimSpace(p.Prefix)
 		if utf8.RuneCountInString(prefix) > maxItemIDPolicyPrefixRunes {
@@ -127,12 +110,6 @@ func ItemIDMatchesPolicy(id string, p ItemIDPolicy) bool {
 	}
 	p = p.Normalize()
 	switch p.Kind {
-	case ItemIDKindULID:
-		_, err := ulid.ParseStrict(id)
-		return err == nil
-	case ItemIDKindUUID:
-		_, err := uuid.Parse(id)
-		return err == nil
 	case ItemIDKindSequential:
 		prefix := strings.TrimSpace(p.Prefix)
 		reNew, err := regexp.Compile(fmt.Sprintf(`^%s_\d{%d}$`, regexp.QuoteMeta(prefix), p.Width))
@@ -163,7 +140,7 @@ func ParseItemIDPolicyJSON(raw string) (ItemIDPolicy, error) {
 		return ItemIDPolicy{}, err
 	}
 	switch p.Kind {
-	case ItemIDKindULID, ItemIDKindUUID, ItemIDKindSequential:
+	case ItemIDKindSequential:
 	default:
 		return DefaultItemIDPolicy(), nil
 	}

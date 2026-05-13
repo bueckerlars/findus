@@ -15,9 +15,3 @@ func TestItemIDMatchesPolicy_Sequential(t *testing.T) {
 	require.False(t, domain.ItemIDMatchesPolicy("01ARZ3NDEKTSV4RRFFQ69G5FAV", p))
 	require.False(t, domain.ItemIDMatchesPolicy("item001", p))
 }
-
-func TestItemIDMatchesPolicy_ULID(t *testing.T) {
-	p := domain.ItemIDPolicy{Kind: domain.ItemIDKindULID, NextSeq: 1}
-	require.True(t, domain.ItemIDMatchesPolicy("01ARZ3NDEKTSV4RRFFQ69G5FAV", p))
-	require.False(t, domain.ItemIDMatchesPolicy("item0001", p))
-}
