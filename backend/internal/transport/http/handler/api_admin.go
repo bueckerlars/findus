@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -191,7 +192,6 @@ func (s *Server) APIAdminSettingsItemIDsGet(w http.ResponseWriter, r *http.Reque
 }
 
 type apiAdminItemIDPolicyReq struct {
-	Kind    string  `json:"kind"`
 	Prefix  string  `json:"prefix"`
 	Width   float64 `json:"width"`
 	NextSeq int64   `json:"next_seq,omitempty"` // accepted for forward-compatible clients; ignored here
@@ -205,18 +205,7 @@ func (s *Server) APIAdminSettingsItemIDsPost(w http.ResponseWriter, r *http.Requ
 		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
-	var want domain.ItemIDPolicy
-	switch strings.TrimSpace(strings.ToLower(req.Kind)) {
-	case "ulid":
-		want.Kind = domain.ItemIDKindULID
-	case "uuid":
-		want.Kind = domain.ItemIDKindUUID
-	case "sequential":
-		want.Kind = domain.ItemIDKindSequential
-	default:
-		s.writeJSONError(w, http.StatusBadRequest, "bad kind")
-		return
-	}
+	want := domain.ItemIDPolicy{Kind: domain.ItemIDKindSequential}
 	want.Prefix = strings.TrimSpace(req.Prefix)
 	if req.Width < 0 || req.Width > 64 {
 		s.writeJSONError(w, http.StatusBadRequest, "bad width")
@@ -242,6 +231,47 @@ func (s *Server) APIAdminSettingsItemIDsPost(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/settings"})
+}
+
+type apiAdminLabelGenerateReq struct {
+	From float64 `json:"from"`
+	To   float64 `json:"to"`
+}
+
+func (s *Server) APIAdminLabelsGenerate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req apiAdminLabelGenerateReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	if req.From < 1 || req.To < 1 || math.Trunc(req.From) != req.From || math.Trunc(req.To) != req.To {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid range")
+		return
+	}
+	pol, err := s.Inventory.GetItemIDPolicy(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	gen := service.LabelPDFGenerator{
+		QR:       s.QR,
+		MaxBatch: service.DefaultLabelBatchLimit,
+	}
+	out, err := gen.Generate(ctx, service.LabelPDFInput{
+		From:   int64(req.From),
+		To:     int64(req.To),
+		Policy: pol,
+	})
+	if err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `inline; filename="`+out.Filename+`"`)
+	w.Header().Set("X-Filename", out.Filename)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(out.PDF)
 }
 
 type apiTemplateListRow struct {

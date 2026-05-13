@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/uuid"
-
 	"findus/backend/internal/domain"
 )
 
@@ -132,31 +130,16 @@ func allItemIDsMatchPolicy(items []domain.Item, pol domain.ItemIDPolicy) bool {
 func buildItemIDMigrationRows(items []domain.Item, pol domain.ItemIDPolicy) ([]domain.ItemIDMigration, int64, error) {
 	pol = pol.Normalize()
 	n := len(items)
-	var nextSeq int64
 	rows := make([]domain.ItemIDMigration, 0, n)
-
-	switch pol.Kind {
-	case domain.ItemIDKindULID:
-		nextSeq = 1
-		for _, it := range items {
-			rows = append(rows, itemMigrationRow(it, newID()))
-		}
-	case domain.ItemIDKindUUID:
-		nextSeq = 1
-		for _, it := range items {
-			rows = append(rows, itemMigrationRow(it, uuid.NewString()))
-		}
-	case domain.ItemIDKindSequential:
-		for i, it := range items {
-			seq := int64(i) + 1
-			newID := domain.FormatSequentialID(pol.Prefix, pol.Width, seq)
-			rows = append(rows, itemMigrationRow(it, newID))
-		}
-		nextSeq = int64(n) + 1
-	default:
+	if pol.Kind != domain.ItemIDKindSequential {
 		return nil, 0, fmt.Errorf("%w: kind", domain.ErrValidation)
 	}
-	return rows, nextSeq, nil
+	for i, it := range items {
+		seq := int64(i) + 1
+		newID := domain.FormatSequentialID(pol.Prefix, pol.Width, seq)
+		rows = append(rows, itemMigrationRow(it, newID))
+	}
+	return rows, int64(n) + 1, nil
 }
 
 func itemMigrationRow(it domain.Item, newID string) domain.ItemIDMigration {
@@ -218,16 +201,10 @@ func (s *Inventory) allocateNextItemID(ctx context.Context) (string, error) {
 		return "", err
 	}
 	pol = pol.Normalize()
-	switch pol.Kind {
-	case domain.ItemIDKindULID:
-		return newID(), nil
-	case domain.ItemIDKindUUID:
-		return uuid.NewString(), nil
-	case domain.ItemIDKindSequential:
-		return domain.FormatSequentialID(pol.Prefix, pol.Width, pol.NextSeq), nil
-	default:
-		return newID(), nil
+	if pol.Kind != domain.ItemIDKindSequential {
+		return "", fmt.Errorf("%w: kind", domain.ErrValidation)
 	}
+	return domain.FormatSequentialID(pol.Prefix, pol.Width, pol.NextSeq), nil
 }
 
 func (s *Inventory) sequentialBumpAfterSuccessfulCreate(ctx context.Context, issuedID string) error {
@@ -237,7 +214,7 @@ func (s *Inventory) sequentialBumpAfterSuccessfulCreate(ctx context.Context, iss
 	}
 	pol = pol.Normalize()
 	if pol.Kind != domain.ItemIDKindSequential {
-		return nil
+		return fmt.Errorf("%w: kind", domain.ErrValidation)
 	}
 	expected := domain.FormatSequentialID(pol.Prefix, pol.Width, pol.NextSeq)
 	if issuedID != expected {

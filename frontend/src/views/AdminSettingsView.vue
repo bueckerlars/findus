@@ -7,14 +7,13 @@ import { toast } from "../composables/useToast";
 const { t } = useI18n();
 
 type ItemIdPolicy = {
-  kind: string;
   prefix?: string;
   width?: number;
   next_seq?: number;
 };
 
 const registrationMode = ref("admin_only");
-const itemIdPolicy = ref<ItemIdPolicy>({ kind: "sequential", prefix: "item", width: 4 });
+const itemIdPolicy = ref<ItemIdPolicy>({ prefix: "item", width: 4 });
 const itemCount = ref(0);
 const err = ref("");
 const importJsonRef = ref<HTMLInputElement | null>(null);
@@ -31,7 +30,6 @@ async function load() {
     ]);
     registrationMode.value = reg.registration_mode;
     itemIdPolicy.value = {
-      kind: ids.policy.kind || "sequential",
       prefix: ids.policy.prefix ?? "item",
       width: ids.policy.width && ids.policy.width > 0 ? ids.policy.width : 4,
       next_seq: ids.policy.next_seq,
@@ -58,7 +56,6 @@ async function saveItemIdPolicy() {
   err.value = "";
   try {
     await postJson("/api/admin/settings/item-ids", {
-      kind: itemIdPolicy.value.kind,
       prefix: itemIdPolicy.value.prefix ?? "",
       width: itemIdPolicy.value.width ?? 4,
     });
@@ -216,18 +213,11 @@ async function onImportZip(ev: Event) {
       </p>
       <p class="mt-1 text-xs text-zinc-500">{{ $t("adminSettings.itemsInDb", { n: itemCount }) }}</p>
       <div class="mt-4 flex flex-wrap items-end gap-3">
-        <select v-model="itemIdPolicy.kind" class="fx-input max-w-xs">
-          <option value="sequential">{{ $t("adminSettings.seqDefault") }}</option>
-          <option value="ulid">{{ $t("adminSettings.kindUlid") }}</option>
-          <option value="uuid">{{ $t("adminSettings.kindUuid") }}</option>
-        </select>
-        <template v-if="itemIdPolicy.kind === 'sequential'">
-          <input v-model="itemIdPolicy.prefix" class="fx-input w-40" :placeholder="$t('adminSettings.prefixPlaceholder')" />
-          <label class="flex items-center gap-2 text-sm text-zinc-600">
-            {{ $t("common.width") }}
-            <input v-model.number="itemIdPolicy.width" type="number" min="1" max="12" class="fx-input w-20" />
-          </label>
-        </template>
+        <input v-model="itemIdPolicy.prefix" class="fx-input w-40" :placeholder="$t('adminSettings.prefixPlaceholder')" />
+        <label class="flex items-center gap-2 text-sm text-zinc-600">
+          {{ $t("common.width") }}
+          <input v-model.number="itemIdPolicy.width" type="number" min="1" max="12" class="fx-input w-20" />
+        </label>
         <button type="button" class="fx-btn-primary text-sm" @click="saveItemIdPolicy">{{ $t("common.save") }}</button>
       </div>
     </section>
