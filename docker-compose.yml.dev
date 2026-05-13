@@ -1,7 +1,18 @@
 # Local development: build the image from the Dockerfile in this repo.
 # Usage: docker compose -f docker-compose.yml.dev up --build
 services:
+  # Distroless image runs as nonroot (65532:65532); Docker named volumes are root-owned by default.
+  findus-data-init:
+    image: busybox:1.36
+    volumes:
+      - findus_data:/data
+    command: ["sh", "-c", "chown -R 65532:65532 /data"]
+    restart: "no"
+
   findus:
+    depends_on:
+      findus-data-init:
+        condition: service_completed_successfully
     build: .
     image: findus:dev
     ports:
