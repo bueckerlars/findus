@@ -324,10 +324,16 @@ function goCreate(
   kind: "item" | "location" | "label",
   opts?: { itemLocationId?: string; locationParentId?: string },
 ) {
+  lastFocus = null;
+  const d = dialog.value;
+  const run = () => {
+    if (kind === "item") openCreateItem(opts?.itemLocationId ? { locationId: opts.itemLocationId } : undefined);
+    else if (kind === "location") openCreateLocation(opts?.locationParentId ? { parentId: opts.locationParentId } : undefined);
+    else openCreateLabel();
+  };
+  if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+  else nextTick(run);
   closePalette();
-  if (kind === "item") openCreateItem(opts?.itemLocationId ? { locationId: opts.itemLocationId } : undefined);
-  else if (kind === "location") openCreateLocation(opts?.locationParentId ? { parentId: opts.locationParentId } : undefined);
-  else openCreateLabel();
 }
 
 function handleCommandButton(btn: HTMLElement) {
