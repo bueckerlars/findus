@@ -66,6 +66,10 @@
     "openLink": "Link öffnen",
     "width": "Breite"
   },
+  "shell": {
+    "openNavigationMenu": "Navigationsmenü öffnen",
+    "navigationMenu": "Hauptnavigation"
+  },
   "errors": {
     "generic": "Etwas ist schiefgelaufen."
   },

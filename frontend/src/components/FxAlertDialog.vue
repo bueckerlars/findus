@@ -52,7 +52,7 @@ onUnmounted(() => {
         aria-modal="true"
         :aria-labelledby="titleId"
         :aria-describedby="message ? descId : undefined"
-        class="relative z-[1] w-full max-w-md rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xl ring-1 ring-zinc-950/[0.04]"
+        class="relative z-[1] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xl ring-1 ring-zinc-950/[0.04] max-sm:max-h-[min(90dvh,28rem)] sm:max-h-[min(85vh,32rem)]"
         @pointerdown.stop
       >
         <h2 :id="titleId" class="text-lg font-semibold tracking-tight text-zinc-900">

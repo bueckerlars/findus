@@ -85,7 +85,7 @@ onUnmounted(() => {
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
-        class="relative z-[1] flex max-h-[min(85vh,44rem)] w-full flex-col rounded-2xl border border-zinc-200/90 bg-white shadow-xl ring-1 ring-zinc-950/[0.04]"
+        class="relative z-[1] flex max-h-[min(90dvh,44rem)] w-full flex-col rounded-2xl border border-zinc-200/90 bg-white shadow-xl ring-1 ring-zinc-950/[0.04] sm:max-h-[min(85vh,44rem)]"
         :class="maxWidthClass"
         @pointerdown.stop
       >
