@@ -35,12 +35,23 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     const skipRedirect =
       path.startsWith("/api/me") ||
       path.startsWith("/api/auth/login") ||
-      path.startsWith("/api/auth/register");
+      path.startsWith("/api/auth/register") ||
+      path.startsWith("/api/auth/username-available");
     if (!skipRedirect) {
       const next = encodeURIComponent(location.pathname + location.search);
       window.location.href = "/login?next=" + next;
     }
-    throw new Error("unauthorized");
+    let msg = "";
+    const ct401 = res.headers.get("Content-Type") || "";
+    if (ct401.includes("application/json")) {
+      try {
+        const j = (await res.json()) as { error?: string };
+        if (j.error) msg = j.error;
+      } catch {
+        /* ignore */
+      }
+    }
+    throw new Error(msg || "Unauthorized");
   }
   const ct = res.headers.get("Content-Type") || "";
   if (!res.ok) {

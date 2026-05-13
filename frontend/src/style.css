@@ -800,6 +800,96 @@
     box-shadow: 0 2px 12px rgb(var(--fx-accent-rgb) / 0.35);
   }
 
+  .fx-auth-subtitle {
+    @apply mt-3 text-center text-base font-medium leading-relaxed text-zinc-600;
+  }
+
+  .fx-auth-form-field .fx-auth-input-shell {
+    @apply relative mt-1.5;
+  }
+  .fx-auth-form-field .fx-auth-input-shell .fx-input {
+    @apply mt-0;
+  }
+  .fx-auth-input-icon {
+    @apply pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2;
+  }
+  .fx-auth-form-input--with-leading {
+    @apply pl-11;
+  }
+  .fx-auth-form-input--with-toggle {
+    @apply pr-12;
+  }
+  .fx-auth-password-toggle {
+    @apply absolute right-1.5 top-1/2 z-[1] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-40;
+    --tw-outline-color: rgb(var(--fx-accent-rgb) / 1);
+  }
+  .fx-auth-input-shell--invalid .fx-input {
+    @apply border-red-400 ring-red-100;
+  }
+  .fx-input--invalid:focus {
+    @apply border-red-500 ring-red-100;
+  }
+  .fx-auth-field-error {
+    @apply mt-2 text-sm font-medium text-red-600;
+  }
+  .fx-auth-username-available {
+    @apply mt-2 text-sm font-medium text-emerald-600;
+  }
+  .fx-auth-username-checking {
+    @apply mt-2 text-sm text-zinc-500;
+  }
+
+  .fx-auth-alert {
+    @apply mt-5 flex gap-3 rounded-xl border border-red-200/90 bg-red-50 px-4 py-3 text-left text-sm leading-snug text-red-800 shadow-sm;
+  }
+  .fx-auth-alert__icon {
+    @apply mt-0.5 shrink-0 text-red-500;
+  }
+
+  .fx-auth-invite-banner {
+    @apply mt-4 flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-sm leading-snug shadow-sm;
+    border-color: rgb(var(--fx-accent-muted-rgb) / 0.65);
+    background-color: rgb(var(--fx-accent-soft-rgb) / 0.65);
+    color: rgb(var(--fx-accent-text-rgb) / 1);
+  }
+  .fx-auth-invite-banner svg {
+    @apply mt-0.5 h-5 w-5 shrink-0;
+    color: rgb(var(--fx-accent-rgb) / 1);
+  }
+
+  .fx-auth-password-hint {
+    @apply mt-2 text-xs font-medium leading-relaxed text-zinc-500;
+  }
+
+  .fx-auth-submit {
+    @apply fx-btn-primary mt-2 w-full min-h-[3rem] text-base font-semibold;
+  }
+  .fx-auth-submit:disabled {
+    @apply cursor-not-allowed opacity-80;
+  }
+  .fx-auth-submit-spinner {
+    @apply h-5 w-5 shrink-0 animate-spin;
+  }
+
+  .fx-auth-card-divider {
+    @apply mt-8 border-t border-zinc-200/90 pt-6;
+  }
+  .fx-auth-footer {
+    @apply text-center text-sm text-zinc-600;
+  }
+  .fx-auth-footer-link {
+    @apply ml-1 font-semibold underline decoration-transparent underline-offset-2 transition-colors;
+    color: rgb(var(--fx-accent-rgb) / 1);
+  }
+  .fx-auth-footer-link:hover {
+    color: rgb(var(--fx-accent-hover-rgb) / 1);
+    text-decoration-color: rgb(var(--fx-accent-muted-rgb) / 1);
+  }
+
+  .fx-auth-help-skeleton {
+    @apply mx-auto mt-3 h-14 max-w-sm rounded-xl bg-zinc-200/80 motion-safe:animate-pulse;
+  }
+
   .fx-command-dialog::backdrop {
     background-color: rgba(24, 24, 27, 0.5);
   }

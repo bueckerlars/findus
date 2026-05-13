@@ -76,6 +76,8 @@
     "newLabel": "Neues Label"
   },
   "auth": {
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
     "login": {
       "title": "Willkommen zurück",
       "subtitle": "Melden Sie sich an, um Ihr Inventar zu verwalten",
@@ -83,7 +85,11 @@
       "password": "Passwort",
       "passwordMask": "••••••••",
       "usernamePlaceholder": "Ihr Benutzername",
-      "submit": "Anmelden"
+      "submit": "Anmelden",
+      "submitting": "Wird angemeldet…",
+      "invalidCredentials": "Benutzername und Passwort passen nicht zusammen. Bitte prüfen Sie Ihre Eingabe und versuchen Sie es erneut.",
+      "footerPrompt": "Neu bei Findus?",
+      "footerLink": "Konto erstellen"
     },
     "register": {
       "title": "Konto erstellen",
@@ -97,7 +103,19 @@
       "helpFirstAdmin": "Sie legen das erste Administratorkonto an.",
       "helpInvite": "Registrieren Sie sich mit Ihrem Einladungslink.",
       "helpOpen": "Offene Registrierung ist aktiviert.",
-      "helpDefault": "Erstellen Sie Ihr Findus-Konto."
+      "helpDefault": "Erstellen Sie Ihr Findus-Konto.",
+      "submitting": "Konto wird erstellt…",
+      "footerPrompt": "Schon ein Konto?",
+      "footerLink": "Anmelden",
+      "inviteNotice": "Sie registrieren sich mit einem Einladungslink.",
+      "passwordHint": "Mindestens 10 Zeichen für ein sicheres Passwort.",
+      "validationUsernameLength": "Der Benutzername muss 2–64 Zeichen haben.",
+      "validationUsernameRequired": "Bitte geben Sie einen Benutzernamen ein.",
+      "validationUsernameTaken": "Dieser Benutzername ist bereits vergeben.",
+      "validationEmailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "validationPasswordLength": "Das Passwort muss mindestens 10 Zeichen lang sein.",
+      "usernameAvailable": "Dieser Benutzername ist frei.",
+      "checkingUsername": "Benutzername wird geprüft…"
     }
   },
   "home": {

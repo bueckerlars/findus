@@ -40,6 +40,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 // MountAPI registers JSON API routes (caller wraps with auth/admin as needed).
 func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/bootstrap", s.APIBootstrap)
+	mux.HandleFunc("GET /api/auth/username-available", s.APIAuthUsernameAvailable)
 	mux.HandleFunc("POST /api/auth/login", s.APIAuthLogin)
 	mux.HandleFunc("POST /api/auth/register", s.APIAuthRegister)
 

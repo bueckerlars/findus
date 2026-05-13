@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import AuthBackground from "../components/AuthBackground.vue";
+import AuthFormInput from "../components/AuthFormInput.vue";
 import GuestNav from "../components/GuestNav.vue";
 import { postJson } from "../api";
 import { useSession } from "../session";
@@ -15,10 +16,13 @@ const { t } = useI18n();
 const username = ref("");
 const password = ref("");
 const err = ref("");
+const submitting = ref(false);
 
 async function submit() {
+  if (submitting.value) return;
   err.value = "";
   const next = typeof route.query.next === "string" ? route.query.next : "/";
+  submitting.value = true;
   try {
     const r = await postJson<{ next: string }>("/api/auth/login", {
       username: username.value,
@@ -28,7 +32,18 @@ async function submit() {
     await refresh();
     await router.push(r.next || "/");
   } catch (e) {
-    err.value = e instanceof Error ? e.message : t("common.signInFailed");
+    const raw = e instanceof Error ? e.message : "";
+    const norm = raw.trim().toLowerCase();
+    if (
+      norm === "unauthorized" ||
+      norm === "invalid credentials"
+    ) {
+      err.value = t("auth.login.invalidCredentials");
+    } else {
+      err.value = raw || t("common.signInFailed");
+    }
+  } finally {
+    submitting.value = false;
   }
 }
 </script>
@@ -38,32 +53,60 @@ async function submit() {
     <AuthBackground />
     <div class="relative z-[1] flex min-h-full flex-col">
       <GuestNav />
-      <main class="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-1 flex-col justify-center px-4 py-10 sm:px-6">
+      <main class="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-lg flex-1 flex-col justify-center px-4 py-10 sm:px-6">
         <div class="fx-auth-card">
           <h1 class="fx-auth-title">{{ $t("auth.login.title") }}</h1>
-          <p class="mt-3 text-center text-base font-medium text-zinc-600">{{ $t("auth.login.subtitle") }}</p>
-          <p v-if="err" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
-            {{ err }}
-          </p>
-          <form class="mt-8 space-y-5" @submit.prevent="submit">
-            <div>
-              <label class="fx-label" for="username">{{ $t("auth.login.username") }}</label>
-              <input id="username" v-model="username" class="fx-input" required autocomplete="username" :placeholder="$t('auth.login.usernamePlaceholder')" />
-            </div>
-            <div>
-              <label class="fx-label" for="password">{{ $t("auth.login.password") }}</label>
-              <input
-                id="password"
-                v-model="password"
-                type="password"
-                class="fx-input"
-                required
-                autocomplete="current-password"
-                :placeholder="$t('auth.login.passwordMask')"
-              />
-            </div>
-            <button type="submit" class="fx-btn-primary w-full">{{ $t("auth.login.submit") }}</button>
+          <p class="fx-auth-subtitle">{{ $t("auth.login.subtitle") }}</p>
+
+          <div
+            v-if="err"
+            id="login-error"
+            role="alert"
+            aria-live="assertive"
+            class="fx-auth-alert"
+          >
+            <svg class="fx-auth-alert__icon h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <span>{{ err }}</span>
+          </div>
+
+          <form class="mt-8 space-y-5" :aria-busy="submitting" :aria-describedby="err ? 'login-error' : undefined" @submit.prevent="submit">
+            <AuthFormInput
+              id="username"
+              v-model="username"
+              icon="user"
+              :label="$t('auth.login.username')"
+              autocomplete="username"
+              :placeholder="$t('auth.login.usernamePlaceholder')"
+              :disabled="submitting"
+            />
+            <AuthFormInput
+              id="password"
+              v-model="password"
+              password
+              :label="$t('auth.login.password')"
+              autocomplete="current-password"
+              :placeholder="$t('auth.login.passwordMask')"
+              :disabled="submitting"
+            />
+            <button type="submit" class="fx-auth-submit" :disabled="submitting" :aria-busy="submitting">
+              <span v-if="submitting" class="inline-flex items-center justify-center gap-2.5">
+                <svg class="fx-auth-submit-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {{ $t("auth.login.submitting") }}
+              </span>
+              <span v-else>{{ $t("auth.login.submit") }}</span>
+            </button>
           </form>
+
+          <div class="fx-auth-card-divider" role="presentation" />
+          <p class="fx-auth-footer">
+            {{ $t("auth.login.footerPrompt") }}
+            <RouterLink to="/register" class="fx-auth-footer-link">{{ $t("auth.login.footerLink") }}</RouterLink>
+          </p>
         </div>
       </main>
     </div>
