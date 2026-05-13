@@ -105,7 +105,7 @@ async function createInvite() {
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-10">
+  <div class="w-full space-y-10">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminUsers.pageTitle") }}</h1>
       <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">{{ $t("common.downloadBackup") }}</a>

@@ -91,7 +91,7 @@ async function del() {
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-6">
+  <div class="w-full space-y-6">
     <p>
       <RouterLink to="/admin/templates" class="text-sm font-medium text-sky-700 hover:text-sky-800">{{ $t("adminTpl.back") }}</RouterLink>
     </p>

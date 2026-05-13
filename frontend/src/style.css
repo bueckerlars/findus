@@ -619,10 +619,185 @@
   }
 
   .fx-auth-shell {
-    @apply min-h-full bg-gradient-to-b from-zinc-100 via-white to-sky-50/40;
+    @apply relative isolate min-h-full overflow-hidden;
   }
+
+  /* Guest login / register: mesh + orbs + SVG curves (theme tokens from `html[data-fx-theme]`) */
+  .fx-auth-bg {
+    @apply pointer-events-none absolute inset-0 -z-[1];
+  }
+  .fx-auth-bg__mesh {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 118% 95% at 50% -32%, rgb(var(--fx-accent-soft-rgb) / 1), rgb(var(--fx-accent-muted-rgb) / 0.35) 42%, transparent 58%),
+      radial-gradient(ellipse 95% 78% at 112% 2%, rgb(var(--fx-item-accent-from-rgb) / 0.52), transparent 52%),
+      radial-gradient(ellipse 88% 70% at -18% 92%, rgb(var(--fx-dash-to-rgb) / 0.72), transparent 50%),
+      radial-gradient(ellipse 62% 48% at 78% 98%, rgb(var(--fx-page-spot-rgb) / calc(var(--fx-page-spot-opacity, 0.09) * 2.2)), transparent 46%),
+      linear-gradient(
+        158deg,
+        rgb(var(--fx-page-bg-rgb) / 1) 0%,
+        rgb(var(--fx-dash-from-rgb) / 0.88) 32%,
+        rgb(var(--fx-accent-soft-rgb) / 0.45) 52%,
+        rgb(var(--fx-page-bg-rgb) / 1) 78%,
+        rgb(var(--fx-item-accent-from-rgb) / 0.18) 100%
+      );
+  }
+  .fx-auth-bg__sweep {
+    position: absolute;
+    left: -25%;
+    top: 8%;
+    width: 150%;
+    height: min(52vh, 28rem);
+    transform: rotate(-10deg);
+    transform-origin: center;
+    background: linear-gradient(
+      95deg,
+      transparent 0%,
+      rgb(var(--fx-item-accent-from-rgb) / 0.42) 28%,
+      rgb(var(--fx-item-accent-via-rgb) / 0.32) 48%,
+      rgb(var(--fx-item-accent-to-rgb) / 0.22) 68%,
+      transparent 100%
+    );
+    filter: blur(56px);
+    opacity: 0.95;
+    pointer-events: none;
+  }
+  .fx-auth-bg__orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(56px);
+    will-change: transform;
+    opacity: 0.72;
+  }
+  .fx-auth-bg__orb--a {
+    width: min(58vw, 46rem);
+    height: min(58vw, 46rem);
+    top: -16%;
+    right: -12%;
+    background: radial-gradient(circle at 32% 32%, rgb(var(--fx-item-accent-from-rgb) / 0.85), rgb(var(--fx-item-accent-via-rgb) / 0.35) 52%, transparent 70%);
+    animation: fx-auth-bg-drift-a 32s ease-in-out infinite alternate;
+  }
+  .fx-auth-bg__orb--b {
+    width: min(54vw, 40rem);
+    height: min(54vw, 40rem);
+    bottom: -22%;
+    left: -18%;
+    background: radial-gradient(circle at 50% 40%, rgb(var(--fx-accent-muted-rgb) / 0.75), rgb(var(--fx-accent-soft-rgb) / 0.35) 55%, transparent 72%);
+    animation: fx-auth-bg-drift-b 26s ease-in-out infinite alternate;
+  }
+  .fx-auth-bg__orb--c {
+    width: min(42vw, 32rem);
+    height: min(42vw, 32rem);
+    top: 36%;
+    left: 38%;
+    background: radial-gradient(circle, rgb(var(--fx-item-accent-via-rgb) / 0.55), rgb(var(--fx-accent-rgb) / 0.15) 58%, transparent 70%);
+    animation: fx-auth-bg-drift-c 22s ease-in-out infinite alternate;
+  }
+  .fx-auth-bg__svg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 125%;
+    min-width: 100%;
+    height: 125%;
+    min-height: 100%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    filter: drop-shadow(0 0 28px rgb(var(--fx-accent-rgb) / 0.2));
+  }
+  .fx-auth-bg__grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.085;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 96px 96px;
+    mix-blend-mode: multiply;
+  }
+  .fx-auth-bg__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 82% 72% at 50% 42%, transparent 32%, rgb(var(--fx-shell-text-rgb) / 0.07) 100%);
+    pointer-events: none;
+  }
+
+  @keyframes fx-auth-bg-drift-a {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+    100% {
+      transform: translate(-3%, 4%) scale(1.06);
+    }
+  }
+  @keyframes fx-auth-bg-drift-b {
+    0% {
+      transform: translate(0, 0) scale(1.02);
+    }
+    100% {
+      transform: translate(4%, -3%) scale(1);
+    }
+  }
+  @keyframes fx-auth-bg-drift-c {
+    0% {
+      transform: translate(-2%, 2%) scale(1);
+    }
+    100% {
+      transform: translate(3%, -2%) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fx-auth-bg__orb--a,
+    .fx-auth-bg__orb--b,
+    .fx-auth-bg__orb--c {
+      animation: none;
+    }
+  }
+
+  .fx-guest-nav {
+    border-bottom: 2px solid rgb(var(--fx-accent-muted-rgb) / 0.55);
+    background-color: rgb(255 255 255 / 0.82);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.65),
+      0 1px 2px rgb(15 23 42 / 0.06),
+      0 8px 28px rgb(var(--fx-accent-rgb) / 0.12),
+      0 20px 50px rgb(15 23 42 / 0.1);
+    backdrop-filter: blur(20px) saturate(1.65);
+    -webkit-backdrop-filter: blur(20px) saturate(1.65);
+  }
+  .fx-guest-logo-mark {
+    background-image: linear-gradient(135deg, rgb(var(--fx-item-accent-from-rgb)), rgb(var(--fx-item-accent-to-rgb)));
+    box-shadow:
+      0 2px 8px rgb(var(--fx-accent-rgb) / 0.35),
+      inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+
   .fx-auth-card {
-    @apply fx-card p-8 ring-zinc-950/5;
+    @apply fx-card p-8 ring-2 sm:p-10;
+    border-color: rgb(var(--fx-accent-muted-rgb) / 0.75);
+    --tw-ring-color: rgb(var(--fx-accent-rgb) / 0.18);
+    background-color: rgb(255 255 255 / 0.88);
+    backdrop-filter: blur(18px) saturate(1.55);
+    -webkit-backdrop-filter: blur(18px) saturate(1.55);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.75),
+      0 1px 2px rgb(15 23 42 / 0.06),
+      0 12px 32px rgb(15 23 42 / 0.08),
+      0 28px 90px rgb(var(--fx-accent-rgb) / 0.22);
+  }
+
+  .fx-auth-title {
+    @apply text-center text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl;
+  }
+  .fx-auth-title::after {
+    content: "";
+    display: block;
+    width: 3.25rem;
+    height: 0.3rem;
+    margin: 0.85rem auto 0;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, rgb(var(--fx-item-accent-from-rgb)), rgb(var(--fx-item-accent-to-rgb)));
+    box-shadow: 0 2px 12px rgb(var(--fx-accent-rgb) / 0.35);
   }
 
   .fx-command-dialog::backdrop {

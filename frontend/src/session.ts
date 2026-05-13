@@ -1,7 +1,7 @@
 import { ref, computed } from "vue";
 import type { User } from "./api";
 import { api } from "./api";
-import { applyFxTheme, resetFxTheme } from "./composables/useFxTheme";
+import { applyFxTheme, persistLastUserFxTheme, resetFxTheme } from "./composables/useFxTheme";
 
 const user = ref<User | null | undefined>(undefined);
 
@@ -13,8 +13,12 @@ async function refresh() {
     user.value = null;
   } finally {
     if (typeof document !== "undefined") {
-      if (user.value) applyFxTheme(user.value.theme);
-      else resetFxTheme();
+      if (user.value) {
+        applyFxTheme(user.value.theme);
+        persistLastUserFxTheme(user.value.theme);
+      } else {
+        resetFxTheme();
+      }
     }
   }
 }

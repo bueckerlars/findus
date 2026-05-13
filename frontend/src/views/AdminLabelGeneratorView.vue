@@ -82,7 +82,7 @@ function download() {
 </script>
 
 <template>
-  <div class="max-w-5xl space-y-6">
+  <div class="w-full space-y-6">
     <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminLabelGenerator.title") }}</h1>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <p class="text-sm text-zinc-600">{{ $t("adminLabelGenerator.help") }}</p>

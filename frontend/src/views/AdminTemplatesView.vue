@@ -15,7 +15,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="max-w-4xl space-y-6">
+    <div class="w-full space-y-6">
     <div class="flex items-center justify-between gap-4">
       <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminTemplates.title") }}</h1>
       <RouterLink to="/admin/templates/new" class="fx-btn-primary text-sm">{{ $t("adminTemplates.new") }}</RouterLink>

@@ -191,7 +191,7 @@ async function onImportZip(ev: Event) {
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-10">
+  <div class="w-full space-y-10">
     <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminSettings.title") }}</h1>
     <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">

@@ -91,7 +91,7 @@
       "email": "E-Mail",
       "password": "Passwort",
       "usernamePlaceholder": "Benutzername wählen",
-      "emailPlaceholder": "sie@example.com",
+      "emailPlaceholder": "sie{'@'}example.com",
       "passwordPlaceholder": "Mindestens 10 Zeichen",
       "submit": "Konto erstellen",
       "helpFirstAdmin": "Sie legen das erste Administratorkonto an.",
