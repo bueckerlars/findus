@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, useId } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { api } from "../api";
+import { api, postJson } from "../api";
 import { useSession } from "../session";
 import FxSvg from "./FxSvg.vue";
 import { useCreateModals } from "../composables/useCreateModals";
@@ -10,6 +10,8 @@ import { useLocationDetailCommandHandlers } from "../composables/useLocationDeta
 import { useI18n } from "vue-i18n";
 import { buildContextCommands } from "./commandPaletteContext";
 import { allLocalesSearchBlob } from "../utils/commandPaletteAllLocaleKeywords";
+import { confirmAlert } from "../composables/useAlertDialog";
+import { toast } from "../composables/useToast";
 
 /** Static palette rows: match query against every loaded UI language (labels stay current locale). */
 const GO_TO_CMD_KW = {
@@ -55,6 +57,200 @@ const isMac = computed(() => {
 });
 
 const modLabel = computed(() => (isMac.value ? "⌘" : "Ctrl+"));
+
+/** Chord for search-hit item actions menu (⌘⇧K — distinct from ⌘K palette toggle). */
+const itemActionsChordLabel = computed(() => (isMac.value ? "⌘⇧K" : "Ctrl+Shift+K"));
+
+const itemSearchActionsMenuId = useId();
+const itemSearchActionsOpen = ref(false);
+const itemSearchActionsTarget = ref<{ id: string; name: string } | null>(null);
+const searchHitActionsPanelRef = ref<HTMLElement | null>(null);
+const itemSearchHitMenuStyle = ref<{ top: string; left: string }>({ top: "0px", left: "0px" });
+
+function itemQrDownloadFilename(name: string) {
+  const raw = (name || "item").replace(/[^\w\-._\s]+/g, "").trim().replace(/\s+/g, "-");
+  const base = raw.length ? raw.slice(0, 80) : "item";
+  return `findus-${base}-qr.png`;
+}
+
+function itemOpenAbsoluteUrl(id: string) {
+  return `${window.location.origin}/items/${id}`;
+}
+
+function getSelectedSearchHitEl(): HTMLButtonElement | null {
+  const items = visibleItems();
+  const el = items[selectedIdx.value];
+  if (el?.hasAttribute("data-cmd-search-hit")) return el as HTMLButtonElement;
+  return null;
+}
+
+function detachItemSearchActionsListeners() {
+  window.removeEventListener("scroll", updateItemSearchActionsMenuPosition, true);
+  window.removeEventListener("resize", updateItemSearchActionsMenuPosition);
+  document.removeEventListener("pointerdown", onItemSearchActionsPointerDown, true);
+}
+
+function updateItemSearchActionsMenuPosition() {
+  const id = itemSearchActionsTarget.value?.id;
+  if (!id || !itemSearchActionsOpen.value) return;
+  const btn = dialog.value?.querySelector<HTMLElement>(`button[data-cmd-search-hit][data-href="/items/${id}"]`);
+  if (!btn) {
+    closeItemSearchActionsMenu();
+    return;
+  }
+  const r = btn.getBoundingClientRect();
+  const margin = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let leftPx = r.left;
+  let topPx = r.bottom + margin;
+  itemSearchHitMenuStyle.value = { top: `${topPx}px`, left: `${leftPx}px` };
+  requestAnimationFrame(() => {
+    const panel = searchHitActionsPanelRef.value;
+    if (!panel || !itemSearchActionsOpen.value) return;
+    const pr = panel.getBoundingClientRect();
+    if (pr.right > vw - margin) leftPx = Math.max(margin, vw - margin - pr.width);
+    if (pr.left < margin) leftPx = margin;
+    if (pr.bottom > vh - margin && r.top - margin - pr.height >= margin) {
+      topPx = r.top - margin - pr.height;
+    }
+    itemSearchHitMenuStyle.value = { top: `${topPx}px`, left: `${leftPx}px` };
+  });
+}
+
+function onItemSearchActionsPointerDown(e: PointerEvent) {
+  if (!itemSearchActionsOpen.value) return;
+  const t = e.target as Node | null;
+  const panel = searchHitActionsPanelRef.value;
+  if (t && panel?.contains(t)) return;
+  closeItemSearchActionsMenu();
+}
+
+function closeItemSearchActionsMenu() {
+  itemSearchActionsOpen.value = false;
+  itemSearchActionsTarget.value = null;
+}
+
+function searchHitMenuItemButtons(): HTMLButtonElement[] {
+  const panel = searchHitActionsPanelRef.value;
+  if (!panel) return [];
+  return Array.from(panel.querySelectorAll<HTMLButtonElement>("button.fx-cmd-search-hit-menu-item"));
+}
+
+function onSearchHitActionsMenuKeydown(e: KeyboardEvent) {
+  if (!itemSearchActionsOpen.value) return;
+  const items = searchHitMenuItemButtons();
+  if (items.length === 0) return;
+  const active = document.activeElement;
+  const cur = active instanceof HTMLButtonElement ? items.indexOf(active) : -1;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = cur >= 0 ? (cur + 1) % items.length : 0;
+    items[next]?.focus();
+    return;
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = cur >= 0 ? (cur - 1 + items.length) % items.length : items.length - 1;
+    items[next]?.focus();
+    return;
+  }
+}
+
+function toggleItemSearchActionsMenu() {
+  const el = getSelectedSearchHitEl();
+  if (!el) return;
+  const href = el.getAttribute("data-href") || "";
+  const m = /^\/items\/([^/]+)$/.exec(href);
+  if (!m) return;
+  const id = m[1];
+  const row = searchItems.value.find((x) => x.id === id);
+  const name = row?.name ?? "";
+  if (itemSearchActionsOpen.value && itemSearchActionsTarget.value?.id === id) {
+    closeItemSearchActionsMenu();
+    return;
+  }
+  if (itemSearchActionsOpen.value) closeItemSearchActionsMenu();
+  itemSearchActionsTarget.value = { id, name };
+  itemSearchActionsOpen.value = true;
+}
+
+function runSearchHitEdit() {
+  const id = itemSearchActionsTarget.value?.id;
+  if (!id || !isAdmin.value) return;
+  closeItemSearchActionsMenu();
+  goHref(`/items/${id}?edit=1`);
+}
+
+function runSearchHitDownloadQr() {
+  const x = itemSearchActionsTarget.value;
+  if (!x) return;
+  const durl = `/items/${x.id}/qr.png`;
+  const fn = itemQrDownloadFilename(x.name);
+  lastFocus = null;
+  const d = dialog.value;
+  const run = () => {
+    const a = document.createElement("a");
+    a.href = durl;
+    a.download = fn;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+  if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+  else nextTick(run);
+  closeItemSearchActionsMenu();
+  closePalette();
+}
+
+function runSearchHitCopyLink() {
+  const id = itemSearchActionsTarget.value?.id;
+  if (!id) return;
+  const text = itemOpenAbsoluteUrl(id);
+  lastFocus = null;
+  const d = dialog.value;
+  const run = () => void navigator.clipboard.writeText(text).catch(() => {});
+  if (d?.open) d.addEventListener("close", () => nextTick(run), { once: true });
+  else nextTick(run);
+  closeItemSearchActionsMenu();
+  closePalette();
+}
+
+/** Native `<dialog>` top layer sits above any z-index; wait until it is gone before global confirm modals. */
+function waitForCommandDialogClosed(): Promise<void> {
+  const d = dialog.value;
+  if (!d || !d.open) return Promise.resolve();
+  return new Promise((resolve) => {
+    d.addEventListener("close", () => nextTick(resolve), { once: true });
+    closePalette();
+  });
+}
+
+async function runSearchHitDelete() {
+  const id = itemSearchActionsTarget.value?.id;
+  if (!id || !isAdmin.value) return;
+  await waitForCommandDialogClosed();
+  const ok = await confirmAlert({
+    title: t("itemDetail.deleteTitle"),
+    message: t("itemDetail.deleteMsg"),
+    confirmLabel: t("common.delete"),
+    variant: "danger",
+  });
+  if (!ok) return;
+  try {
+    await postJson("/api/items/" + id + "/delete", {});
+    toast.success(t("toast.itemDeleted"));
+    closeItemSearchActionsMenu();
+    closePalette();
+    await router.push("/items");
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : t("common.deleteFailed"));
+  }
+}
 
 function norm(s: string) {
   return (s || "").toLowerCase().trim();
@@ -184,6 +380,7 @@ function scheduleSearch() {
 
 function openPalette() {
   if (dialog.value?.open) return;
+  closeItemSearchActionsMenu();
   dialog.value?.classList.remove("fx-command-dialog--closing");
   lastFocus = document.activeElement;
   dialog.value?.showModal();
@@ -206,6 +403,8 @@ function closePalette() {
   const d = dialog.value;
   if (!d?.open) return;
   if (d.classList.contains("fx-command-dialog--closing")) return;
+
+  closeItemSearchActionsMenu();
 
   triggerBtn.value?.setAttribute("aria-expanded", "false");
 
@@ -418,7 +617,26 @@ function activateSelected() {
 }
 
 function onGlobalKeydown(e: KeyboardEvent) {
-  const cmdk = (e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K");
+  if (e.key === "Escape" && dialog.value?.open && itemSearchActionsOpen.value) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeItemSearchActionsMenu();
+    return;
+  }
+  const itemActionsChord =
+    (e.metaKey || e.ctrlKey) &&
+    e.shiftKey &&
+    !e.altKey &&
+    (e.key === "k" || e.key === "K") &&
+    !e.repeat;
+  if (itemActionsChord && dialog.value?.open && getSelectedSearchHitEl()) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItemSearchActionsMenu();
+    return;
+  }
+  const cmdk =
+    (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === "k" || e.key === "K") && !e.repeat;
   if (!cmdk) return;
   e.preventDefault();
   if (dialog.value?.open) closePalette();
@@ -427,10 +645,16 @@ function onGlobalKeydown(e: KeyboardEvent) {
 
 function onDialogCancel(e: Event) {
   e.preventDefault();
+  if (itemSearchActionsOpen.value) {
+    closeItemSearchActionsMenu();
+    return;
+  }
   closePalette();
 }
 
 function onDialogClose() {
+  closeItemSearchActionsMenu();
+  detachItemSearchActionsListeners();
   clearTimeout(debounceTimer);
   if (fetchAbort) fetchAbort.abort();
   triggerBtn.value?.setAttribute("aria-expanded", "false");
@@ -490,6 +714,25 @@ onMounted(() => {
 });
 onUnmounted(() => {
   document.removeEventListener("keydown", onGlobalKeydown, true);
+  detachItemSearchActionsListeners();
+});
+
+watch(itemSearchActionsOpen, async (isOpen) => {
+  if (isOpen) {
+    await nextTick();
+    updateItemSearchActionsMenuPosition();
+    window.addEventListener("scroll", updateItemSearchActionsMenuPosition, true);
+    window.addEventListener("resize", updateItemSearchActionsMenuPosition);
+    document.addEventListener("pointerdown", onItemSearchActionsPointerDown, true);
+    await nextTick();
+    updateItemSearchActionsMenuPosition();
+    const panel = searchHitActionsPanelRef.value;
+    panel?.querySelector<HTMLButtonElement>("button.fx-cmd-search-hit-menu-item")?.focus();
+  } else {
+    detachItemSearchActionsListeners();
+    await nextTick();
+    if (dialog.value?.open) inputEl.value?.focus();
+  }
 });
 
 watch(q, () => scheduleSearch());
@@ -553,6 +796,10 @@ const createCommands = computed(() =>
     kind,
     ...createKindMeta.value[kind],
   })),
+);
+
+const footerHintsLine = computed(() =>
+  t("cpUi.footerHints", { mod: modLabel.value, act: itemActionsChordLabel.value }),
 );
 </script>
 
@@ -847,9 +1094,66 @@ const createCommands = computed(() =>
         </div>
       </div>
       <div class="flex shrink-0 items-center justify-between gap-2 border-t border-zinc-400/15 px-3 py-1.5 text-[10px] text-zinc-600 sm:px-3.5">
-        <span>{{ $t("cpUi.footerHints") }}</span>
+        <span>{{ footerHintsLine }}</span>
         <span class="hidden text-zinc-500 sm:inline">{{ $t("cpUi.quickFind") }}</span>
       </div>
+    </div>
+    <div
+      v-if="itemSearchActionsOpen && itemSearchActionsTarget"
+      :id="itemSearchActionsMenuId"
+      ref="searchHitActionsPanelRef"
+      role="menu"
+      :aria-label="$t('cpUi.searchHitItemActionsAria')"
+      class="fixed z-[60] w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-zinc-200/90 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-950/[0.04]"
+      :style="{ top: itemSearchHitMenuStyle.top, left: itemSearchHitMenuStyle.left }"
+      @keydown="onSearchHitActionsMenuKeydown"
+    >
+      <button
+        v-if="isAdmin"
+        type="button"
+        role="menuitem"
+        class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-zinc-900 outline-none hover:bg-zinc-100 focus-visible:bg-zinc-100"
+        @click="runSearchHitEdit"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500"
+          ><FxSvg name="pencilSquare" class="h-3.5 w-3.5 shrink-0"
+        /></span>
+        <span>{{ $t("cp.ctx_item_edit_l") }}</span>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-zinc-900 outline-none hover:bg-zinc-100 focus-visible:bg-zinc-100"
+        @click="runSearchHitDownloadQr"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500"
+          ><FxSvg name="qr" class="h-3.5 w-3.5 shrink-0"
+        /></span>
+        <span>{{ $t("cp.ctx_item_qr_dl_l") }}</span>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-zinc-900 outline-none hover:bg-zinc-100 focus-visible:bg-zinc-100"
+        @click="runSearchHitCopyLink"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500"
+          ><FxSvg name="cube" class="h-3.5 w-3.5 shrink-0"
+        /></span>
+        <span>{{ $t("cp.ctx_item_copy_link_l") }}</span>
+      </button>
+      <button
+        v-if="isAdmin"
+        type="button"
+        role="menuitem"
+        class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-red-700 outline-none hover:bg-red-50 focus-visible:bg-red-50"
+        @click="runSearchHitDelete"
+      >
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-red-50/90 text-red-600"
+          ><FxSvg name="trash" class="h-3.5 w-3.5 shrink-0"
+        /></span>
+        <span>{{ $t("cp.ctx_item_delete_l") }}</span>
+      </button>
     </div>
   </dialog>
   <button

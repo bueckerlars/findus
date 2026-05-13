@@ -554,7 +554,8 @@
     "openCommandPalette": "Open command palette",
     "matchingItems": "Matching items",
     "quickFind": "Quick find",
-    "footerHints": "↑↓ select · ↵ open · esc close",
+    "footerHints": "↑↓ select · ↵ open · esc close · {act} item actions (row) · {mod}K palette",
+    "searchHitItemActionsAria": "Item actions",
     "keyboardShortcut": "Keyboard shortcut"
   },
   "locationForm": {
