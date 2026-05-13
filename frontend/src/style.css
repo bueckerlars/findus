@@ -506,6 +506,11 @@
     color: rgb(var(--fx-accent-rgb) / 1);
   }
 
+  /* Item list row: left thumb stretches to full row height */
+  .fx-item-row-thumb-placeholder .fx-item-photo-placeholder-svg {
+    @apply min-h-0 flex-1;
+  }
+
   /* Home “recent item” row: no fx-list-row; subtle lift + chevron reveal */
   .fx-home-item-row {
     @apply relative overflow-hidden transition-colors duration-200 ease-out motion-reduce:transition-none;

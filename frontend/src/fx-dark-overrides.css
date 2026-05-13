@@ -448,6 +448,11 @@ html[data-fx-scheme="dark"] .fx-list-row {
   border-color: rgb(39 39 42 / 0.95);
 }
 
+html[data-fx-scheme="dark"] .fx-item-row-thumb-media {
+  background-image: linear-gradient(to bottom right, rgb(39 39 42), rgb(24 24 27));
+  --tw-ring-color: rgb(63 63 70 / 0.75);
+}
+
 html[data-fx-scheme="dark"] .fx-item-gallery-fab {
   background-color: rgb(24 24 27 / 0.96);
   --tw-ring-color: rgb(63 63 70 / 0.85);

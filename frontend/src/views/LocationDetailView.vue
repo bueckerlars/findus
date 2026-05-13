@@ -230,7 +230,7 @@ async function del() {
       <div v-if="items.length" class="mt-4">
         <ul class="items-view-list-only divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]">
           <li v-for="it in items" :key="it.ID">
-            <ItemListRow :id="it.ID" :name="it.Name" />
+            <ItemListRow :id="it.ID" :name="it.Name" :photo-path="it.PhotoPath" />
           </li>
         </ul>
         <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">

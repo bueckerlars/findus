@@ -129,6 +129,7 @@ onUnmounted(() => {
                 :id="it.ID"
                 :name="it.Name"
                 :location-name="it.location_name"
+                :photo-path="it.PhotoPath"
               />
             </div>
           </div>

@@ -131,6 +131,7 @@ onMounted(async () => {
               :id="row.item.ID"
               :name="row.item.Name"
               :location-name="row.location_name"
+              :photo-path="row.item.PhotoPath"
               :timestamp="fmtItemTime(row.item.UpdatedAt)"
               :timestamp-iso="row.item.UpdatedAt"
               :badge-label="row.recently_added ? $t('home.new') : $t('home.updated')"

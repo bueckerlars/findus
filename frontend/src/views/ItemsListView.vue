@@ -66,6 +66,7 @@ onMounted(async () => {
           :id="it.ID"
           :name="it.Name"
           :location-name="it.location_name"
+          :photo-path="it.PhotoPath"
         />
       </div>
       <div class="items-view-gallery-only grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4">
