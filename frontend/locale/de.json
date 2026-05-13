@@ -558,7 +558,8 @@
     "openCommandPalette": "Befehlspalette öffnen",
     "matchingItems": "Passende Artikel",
     "quickFind": "Schnellsuche",
-    "footerHints": "↑↓ wählen · ↵ öffnen · esc schließen",
+    "footerHints": "↑↓ wählen · ↵ öffnen · esc schließen · {act} Aktionen (Zeile) · {mod}K Palette",
+    "searchHitItemActionsAria": "Artikelaktionen",
     "keyboardShortcut": "Tastenkürzel"
   },
   "locationForm": {
