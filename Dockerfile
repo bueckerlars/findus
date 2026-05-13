@@ -5,6 +5,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/vite.config.ts frontend/tsconfig.json frontend/tailwind.config.js frontend/postcss.config.js ./
 COPY frontend/index.html ./
+COPY frontend/locale ./locale
 COPY frontend/src ./src
 RUN npm run build
 
