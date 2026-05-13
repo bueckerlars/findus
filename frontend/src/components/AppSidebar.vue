@@ -117,11 +117,11 @@ defineExpose({ focusFirst });
       </RouterLink>
       <RouterLink
         v-if="isAdmin"
-        to="/admin"
+        to="/tools"
         class="fx-sidebar-link mt-2"
-        :class="{ 'fx-sidebar-link-active': navActive(route.path, '/admin') }"
+        :class="{ 'fx-sidebar-link-active': navActive(route.path, '/tools') }"
       >
-        <span class="fx-sidebar-link-icon"><FxSvg name="gear" /></span> {{ $t("common.admin") }}
+        <span class="fx-sidebar-link-icon"><FxSvg name="qr" /></span> {{ $t("common.tools") }}
       </RouterLink>
     </nav>
 
@@ -150,6 +150,7 @@ defineExpose({ focusFirst });
           </button>
         </template>
         <FxDropdownItem icon="users" to="/profile">{{ $t("common.profile") }}</FxDropdownItem>
+        <FxDropdownItem v-if="isAdmin" icon="gear" to="/admin">{{ $t("common.administration") }}</FxDropdownItem>
         <FxDropdownSeparator />
         <FxDropdownItem tone="danger" @select="logout">{{ $t("common.logOut") }}</FxDropdownItem>
       </FxDropdownMenu>
