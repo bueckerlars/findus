@@ -145,10 +145,9 @@ func (s *Server) APIItemGet(w http.ResponseWriter, r *http.Request) {
 		s.writeJSONError(w, http.StatusNotFound, "not found")
 		return
 	}
-	u, ok := middleware.User(ctx)
-	isAdmin := ok && u.Role.IsAdmin()
+	canEdit := middleware.Can(ctx, domain.PermItemsWrite)
 	editMode := r.URL.Query().Get("edit") == "1"
-	if editMode && !isAdmin {
+	if editMode && !canEdit {
 		editMode = false
 	}
 	out := s.itemDetailJSON(ctx, it, editMode)
@@ -342,8 +341,7 @@ type apiLabelRow struct {
 
 func (s *Server) APILabelsList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	u, _ := middleware.User(ctx)
-	isAdmin := u != nil && u.Role.IsAdmin()
+	canEdit := middleware.Can(ctx, domain.PermLabelsWrite)
 	list, err := s.Inventory.ListLabels(ctx)
 	if err != nil {
 		s.writeJSONError(w, http.StatusInternalServerError, "server error")
@@ -354,7 +352,7 @@ func (s *Server) APILabelsList(w http.ResponseWriter, r *http.Request) {
 	for _, t := range tpls {
 		titles[t.ID] = t.DisplayName
 	}
-	rows := s.labelRows(isAdmin, list, titles)
+	rows := s.labelRows(canEdit, list, titles)
 	out := make([]apiLabelRow, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, apiLabelRow{

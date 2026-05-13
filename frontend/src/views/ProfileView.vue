@@ -32,10 +32,11 @@ const err = ref("");
 const saving = ref(false);
 const themeSaving = ref<string | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
-const { refresh } = useSession();
+const { refresh, accessGroups, isAdmin } = useSession();
 const { t, locale } = useI18n();
 
 onMounted(async () => {
+  await refresh();
   const r = await api<{ user: User }>("/api/profile");
   u.value = r.user;
   username.value = r.user.username;
@@ -303,6 +304,14 @@ async function save() {
                 class="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200/80"
                 >{{ $t("common.inactive") }}</span
               >
+            </div>
+            <div v-if="!isAdmin" class="mt-5 rounded-xl border border-zinc-200/60 bg-white/60 px-3 py-2.5 text-left backdrop-blur-sm">
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("profile.accessGroups") }}</p>
+              <p class="mt-1 text-xs text-zinc-500">{{ $t("profile.accessGroupsHelp") }}</p>
+              <ul v-if="accessGroups.length" class="mt-2 list-inside list-disc text-sm text-zinc-800">
+                <li v-for="g in accessGroups" :key="g.id">{{ g.name }}</li>
+              </ul>
+              <p v-else class="mt-2 text-sm text-zinc-600">{{ $t("profile.accessGroupsNone") }}</p>
             </div>
             <dl class="mx-auto mt-6 max-w-md text-left text-sm sm:mx-0">
               <div class="rounded-xl border border-zinc-200/60 bg-white/60 px-3 py-2.5 backdrop-blur-sm">

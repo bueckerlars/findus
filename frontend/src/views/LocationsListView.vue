@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { api } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
+import { PERM_LOCATIONS_WRITE } from "../permissions";
 import LocationTreeRow, { type LocationTreeNode } from "../components/LocationTreeRow.vue";
 import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 import FxButton from "../components/primitives/FxButton.vue";
@@ -12,7 +13,8 @@ import FxSkeletonList from "../components/primitives/FxSkeletonList.vue";
 const tree = ref<LocationTreeNode[]>([]);
 const loading = ref(true);
 const expandedIds = ref(new Set<string>());
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canManageLocations = computed(() => isAdmin.value || can(PERM_LOCATIONS_WRITE));
 const { openCreateLocation } = useCreateModals();
 
 function isExpanded(id: string) {
@@ -40,7 +42,7 @@ onMounted(async () => {
   <div class="mx-auto max-w-3xl">
     <FxPageHeader :title="$t('locations.title')" :subtitle="$t('locations.subtitle')">
       <template #actions>
-        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.newLocation") }}</FxButton>
+        <FxButton v-if="canManageLocations" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.newLocation") }}</FxButton>
       </template>
     </FxPageHeader>
 
@@ -54,11 +56,11 @@ onMounted(async () => {
         :node="node"
         :is-expanded="isExpanded"
         :toggle="toggle"
-        :is-admin="isAdmin"
+        :is-admin="canManageLocations"
       />
     </ul>
     <FxEmptyState v-else icon="mapPin" :title="$t('locations.noLocations')">
-      <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.createFirst") }}</FxButton>
+      <FxButton v-if="canManageLocations" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.createFirst") }}</FxButton>
     </FxEmptyState>
   </div>
 </template>

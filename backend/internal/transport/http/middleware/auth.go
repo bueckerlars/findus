@@ -12,7 +12,7 @@ import (
 
 const sessionCookie = "findus_session"
 
-func AuthOptional(users repository.UserRepository, secret []byte, secure bool) func(http.Handler) http.Handler {
+func AuthOptional(users repository.UserRepository, groups repository.PermissionGroupRepository, secret []byte, secure bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c, err := r.Cookie(sessionCookie)
@@ -35,6 +35,13 @@ func AuthOptional(users repository.UserRepository, secret []byte, secure bool) f
 				return
 			}
 			ctx := WithUser(r.Context(), u)
+			if !u.Role.IsAdmin() && groups != nil {
+				perms, err := groups.EffectivePermissions(r.Context(), u.ID)
+				if err != nil {
+					perms = nil
+				}
+				ctx = WithPermissions(ctx, perms)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -67,6 +74,27 @@ func RequireAdmin(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// RequirePermission allows admins or users with the given permission (loaded by AuthOptional).
+func RequirePermission(p domain.Permission) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if _, ok := User(r.Context()); !ok {
+				if r.Header.Get("HX-Request") == "true" {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				return
+			}
+			if Can(r.Context(), p) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			http.Error(w, "forbidden", http.StatusForbidden)
+		})
+	}
 }
 
 // IssueSessionCookie sets JWT cookie (call after successful login).

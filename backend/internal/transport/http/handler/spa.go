@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 
+	"findus/backend/internal/domain"
 	"findus/backend/internal/transport/http/middleware"
 	"findus/frontend"
 )
@@ -53,41 +54,47 @@ func (s *Server) MountAPI(mux *http.ServeMux) {
 	mux.Handle("PATCH /api/profile/theme", middleware.RequireAuth(http.HandlerFunc(s.APIProfileThemePatch)))
 
 	mux.Handle("GET /api/locations", middleware.RequireAuth(http.HandlerFunc(s.APILocationsList)))
-	mux.Handle("GET /api/locations/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationNew))))
-	mux.Handle("POST /api/locations", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationCreate))))
+	mux.Handle("GET /api/locations/new", middleware.RequireAuth(middleware.RequirePermission(domain.PermLocationsWrite)(http.HandlerFunc(s.APILocationNew))))
+	mux.Handle("POST /api/locations", middleware.RequireAuth(middleware.RequirePermission(domain.PermLocationsWrite)(http.HandlerFunc(s.APILocationCreate))))
 	mux.Handle("GET /api/locations/{id}", middleware.RequireAuth(http.HandlerFunc(s.APILocationGet)))
-	mux.Handle("GET /api/locations/{id}/edit", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationEdit))))
-	mux.Handle("POST /api/locations/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationUpdate))))
-	mux.Handle("POST /api/locations/{id}/delete", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILocationDelete))))
+	mux.Handle("GET /api/locations/{id}/edit", middleware.RequireAuth(middleware.RequirePermission(domain.PermLocationsWrite)(http.HandlerFunc(s.APILocationEdit))))
+	mux.Handle("POST /api/locations/{id}", middleware.RequireAuth(middleware.RequirePermission(domain.PermLocationsWrite)(http.HandlerFunc(s.APILocationUpdate))))
+	mux.Handle("POST /api/locations/{id}/delete", middleware.RequireAuth(middleware.RequirePermission(domain.PermLocationsWrite)(http.HandlerFunc(s.APILocationDelete))))
 
 	mux.Handle("GET /api/items", middleware.RequireAuth(http.HandlerFunc(s.APIItemsList)))
-	mux.Handle("GET /api/items/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemNew))))
-	mux.Handle("GET /api/items/new/fields", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemNewFields))))
-	mux.Handle("POST /api/items", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemCreate))))
+	mux.Handle("GET /api/items/new", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemNew))))
+	mux.Handle("GET /api/items/new/fields", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemNewFields))))
+	mux.Handle("POST /api/items", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemCreate))))
 	mux.Handle("GET /api/items/{id}", middleware.RequireAuth(http.HandlerFunc(s.APIItemGet)))
-	mux.Handle("GET /api/items/{id}/edit", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemEdit))))
-	mux.Handle("POST /api/items/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemUpdate))))
-	mux.Handle("POST /api/items/{id}/delete", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemDelete))))
+	mux.Handle("GET /api/items/{id}/edit", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemEdit))))
+	mux.Handle("POST /api/items/{id}", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemUpdate))))
+	mux.Handle("POST /api/items/{id}/delete", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemDelete))))
 	mux.Handle("GET /api/items/{id}/attachments", middleware.RequireAuth(http.HandlerFunc(s.APIItemAttachmentsList)))
-	mux.Handle("POST /api/items/{id}/attachments", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentCreate))))
-	mux.Handle("PATCH /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentPatch))))
-	mux.Handle("DELETE /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIItemAttachmentDelete))))
+	mux.Handle("POST /api/items/{id}/attachments", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemAttachmentCreate))))
+	mux.Handle("PATCH /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemAttachmentPatch))))
+	mux.Handle("DELETE /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(s.APIItemAttachmentDelete))))
 
 	mux.Handle("GET /api/search", middleware.RequireAuth(http.HandlerFunc(s.APISearch)))
 	mux.Handle("GET /api/command-search", middleware.RequireAuth(http.HandlerFunc(s.CommandSearchGet)))
 
 	mux.Handle("GET /api/labels", middleware.RequireAuth(http.HandlerFunc(s.APILabelsList)))
-	mux.Handle("GET /api/labels/new", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILabelNew))))
-	mux.Handle("POST /api/labels", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILabelCreate))))
-	mux.Handle("GET /api/labels/{id}/edit", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILabelGet))))
-	mux.Handle("POST /api/labels/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILabelUpdate))))
-	mux.Handle("POST /api/labels/{id}/delete", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APILabelDelete))))
+	mux.Handle("GET /api/labels/new", middleware.RequireAuth(middleware.RequirePermission(domain.PermLabelsWrite)(http.HandlerFunc(s.APILabelNew))))
+	mux.Handle("POST /api/labels", middleware.RequireAuth(middleware.RequirePermission(domain.PermLabelsWrite)(http.HandlerFunc(s.APILabelCreate))))
+	mux.Handle("GET /api/labels/{id}/edit", middleware.RequireAuth(middleware.RequirePermission(domain.PermLabelsWrite)(http.HandlerFunc(s.APILabelGet))))
+	mux.Handle("POST /api/labels/{id}", middleware.RequireAuth(middleware.RequirePermission(domain.PermLabelsWrite)(http.HandlerFunc(s.APILabelUpdate))))
+	mux.Handle("POST /api/labels/{id}/delete", middleware.RequireAuth(middleware.RequirePermission(domain.PermLabelsWrite)(http.HandlerFunc(s.APILabelDelete))))
 
 	mux.Handle("GET /api/admin", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminHome))))
 	mux.Handle("GET /api/admin/users", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUsers))))
 	mux.Handle("POST /api/admin/users", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUsersCreate))))
 	mux.Handle("POST /api/admin/users/{id}/role", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUserRole))))
 	mux.Handle("POST /api/admin/users/{id}/active", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUserActive))))
+	mux.Handle("POST /api/admin/users/{id}/groups", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminUserGroupsSet))))
+	mux.Handle("GET /api/admin/groups", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminGroupsList))))
+	mux.Handle("POST /api/admin/groups", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminGroupsCreate))))
+	mux.Handle("GET /api/admin/groups/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminGroupGet))))
+	mux.Handle("POST /api/admin/groups/{id}/delete", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminGroupDelete))))
+	mux.Handle("POST /api/admin/groups/{id}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminGroupUpdate))))
 	mux.Handle("POST /api/admin/invites", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminInvitesCreate))))
 	mux.Handle("GET /api/admin/settings/registration", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsRegistrationGet))))
 	mux.Handle("POST /api/admin/settings/registration", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(s.APIAdminSettingsRegistration))))
@@ -130,7 +137,7 @@ func (s *Server) Handler() (http.Handler, error) {
 	mux.Handle("GET /{path...}", http.HandlerFunc(s.ServeSPA))
 
 	return middleware.Chain(mux,
-		middleware.AuthOptional(s.Users, s.JWTSecret, s.Config.CookieSecure),
+		middleware.AuthOptional(s.Users, s.Groups, s.JWTSecret, s.Config.CookieSecure),
 		middleware.CSRF(s.Config.CookieSecure),
 		middleware.RequestLog(s.Log),
 		middleware.Recover(s.Log),

@@ -273,6 +273,7 @@
   },
   "admin": {
     "navUsers": "Users",
+    "navGroups": "Groups",
     "navSettings": "Settings",
     "navTemplates": "Templates",
     "title": "Administration"
@@ -290,8 +291,31 @@
     "colUser": "User",
     "colRole": "Role",
     "colActive": "Active",
+    "colGroups": "Groups",
+    "groupsHelp": "Check the groups this user belongs to. Administrators have full access without groups.",
+    "groupsAdminSkip": "—",
     "passPlaceholder": "Password",
     "inviteHoursLabel": "hours"
+  },
+  "adminGroups": {
+    "pageTitle": "Permission groups",
+    "newGroup": "New group",
+    "empty": "No groups yet. Create a group and assign permissions, then add users to the group on the Users page.",
+    "colName": "Name",
+    "colMembers": "Members",
+    "colPermissions": "Permissions"
+  },
+  "adminGroupForm": {
+    "newTitle": "New permission group",
+    "editTitle": "Edit permission group",
+    "nameLabel": "Group name",
+    "permissionsLegend": "Permissions",
+    "confirmDelete": "Delete this group? Members lose these permissions unless they are in other groups."
+  },
+  "permissions": {
+    "itemsWrite": "Create and edit items (including photos and attachments)",
+    "labelsWrite": "Create and edit labels",
+    "locationsWrite": "Create and edit locations"
   },
   "adminSettings": {
     "title": "Application settings",
@@ -368,6 +392,9 @@
     "memberSince": "Member since",
     "account": "Account",
     "accountHelp": "Username and email used across Findus.",
+    "accessGroups": "Access via groups",
+    "accessGroupsHelp": "Permissions granted by your administrator through named groups.",
+    "accessGroupsNone": "No groups — you can browse the inventory. Ask an administrator if you need to add or edit content.",
     "appearance": "Appearance",
     "appearanceHelp": "Color theme for your account on this device.",
     "security": "Security",
@@ -404,6 +431,7 @@
     "userActivated": "User activated.",
     "userDeactivated": "User deactivated.",
     "userCreated": "User created.",
+    "userGroupsUpdated": "Group membership updated.",
     "inviteCreated": "Invite created.",
     "locationSaved": "Location saved.",
     "locationCreated": "Location created.",
@@ -615,6 +643,7 @@
   },
   "adminLayout": {
     "tabUsers": "User management",
+    "tabGroups": "Permission groups",
     "tabSettings": "Application settings",
     "tabLabelGenerator": "Label generator",
     "tabTemplates": "Templates",

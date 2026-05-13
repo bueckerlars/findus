@@ -38,6 +38,12 @@ func (s *Server) APIAdminUsers(w http.ResponseWriter, r *http.Request) {
 	for i := range us {
 		apiUsers = append(apiUsers, apiUserFrom(&us[i]))
 	}
+	ugMap, _ := s.Admin.MapUserGroupIDs(ctx)
+	for i := range apiUsers {
+		if gids := ugMap[apiUsers[i].ID]; len(gids) > 0 {
+			apiUsers[i].GroupIDs = gids
+		}
+	}
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"users": apiUsers, "invites": list, "registration_mode": string(mode),
 	})
@@ -372,4 +378,181 @@ func (s *Server) APIAdminTemplateDelete(w http.ResponseWriter, r *http.Request) 
 func (s *Server) APIAdminTemplateNewEmpty(w http.ResponseWriter, r *http.Request) {
 	_ = r
 	s.writeJSON(w, http.StatusOK, map[string]any{"sort_order": 10, "fields_json": "[]"})
+}
+
+type apiAdminGroupRow struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Permissions []string `json:"permissions"`
+	MemberCount int64    `json:"member_count"`
+	CreatedAt   string   `json:"created_at"`
+	UpdatedAt   string   `json:"updated_at"`
+}
+
+func (s *Server) APIAdminGroupsList(w http.ResponseWriter, r *http.Request) {
+	_ = r
+	ctx := r.Context()
+	gs, counts, err := s.Admin.ListPermissionGroups(ctx)
+	if err != nil {
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	rows := make([]apiAdminGroupRow, 0, len(gs))
+	for i := range gs {
+		g := &gs[i]
+		if s.Groups == nil {
+			s.writeJSONError(w, http.StatusInternalServerError, "server error")
+			return
+		}
+		perms, err := s.Groups.GetGroupPermissions(ctx, g.ID)
+		if err != nil {
+			s.writeJSONError(w, http.StatusInternalServerError, "server error")
+			return
+		}
+		ps := make([]string, 0, len(perms))
+		for _, p := range perms {
+			ps = append(ps, string(p))
+		}
+		rows = append(rows, apiAdminGroupRow{
+			ID:          g.ID,
+			Name:        g.Name,
+			Permissions: ps,
+			MemberCount: counts[g.ID],
+			CreatedAt:   g.CreatedAt.UTC().Format(time.RFC3339Nano),
+			UpdatedAt:   g.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		})
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"groups": rows})
+}
+
+type apiAdminGroupSaveReq struct {
+	Name        string   `json:"name"`
+	Permissions []string `json:"permissions"`
+}
+
+func (s *Server) APIAdminGroupsCreate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req apiAdminGroupSaveReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	var perms []domain.Permission
+	for _, permStr := range req.Permissions {
+		p, ok := domain.ParsePermission(strings.TrimSpace(permStr))
+		if !ok {
+			s.writeJSONError(w, http.StatusBadRequest, "unknown permission: "+permStr)
+			return
+		}
+		perms = append(perms, p)
+	}
+	g, err := s.Admin.CreatePermissionGroup(ctx, req.Name, perms)
+	if err != nil {
+		if errors.Is(err, domain.ErrValidation) {
+			s.writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"id": g.ID, "next": "/admin/groups"})
+}
+
+func (s *Server) APIAdminGroupGet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+	g, perms, err := s.Admin.GetPermissionGroup(ctx, id)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			s.writeJSONError(w, http.StatusNotFound, "not found")
+			return
+		}
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	ps := make([]string, 0, len(perms))
+	for _, p := range perms {
+		ps = append(ps, string(p))
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"group": map[string]any{
+			"id": g.ID, "name": g.Name,
+			"permissions": ps,
+			"created_at":  g.CreatedAt.UTC().Format(time.RFC3339Nano),
+			"updated_at":  g.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		},
+	})
+}
+
+func (s *Server) APIAdminGroupUpdate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+	var req apiAdminGroupSaveReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	var perms []domain.Permission
+	for _, permStr := range req.Permissions {
+		p, ok := domain.ParsePermission(strings.TrimSpace(permStr))
+		if !ok {
+			s.writeJSONError(w, http.StatusBadRequest, "unknown permission: "+permStr)
+			return
+		}
+		perms = append(perms, p)
+	}
+	if err := s.Admin.UpdatePermissionGroup(ctx, id, req.Name, perms); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			s.writeJSONError(w, http.StatusNotFound, "not found")
+			return
+		}
+		if errors.Is(err, domain.ErrValidation) {
+			s.writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/groups/" + id})
+}
+
+func (s *Server) APIAdminGroupDelete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+	if err := s.Admin.DeletePermissionGroup(ctx, id); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			s.writeJSONError(w, http.StatusNotFound, "not found")
+			return
+		}
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/groups"})
+}
+
+type apiAdminUserGroupsReq struct {
+	GroupIDs []string `json:"group_ids"`
+}
+
+func (s *Server) APIAdminUserGroupsSet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+	var req apiAdminUserGroupsReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	if err := s.Admin.SetUserPermissionGroups(ctx, id, req.GroupIDs); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			s.writeJSONError(w, http.StatusNotFound, "not found")
+			return
+		}
+		if errors.Is(err, domain.ErrValidation) {
+			s.writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"next": "/admin/users"})
 }

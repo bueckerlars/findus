@@ -43,6 +43,7 @@ func TestItemAttachmentsAuthMatrix(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 
 	users := sqlite.NewUserRepo(db)
+	groups := sqlite.NewGroupRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	items := sqlite.NewItemRepo(db)
 	labels := sqlite.NewLabelRepo(db)
@@ -61,6 +62,7 @@ func TestItemAttachmentsAuthMatrix(t *testing.T) {
 		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Config:    config.Config{DataDir: dir, CookieSecure: false},
 		Users:     users,
+		Groups:    groups,
 		Locs:      locs,
 		Items:     items,
 		Labels:    labels,
@@ -74,12 +76,12 @@ func TestItemAttachmentsAuthMatrix(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/auth/register", srv.APIAuthRegister)
 	mux.Handle("GET /api/items/{id}/attachments", middleware.RequireAuth(http.HandlerFunc(srv.APIItemAttachmentsList)))
-	mux.Handle("POST /api/items/{id}/attachments", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(srv.APIItemAttachmentCreate))))
-	mux.Handle("PATCH /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(srv.APIItemAttachmentPatch))))
-	mux.Handle("DELETE /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequireAdmin(http.HandlerFunc(srv.APIItemAttachmentDelete))))
+	mux.Handle("POST /api/items/{id}/attachments", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(srv.APIItemAttachmentCreate))))
+	mux.Handle("PATCH /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(srv.APIItemAttachmentPatch))))
+	mux.Handle("DELETE /api/items/{id}/attachments/{attachmentId}", middleware.RequireAuth(middleware.RequirePermission(domain.PermItemsWrite)(http.HandlerFunc(srv.APIItemAttachmentDelete))))
 	mux.Handle("GET /items/{id}/attachments/{attachmentId}", middleware.RequireAuth(http.HandlerFunc(srv.ItemAttachmentDownload)))
 	h := middleware.Chain(mux,
-		middleware.AuthOptional(users, jwtSecret, false),
+		middleware.AuthOptional(users, groups, jwtSecret, false),
 		middleware.CSRF(false),
 	)
 

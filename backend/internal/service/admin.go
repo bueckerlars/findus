@@ -17,6 +17,7 @@ type Admin struct {
 	Users    repository.UserRepository
 	Settings repository.SettingsRepository
 	Invites  repository.InviteRepository
+	Groups   repository.PermissionGroupRepository
 }
 
 func (a *Admin) SetRegistrationMode(ctx context.Context, mode domain.RegistrationMode) error {

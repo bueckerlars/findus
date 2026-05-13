@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 const route = useRoute();
 const { t } = useI18n();
 const usersActive = computed(() => route.path === "/admin/users");
+const groupsActive = computed(() => route.path.startsWith("/admin/groups"));
 const settingsActive = computed(() => route.path === "/admin/settings");
 const labelsActive = computed(() => route.path === "/admin/label-generator");
 const templatesActive = computed(() => route.path.startsWith("/admin/templates"));
@@ -30,6 +31,13 @@ function tabClass(active: boolean) {
           :class="tabClass(usersActive)"
         >
           {{ t("adminLayout.tabUsers") }}
+        </RouterLink>
+        <RouterLink
+          to="/admin/groups"
+          class="inline-flex max-sm:shrink-0 items-center rounded-t-lg border px-4 py-2.5 text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+          :class="tabClass(groupsActive)"
+        >
+          {{ t("adminLayout.tabGroups") }}
         </RouterLink>
         <RouterLink
           to="/admin/settings"

@@ -29,6 +29,7 @@ type Server struct {
 	DB *sql.DB
 
 	Users        *sqlite.UserRepo
+	Groups       *sqlite.GroupRepo
 	Locs         *sqlite.LocationRepo
 	Items        *sqlite.ItemRepo
 	ItemQRTokens *sqlite.ItemQRTokenReservationRepo
@@ -52,11 +53,11 @@ type labelRow struct {
 	DefaultTemplateTitle string
 }
 
-func (s *Server) labelRows(isAdmin bool, list []domain.Label, templateTitles map[string]string) []labelRow {
+func (s *Server) labelRows(canEditLabels bool, list []domain.Label, templateTitles map[string]string) []labelRow {
 	rows := make([]labelRow, 0, len(list))
 	for _, lb := range list {
 		row := labelRow{LB: lb}
-		if isAdmin {
+		if canEditLabels {
 			row.ChipHref = "/labels/" + lb.ID + "/edit"
 		} else {
 			row.ChipHref = "/search?q=" + url.QueryEscape(lb.Name)
