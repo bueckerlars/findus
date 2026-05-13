@@ -41,7 +41,6 @@ withDefaults(
         <ItemPhotoPlaceholder :item-id="id" />
       </div>
       <div class="fx-item-gallery-shade" aria-hidden="true"></div>
-      <span class="fx-item-gallery-fab" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
     </div>
     <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1 border-t border-zinc-100/90 p-2.5">
       <span class="line-clamp-2 text-sm font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ name }}</span>
