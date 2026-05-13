@@ -4,6 +4,9 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { toast } from "../composables/useToast";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const { t } = useI18n();
 
@@ -51,9 +54,9 @@ async function save() {
 </script>
 
 <template>
-  <div class="max-w-lg space-y-6">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("locationForm.titleEdit") }}</h1>
-    <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+  <div class="max-w-lg space-y-5">
+    <FxPageHeader :title="$t('locationForm.titleEdit')" />
+    <FxAlert v-if="err">{{ err }}</FxAlert>
     <form class="space-y-4" @submit.prevent="save">
       <div>
         <label class="fx-label" for="ln">{{ $t("labelForm.name") }}</label>
@@ -69,7 +72,7 @@ async function save() {
           <option v-for="o in parentOptions" :key="o.ID || 'root'" :value="o.ID">{{ o.Label }}</option>
         </select>
       </div>
-      <button type="submit" class="fx-btn-primary">{{ $t("common.save") }}</button>
+      <FxButton type="submit" icon-left="check">{{ $t("common.save") }}</FxButton>
     </form>
   </div>
 </template>

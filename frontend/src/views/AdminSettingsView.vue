@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { api, csrfToken, postJson } from "../api";
 import { toast } from "../composables/useToast";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const { t } = useI18n();
 
@@ -191,9 +193,9 @@ async function onImportZip(ev: Event) {
 </script>
 
 <template>
-  <div class="w-full space-y-10">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminSettings.title") }}</h1>
-    <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
+  <div class="w-full space-y-6">
+    <FxPageHeader :title="$t('adminSettings.title')" />
+    <FxAlert v-if="err">{{ err }}</FxAlert>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminSettings.registrationModeTitle") }}</h2>
       <p class="mt-2 text-sm text-zinc-600">{{ $t("adminSettings.registrationHelp") }}</p>

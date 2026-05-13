@@ -4,6 +4,10 @@ import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { toast } from "../composables/useToast";
+import FxToggle from "../components/primitives/FxToggle.vue";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
+import FxButton from "../components/primitives/FxButton.vue";
 
 const { t } = useI18n();
 
@@ -105,12 +109,13 @@ async function createInvite() {
 </script>
 
 <template>
-  <div class="w-full space-y-10">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminUsers.pageTitle") }}</h1>
-      <a href="/admin/backup.zip" class="fx-btn-secondary text-sm">{{ $t("common.downloadBackup") }}</a>
-    </div>
-    <p v-if="err" class="text-sm text-red-700">{{ err }}</p>
+  <div class="w-full space-y-6">
+    <FxPageHeader :title="$t('adminUsers.pageTitle')">
+      <template #actions>
+        <FxButton variant="secondary" size="sm" icon-left="arrowDownTray" :href="'/admin/backup.zip'">{{ $t("common.downloadBackup") }}</FxButton>
+      </template>
+    </FxPageHeader>
+    <FxAlert v-if="err">{{ err }}</FxAlert>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminUsers.createUserHeading") }}</h2>
       <form class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="createUser">
@@ -176,7 +181,11 @@ async function createInvite() {
               </select>
             </td>
             <td class="py-2 pr-2">
-              <input type="checkbox" :checked="u.is_active" @change="setActive(u.id, ($event.target as HTMLInputElement).checked)" />
+              <FxToggle
+                :model-value="u.is_active"
+                :aria-label="u.is_active ? $t('common.active') : $t('common.inactive')"
+                @update:model-value="setActive(u.id, $event)"
+              />
             </td>
           </tr>
         </tbody>

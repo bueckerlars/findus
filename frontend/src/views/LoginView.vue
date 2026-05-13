@@ -7,6 +7,8 @@ import AuthFormInput from "../components/AuthFormInput.vue";
 import GuestNav from "../components/GuestNav.vue";
 import { postJson } from "../api";
 import { useSession } from "../session";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxButton from "../components/primitives/FxButton.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -58,18 +60,7 @@ async function submit() {
           <h1 class="fx-auth-title">{{ $t("auth.login.title") }}</h1>
           <p class="fx-auth-subtitle">{{ $t("auth.login.subtitle") }}</p>
 
-          <div
-            v-if="err"
-            id="login-error"
-            role="alert"
-            aria-live="assertive"
-            class="fx-auth-alert"
-          >
-            <svg class="fx-auth-alert__icon h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
-            <span>{{ err }}</span>
-          </div>
+          <FxAlert v-if="err" id="login-error" size="lg" class="mt-4">{{ err }}</FxAlert>
 
           <form class="mt-8 space-y-5" :aria-busy="submitting" :aria-describedby="err ? 'login-error' : undefined" @submit.prevent="submit">
             <AuthFormInput
@@ -90,16 +81,9 @@ async function submit() {
               :placeholder="$t('auth.login.passwordMask')"
               :disabled="submitting"
             />
-            <button type="submit" class="fx-auth-submit" :disabled="submitting" :aria-busy="submitting">
-              <span v-if="submitting" class="inline-flex items-center justify-center gap-2.5">
-                <svg class="fx-auth-submit-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                {{ $t("auth.login.submitting") }}
-              </span>
-              <span v-else>{{ $t("auth.login.submit") }}</span>
-            </button>
+            <FxButton type="submit" size="lg" full-width :loading="submitting" :disabled="submitting">
+              {{ submitting ? $t("auth.login.submitting") : $t("auth.login.submit") }}
+            </FxButton>
           </form>
 
           <div class="fx-auth-card-divider" role="presentation" />

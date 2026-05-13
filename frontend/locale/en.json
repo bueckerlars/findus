@@ -5,6 +5,11 @@
   },
   "common": {
     "loading": "Loading…",
+    "loadingAria": "Loading content",
+    "dismiss": "Dismiss",
+    "toggleOn": "On",
+    "toggleOff": "Off",
+    "openMenu": "Open menu",
     "emDash": "—",
     "findus": "Findus",
     "delete": "Delete",

@@ -5,6 +5,11 @@
   },
   "common": {
     "loading": "Laden…",
+    "loadingAria": "Inhalte werden geladen",
+    "dismiss": "Schließen",
+    "toggleOn": "An",
+    "toggleOff": "Aus",
+    "openMenu": "Menü öffnen",
     "emDash": "—",
     "findus": "Findus",
     "delete": "Löschen",

@@ -8,6 +8,9 @@ import { toast } from "../composables/useToast";
 import TemplateFieldsEditor from "../components/TemplateFieldsEditor.vue";
 import { parseTemplateFieldsJson, validateTemplateFields } from "../types/templateFields";
 import { formatParseFieldsIssue, formatValidateFieldsIssue } from "../utils/fieldValidationMessages";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -91,12 +94,12 @@ async function del() {
 </script>
 
 <template>
-  <div class="w-full space-y-6">
+  <div class="w-full space-y-5">
     <p>
-      <RouterLink to="/admin/templates" class="text-sm font-medium text-sky-700 hover:text-sky-800">{{ $t("adminTpl.back") }}</RouterLink>
+      <RouterLink to="/admin/templates" class="text-xs font-semibold text-sky-700 hover:text-sky-800">{{ $t("adminTpl.back") }}</RouterLink>
     </p>
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ isNew ? $t("adminTpl.newTitle") : $t("adminTpl.editTitle") }}</h1>
-    <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+    <FxPageHeader :title="isNew ? $t('adminTpl.newTitle') : $t('adminTpl.editTitle')" />
+    <FxAlert v-if="err">{{ err }}</FxAlert>
     <form class="space-y-4" @submit.prevent="save">
       <div v-if="isNew">
         <label class="fx-label" for="tid">{{ $t("adminTpl.templateId") }}</label>
@@ -115,8 +118,8 @@ async function del() {
         <TemplateFieldsEditor v-model="fieldsJson" />
       </div>
       <div class="flex gap-2">
-        <button type="submit" class="fx-btn-primary">{{ $t("adminTpl.save") }}</button>
-        <button v-if="!isNew" type="button" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="del">{{ $t("adminTpl.delete") }}</button>
+        <FxButton type="submit">{{ $t("adminTpl.save") }}</FxButton>
+        <FxButton v-if="!isNew" type="button" variant="danger" size="sm" @click="del">{{ $t("adminTpl.delete") }}</FxButton>
       </div>
     </form>
   </div>

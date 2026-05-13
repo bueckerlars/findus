@@ -8,7 +8,7 @@ import CreateModalsHost from "../components/CreateModalsHost.vue";
 <template>
   <div class="fx-page-shell flex min-h-screen items-stretch font-sans antialiased">
     <AppSidebar />
-    <main class="min-w-0 flex-1 overflow-y-auto px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+    <main class="min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
       <RouterView />
     </main>
     <CommandPalette />

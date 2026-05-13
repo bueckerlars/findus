@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { csrfToken } from "../api";
 import { useI18n } from "vue-i18n";
 import { toast } from "../composables/useToast";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const { t } = useI18n();
 
@@ -82,12 +84,12 @@ function download() {
 </script>
 
 <template>
-  <div class="w-full space-y-6">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("adminLabelGenerator.title") }}</h1>
+  <div class="w-full space-y-5">
+    <FxPageHeader :title="$t('adminLabelGenerator.title')" />
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <p class="text-sm text-zinc-600">{{ $t("adminLabelGenerator.help") }}</p>
       <p class="mt-1 text-xs text-zinc-500">{{ $t("adminLabelGenerator.constraints", { n: maxBatch }) }}</p>
-      <p v-if="err" class="mt-2 text-sm text-red-700">{{ err }}</p>
+      <FxAlert v-if="err" class="mt-3">{{ err }}</FxAlert>
       <div class="mt-4 flex flex-wrap items-end gap-3">
         <label class="text-sm text-zinc-700">
           {{ $t("adminLabelGenerator.from") }}
