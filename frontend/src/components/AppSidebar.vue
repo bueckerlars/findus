@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSession } from "../session";
 import { postJson } from "../api";
@@ -10,6 +11,19 @@ import FxDropdownMenu from "./primitives/FxDropdownMenu.vue";
 import FxDropdownItem from "./primitives/FxDropdownItem.vue";
 import FxDropdownSeparator from "./primitives/FxDropdownSeparator.vue";
 
+const props = withDefaults(
+  defineProps<{
+    mobileDrawerOpen?: boolean;
+    mobileDrawerAsDialog?: boolean;
+    mobileDrawerAriaHidden?: boolean;
+  }>(),
+  {
+    mobileDrawerOpen: false,
+    mobileDrawerAsDialog: false,
+    mobileDrawerAriaHidden: false,
+  },
+);
+
 const route = useRoute();
 const router = useRouter();
 const { user, isAdmin, refresh } = useSession();
@@ -18,17 +32,43 @@ void refresh();
 
 const profilePhotoSrc = "/profile/photo";
 
+const rootRef = ref<HTMLElement | null>(null);
+
+const drawerMotionClass = computed(() =>
+  props.mobileDrawerOpen
+    ? "max-sm:translate-x-0 max-sm:pointer-events-auto"
+    : "max-sm:-translate-x-full max-sm:pointer-events-none",
+);
+
 async function logout() {
   await postJson("/api/auth/logout", {});
   user.value = null;
   await router.push("/login");
 }
+
+function focusFirst() {
+  const root = rootRef.value;
+  if (!root) return;
+  const el = root.querySelector<HTMLElement>(
+    'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+  );
+  el?.focus();
+}
+
+defineExpose({ focusFirst });
 </script>
 
 <template>
   <aside
-    class="sticky top-0 z-40 flex h-[100dvh] w-52 shrink-0 flex-col border-r border-zinc-200/80 bg-white/95 shadow-[4px_0_24px_-12px_rgba(15,23,42,0.12)] backdrop-blur-md"
-    :aria-label="$t('common.mainNav')"
+    id="fx-app-sidebar"
+    ref="rootRef"
+    :class="drawerMotionClass"
+    class="flex h-[100dvh] flex-col border-r border-zinc-200/80 bg-white/95 backdrop-blur-md max-sm:fixed max-sm:inset-y-0 max-sm:left-0 max-sm:z-[40] max-sm:w-[min(18rem,85vw)] max-sm:max-w-[85vw] max-sm:shadow-xl max-sm:transition-transform max-sm:duration-200 max-sm:ease-out sm:sticky sm:top-0 sm:z-40 sm:w-52 sm:shrink-0 sm:translate-x-0 sm:pointer-events-auto sm:shadow-[4px_0_24px_-12px_rgba(15,23,42,0.12)]"
+    :role="mobileDrawerAsDialog ? 'dialog' : undefined"
+    :aria-modal="mobileDrawerAsDialog ? true : undefined"
+    :aria-labelledby="mobileDrawerAsDialog ? 'fx-shell-drawer-title' : undefined"
+    :aria-label="mobileDrawerAsDialog ? undefined : $t('common.mainNav')"
+    :aria-hidden="mobileDrawerAriaHidden ? true : undefined"
   >
     <div class="flex shrink-0 items-center gap-2.5 border-b border-zinc-100/90 px-4 py-4">
       <RouterLink to="/" class="flex min-w-0 items-center gap-2.5 rounded-lg py-0.5 text-zinc-900 outline-offset-2 transition hover:text-sky-800">
@@ -36,7 +76,7 @@ async function logout() {
           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-bold text-white shadow-md shadow-sky-900/20 ring-1 ring-white/20"
           >F</span
         >
-        <span class="truncate text-sm font-semibold tracking-tight">{{ $t("common.findus") }}</span>
+        <span id="fx-shell-drawer-title" class="truncate text-sm font-semibold tracking-tight">{{ $t("common.findus") }}</span>
       </RouterLink>
     </div>
 
