@@ -23,7 +23,7 @@ const GO_TO_CMD_KW = {
   adminUsers: allLocalesSearchBlob(["cpUi.goAdminUsersKw", "cpUi.goAdminUsers"]),
   adminSettings: allLocalesSearchBlob(["cpUi.goAdminSettingsKw", "cpUi.goAdminSettings"]),
   adminTemplates: allLocalesSearchBlob(["cpUi.goAdminTemplatesKw", "cpUi.goAdminTemplates"]),
-  adminLabelGenerator: allLocalesSearchBlob(["cpUi.goAdminLabelGeneratorKw", "cpUi.goAdminLabelGenerator"]),
+  toolsLabelGenerator: allLocalesSearchBlob(["cpUi.goToolsLabelGeneratorKw", "cpUi.goToolsLabelGenerator"]),
   profile: allLocalesSearchBlob(["cpUi.goProfileKw", "cpUi.goProfile"]),
 } as const;
 
@@ -1020,15 +1020,15 @@ const footerHintsLine = computed(() =>
               v-if="isAdmin"
               type="button"
               data-cmd-static
-              data-href="/admin/label-generator"
-              :data-keywords="GO_TO_CMD_KW.adminLabelGenerator"
+              data-href="/tools"
+              :data-keywords="GO_TO_CMD_KW.toolsLabelGenerator"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
                 class="fx-command-item-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500 transition group-hover:bg-white/95 group-hover:text-zinc-700 group-hover:shadow-sm group-hover:ring-1 group-hover:ring-zinc-200/70"
                 ><FxSvg name="qr" class="h-3.5 w-3.5 shrink-0"
               /></span>
-              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goAdminLabelGenerator") }}</span>
+              <span class="min-w-0 flex-1 font-medium text-zinc-900">{{ $t("cpUi.goToolsLabelGenerator") }}</span>
             </button>
             <button
               type="button"

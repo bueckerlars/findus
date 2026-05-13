@@ -65,6 +65,7 @@ const router = createRouter({
           },
         },
         { path: "labels/:id/edit", component: () => import("../views/LabelFormView.vue"), meta: { requiresAnyPermission: [PERM_LABELS_WRITE] } },
+        { path: "tools", component: () => import("../views/ToolsView.vue"), meta: { requiresAdmin: true } },
         {
           path: "admin",
           component: () => import("../views/AdminLayout.vue"),
@@ -76,7 +77,7 @@ const router = createRouter({
             { path: "groups/new", component: () => import("../views/AdminGroupFormView.vue") },
             { path: "groups/:id/edit", component: () => import("../views/AdminGroupFormView.vue") },
             { path: "settings", component: () => import("../views/AdminSettingsView.vue") },
-            { path: "label-generator", component: () => import("../views/AdminLabelGeneratorView.vue") },
+            { path: "label-generator", redirect: "/tools" },
             { path: "templates", component: () => import("../views/AdminTemplatesView.vue") },
             { path: "templates/new", component: () => import("../views/AdminTemplateFormView.vue") },
             { path: "templates/:id/edit", component: () => import("../views/AdminTemplateFormView.vue") },

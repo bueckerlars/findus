@@ -450,7 +450,7 @@ export function buildContextCommands(
         label: ctxCmd(t, "ctx-admin-label-gen", "l"),
         keywords: ctxCmdKeywords(t, "ctx-admin-label-gen"),
         icon: "qr",
-        href: "/admin/label-generator",
+        href: "/tools",
       },
       {
         id: "ctx-admin-home",
@@ -491,7 +491,7 @@ export function buildContextCommands(
         label: ctxCmd(t, "ctx-settings-label-gen", "l"),
         keywords: ctxCmdKeywords(t, "ctx-settings-label-gen"),
         icon: "qr",
-        href: "/admin/label-generator",
+        href: "/tools",
       },
       {
         id: "ctx-settings-home",
@@ -532,7 +532,7 @@ export function buildContextCommands(
         label: ctxCmd(t, "ctx-tpl-label-gen", "l"),
         keywords: ctxCmdKeywords(t, "ctx-tpl-label-gen"),
         icon: "qr",
-        href: "/admin/label-generator",
+        href: "/tools",
       },
       {
         id: "ctx-tpl-home",
@@ -556,7 +556,7 @@ export function buildContextCommands(
     return out;
   }
 
-  if (path === "/admin/label-generator") {
+  if (path === "/tools") {
     out.push(
       {
         id: "ctx-labelgen-settings",
