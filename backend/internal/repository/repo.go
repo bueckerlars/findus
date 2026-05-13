@@ -96,3 +96,19 @@ type SettingsRepository interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
 }
+
+// PermissionGroupRepository manages RBAC groups and user assignments.
+type PermissionGroupRepository interface {
+	EffectivePermissions(ctx context.Context, userID string) ([]domain.Permission, error)
+	ListGroupsForUser(ctx context.Context, userID string) ([]domain.PermissionGroup, error)
+	ListGroups(ctx context.Context) ([]domain.PermissionGroup, error)
+	ListMemberCounts(ctx context.Context) (map[string]int64, error)
+	GetGroup(ctx context.Context, id string) (*domain.PermissionGroup, error)
+	GetGroupPermissions(ctx context.Context, groupID string) ([]domain.Permission, error)
+	ListUserGroupIDs(ctx context.Context) (map[string][]string, error)
+	CreateGroup(ctx context.Context, g *domain.PermissionGroup) error
+	UpdateGroup(ctx context.Context, g *domain.PermissionGroup) error
+	DeleteGroup(ctx context.Context, id string) error
+	ReplaceGroupPermissions(ctx context.Context, groupID string, perms []domain.Permission) error
+	ReplaceUserGroups(ctx context.Context, userID string, groupIDs []string) error
+}

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
+import { PERM_ITEMS_WRITE } from "../permissions";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import ItemListRow from "../components/ItemListRow.vue";
@@ -25,7 +26,8 @@ type Item = {
 
 const items = ref<Item[]>([]);
 const loading = ref(true);
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canManageItems = computed(() => isAdmin.value || can(PERM_ITEMS_WRITE));
 const { openCreateItem } = useCreateModals();
 
 onMounted(async () => {
@@ -44,7 +46,7 @@ onMounted(async () => {
       <FxPageHeader :title="$t('items.title')" :subtitle="$t('items.subtitle')">
         <template #actions>
           <ItemsViewModeToolbar />
-          <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("items.newItem") }}</FxButton>
+          <FxButton v-if="canManageItems" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("items.newItem") }}</FxButton>
           <FxButton variant="secondary" size="sm" :to="'/search'" icon-left="magnifyingGlass">{{ $t("common.search") }}</FxButton>
         </template>
       </FxPageHeader>
@@ -81,7 +83,7 @@ onMounted(async () => {
       </div>
     </div>
     <FxEmptyState v-else icon="cube" :title="$t('items.noItems')">
-      <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("items.addFirst") }}</FxButton>
+      <FxButton v-if="canManageItems" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("items.addFirst") }}</FxButton>
     </FxEmptyState>
   </ItemsViewToggle>
 </template>

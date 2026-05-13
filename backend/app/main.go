@@ -52,6 +52,7 @@ func main() {
 	)
 
 	users := sqlite.NewUserRepo(db)
+	groups := sqlite.NewGroupRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	items := sqlite.NewItemRepo(db)
 	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
@@ -60,7 +61,7 @@ func main() {
 	settings := sqlite.NewSettingsRepo(db)
 
 	authSvc := &service.Auth{Users: users, Settings: settings, Invites: invites}
-	adminSvc := &service.Admin{Users: users, Settings: settings, Invites: invites}
+	adminSvc := &service.Admin{Users: users, Settings: settings, Invites: invites, Groups: groups}
 	labels := sqlite.NewLabelRepo(db)
 	attachments := sqlite.NewItemAttachmentRepo(db)
 	invSvc := &service.Inventory{Locations: locs, Items: items, ItemQRTokens: itemQRTokens, Labels: labels, Templates: templates, Settings: settings, ItemAttachments: attachments}
@@ -71,6 +72,7 @@ func main() {
 		Config:       cfg,
 		DB:           db,
 		Users:        users,
+		Groups:       groups,
 		Locs:         locs,
 		Items:        items,
 		ItemQRTokens: itemQRTokens,

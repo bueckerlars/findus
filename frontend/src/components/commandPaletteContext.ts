@@ -25,6 +25,9 @@ export type ContextCommand = {
 
 export type ContextPaletteDeps = {
   isAdmin: boolean;
+  canEditItems: boolean;
+  canEditLocations: boolean;
+  canEditLabels: boolean;
   itemDetail: ItemDetailCommandHandlers | null;
   locationDetail: LocationDetailCommandHandlers | null;
 };
@@ -46,7 +49,7 @@ export function buildContextCommands(
   t: ComposerTranslation,
 ): ContextCommand[] {
   const path = route.path;
-  const { isAdmin: admin, itemDetail: ih, locationDetail: lh } = d;
+  const { canEditItems, canEditLocations, canEditLabels, itemDetail: ih, locationDetail: lh } = d;
   const out: ContextCommand[] = [];
 
   const itemsDetail = /^\/items\/([^/]+)$/.exec(path);
@@ -69,7 +72,7 @@ export function buildContextCommands(
           action: "item-detail:cancel",
         },
       );
-    } else if (admin) {
+    } else if (canEditItems) {
       out.push({
         id: "ctx-item-edit",
         label: ctxCmd(t, "ctx-item-edit", "l"),
@@ -134,7 +137,7 @@ export function buildContextCommands(
   const locDetail = /^\/locations\/([^/]+)$/.exec(path);
   if (locDetail?.[1] && locDetail[1] !== "new") {
     const id = locDetail[1];
-    if (admin) {
+    if (canEditLocations) {
       out.push(
         {
           id: "ctx-loc-edit",
@@ -150,14 +153,16 @@ export function buildContextCommands(
           icon: "plus",
           href: `/locations/new?parent_id=${encodeURIComponent(id)}`,
         },
-        {
-          id: "ctx-loc-add-item",
-          label: ctxCmd(t, "ctx-loc-add-item", "l"),
-          keywords: ctxCmdKeywords(t, "ctx-loc-add-item"),
-          icon: "cube",
-          createPreset: { kind: "item", locationId: id },
-        },
       );
+    }
+    if (canEditItems) {
+      out.push({
+        id: "ctx-loc-add-item",
+        label: ctxCmd(t, "ctx-loc-add-item", "l"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-add-item"),
+        icon: "cube",
+        createPreset: { kind: "item", locationId: id },
+      });
     }
     if (lh?.downloadQrPng) {
       out.push({
@@ -339,7 +344,7 @@ export function buildContextCommands(
   }
 
   if (path === "/labels") {
-    if (admin) {
+    if (canEditLabels) {
       out.push({
         id: "ctx-labels-new",
         label: ctxCmd(t, "ctx-labels-new", "l"),
@@ -385,7 +390,7 @@ export function buildContextCommands(
         href: "/search",
       },
     );
-    if (admin) {
+    if (canEditLabels) {
       out.push({
         id: "ctx-label-new2",
         label: ctxCmd(t, "ctx-label-new2", "l"),

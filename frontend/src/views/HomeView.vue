@@ -6,6 +6,7 @@ import { api } from "../api";
 import type { User } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
+import { PERM_ITEMS_WRITE, PERM_LABELS_WRITE, PERM_LOCATIONS_WRITE } from "../permissions";
 import { bcp47ForUiLocale, type SupportedLocale } from "../locale/constants";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
@@ -52,7 +53,7 @@ const data = ref<{
   all_labels: Label[];
 } | null>(null);
 
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 const { locale } = useI18n();
 
@@ -153,7 +154,7 @@ onMounted(async () => {
         </div>
       </template>
       <FxEmptyState v-else icon="cube" :title="$t('home.noItems')">
-        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("home.addItem") }}</FxButton>
+        <FxButton v-if="isAdmin || can(PERM_ITEMS_WRITE)" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("home.addItem") }}</FxButton>
       </FxEmptyState>
     </ItemsViewToggle>
 
@@ -175,7 +176,7 @@ onMounted(async () => {
         </li>
       </ul>
       <FxEmptyState v-else icon="mapPin" :title="$t('home.noLocations')">
-        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("home.createLocation") }}</FxButton>
+        <FxButton v-if="isAdmin || can(PERM_LOCATIONS_WRITE)" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("home.createLocation") }}</FxButton>
       </FxEmptyState>
     </section>
 
@@ -183,7 +184,7 @@ onMounted(async () => {
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
         <h2 id="home-labels-heading" class="text-sm font-semibold uppercase tracking-wide text-zinc-500">{{ $t("home.labels") }}</h2>
         <div class="flex flex-wrap items-center gap-2">
-          <button v-if="isAdmin" type="button" class="text-sm font-medium text-sky-600 hover:text-sky-700" @click="openCreateLabel()">
+          <button v-if="isAdmin || can(PERM_LABELS_WRITE)" type="button" class="text-sm font-medium text-sky-600 hover:text-sky-700" @click="openCreateLabel()">
             {{ $t("home.newLabel") }}
           </button>
           <RouterLink to="/labels" class="text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("home.allLabels") }}</RouterLink>
@@ -205,10 +206,7 @@ onMounted(async () => {
       <div v-else class="px-5 py-10 text-center">
         <p class="text-sm text-zinc-500">{{ $t("home.noLabels") }}</p>
         <button
-          v-if="isAdmin"
-          type="button"
-          class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
-          @click="openCreateLabel()"
+          v-if="isAdmin || can(PERM_LABELS_WRITE)"
         >
           {{ $t("home.createLabel") }}
         </button>

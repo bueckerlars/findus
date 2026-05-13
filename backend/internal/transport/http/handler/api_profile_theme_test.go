@@ -27,6 +27,7 @@ func TestAPIProfileThemePatch(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 
 	users := sqlite.NewUserRepo(db)
+	groups := sqlite.NewGroupRepo(db)
 	settings := sqlite.NewSettingsRepo(db)
 	invites := sqlite.NewInviteRepo(db)
 	auth := &service.Auth{Users: users, Settings: settings, Invites: invites}
@@ -37,6 +38,7 @@ func TestAPIProfileThemePatch(t *testing.T) {
 		Log:       slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Config:    config.Config{DataDir: dir, CookieSecure: false},
 		Users:     users,
+		Groups:    groups,
 		Settings:  settings,
 		Invites:   invites,
 		Auth:      auth,
@@ -48,7 +50,7 @@ func TestAPIProfileThemePatch(t *testing.T) {
 	mux.Handle("GET /api/me", middleware.RequireAuth(http.HandlerFunc(srv.APIMe)))
 	mux.Handle("PATCH /api/profile/theme", middleware.RequireAuth(http.HandlerFunc(srv.APIProfileThemePatch)))
 	h := middleware.Chain(mux,
-		middleware.AuthOptional(users, jwtSecret, false),
+		middleware.AuthOptional(users, groups, jwtSecret, false),
 		middleware.CSRF(false),
 	)
 

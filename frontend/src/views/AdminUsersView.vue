@@ -17,6 +17,7 @@ type UserRow = {
   email: string;
   role: string;
   is_active: boolean;
+  group_ids?: string[];
 };
 type Invite = {
   ID: string;
@@ -28,6 +29,7 @@ type Invite = {
 
 const users = ref<UserRow[]>([]);
 const invites = ref<Invite[]>([]);
+const groupOptions = ref<{ id: string; name: string }[]>([]);
 const err = ref("");
 
 const newUser = ref({ username: "", email: "", password: "", role: "user" });
@@ -41,6 +43,8 @@ async function load() {
     const j = await api<{ users: UserRow[]; invites: Invite[] }>("/api/admin/users");
     users.value = j.users;
     invites.value = j.invites;
+    const g = await api<{ groups: { id: string; name: string }[] }>("/api/admin/groups");
+    groupOptions.value = g.groups ?? [];
   } catch (e) {
     err.value = e instanceof Error ? e.message : t("common.loadFailed");
   }
@@ -106,6 +110,32 @@ async function createInvite() {
     toast.error(msg);
   }
 }
+
+async function toggleUserGroup(uid: string, gid: string, checked: boolean) {
+  const row = users.value.find((x) => x.id === uid);
+  if (!row) return;
+  let ids = [...(row.group_ids ?? [])];
+  if (checked) {
+    if (!ids.includes(gid)) ids.push(gid);
+  } else {
+    ids = ids.filter((x) => x !== gid);
+  }
+  err.value = "";
+  try {
+    await postJson("/api/admin/users/" + uid + "/groups", { group_ids: ids });
+    row.group_ids = ids;
+    toast.success(t("toast.userGroupsUpdated"));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : t("toast.updateFailed");
+    err.value = msg;
+    toast.error(msg);
+    await load();
+  }
+}
+
+function userHasGroup(u: UserRow, gid: string): boolean {
+  return !!(u.group_ids && u.group_ids.includes(gid));
+}
 </script>
 
 <template>
@@ -160,16 +190,18 @@ async function createInvite() {
     </section>
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
       <h2 class="text-lg font-semibold text-zinc-900">{{ $t("adminUsers.usersHeading") }}</h2>
+      <p class="text-xs text-zinc-500">{{ $t("adminUsers.groupsHelp") }}</p>
       <table class="mt-4 w-full text-left text-sm">
         <thead>
           <tr class="border-b border-zinc-200 text-zinc-500">
             <th class="py-2 pr-2">{{ $t("adminUsers.colUser") }}</th>
             <th class="py-2 pr-2">{{ $t("adminUsers.colRole") }}</th>
             <th class="py-2 pr-2">{{ $t("adminUsers.colActive") }}</th>
+            <th class="py-2 pr-2 min-w-[12rem]">{{ $t("adminUsers.colGroups") }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="u in users" :key="u.id" class="border-b border-zinc-100">
+          <tr v-for="u in users" :key="u.id" class="border-b border-zinc-100 align-top">
             <td class="py-2 pr-2">
               <div class="font-medium">{{ u.username }}</div>
               <div class="text-xs text-zinc-500">{{ u.email }}</div>
@@ -186,6 +218,21 @@ async function createInvite() {
                 :aria-label="u.is_active ? $t('common.active') : $t('common.inactive')"
                 @update:model-value="setActive(u.id, $event)"
               />
+            </td>
+            <td class="py-2 pr-2">
+              <div v-if="u.role === 'admin'" class="text-xs text-zinc-400">{{ $t("adminUsers.groupsAdminSkip") }}</div>
+              <ul v-else class="flex flex-col gap-1.5">
+                <li v-for="g in groupOptions" :key="u.id + '-' + g.id" class="flex items-center gap-2">
+                  <input
+                    :id="'ug-' + u.id + '-' + g.id"
+                    type="checkbox"
+                    class="size-3.5 rounded border-zinc-300"
+                    :checked="userHasGroup(u, g.id)"
+                    @change="toggleUserGroup(u.id, g.id, ($event.target as HTMLInputElement).checked)"
+                  />
+                  <label :for="'ug-' + u.id + '-' + g.id" class="text-xs text-zinc-700">{{ g.name }}</label>
+                </li>
+              </ul>
             </td>
           </tr>
         </tbody>

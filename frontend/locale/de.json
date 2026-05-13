@@ -273,6 +273,7 @@
   },
   "admin": {
     "navUsers": "Benutzer",
+    "navGroups": "Gruppen",
     "navSettings": "Einstellungen",
     "navTemplates": "Vorlagen",
     "title": "Administration"
@@ -290,8 +291,31 @@
     "colUser": "Benutzer",
     "colRole": "Rolle",
     "colActive": "Aktiv",
+    "colGroups": "Gruppen",
+    "groupsHelp": "Gruppen auswählen, denen dieser Benutzer angehört. Administratoren haben volle Rechte ohne Gruppen.",
+    "groupsAdminSkip": "—",
     "passPlaceholder": "Passwort",
     "inviteHoursLabel": "Stunden"
+  },
+  "adminGroups": {
+    "pageTitle": "Berechtigungsgruppen",
+    "newGroup": "Neue Gruppe",
+    "empty": "Noch keine Gruppen. Legen Sie eine Gruppe an, weisen Sie Rechte zu, und ordnen Sie Benutzer auf der Seite „Benutzer“ den Gruppen zu.",
+    "colName": "Name",
+    "colMembers": "Mitglieder",
+    "colPermissions": "Berechtigungen"
+  },
+  "adminGroupForm": {
+    "newTitle": "Neue Berechtigungsgruppe",
+    "editTitle": "Berechtigungsgruppe bearbeiten",
+    "nameLabel": "Gruppenname",
+    "permissionsLegend": "Berechtigungen",
+    "confirmDelete": "Diese Gruppe löschen? Mitglieder verlieren diese Rechte, sofern sie nicht in anderen Gruppen sind."
+  },
+  "permissions": {
+    "itemsWrite": "Artikel anlegen und bearbeiten (inkl. Fotos und Anhänge)",
+    "labelsWrite": "Labels anlegen und bearbeiten",
+    "locationsWrite": "Standorte anlegen und bearbeiten"
   },
   "adminSettings": {
     "title": "Anwendungseinstellungen",
@@ -368,6 +392,9 @@
     "memberSince": "Mitglied seit",
     "account": "Konto",
     "accountHelp": "Benutzername und E-Mail für Findus.",
+    "accessGroups": "Zugriff über Gruppen",
+    "accessGroupsHelp": "Berechtigungen, die Ihnen ein Administrator über benannte Gruppen zuweist.",
+    "accessGroupsNone": "Keine Gruppen — Sie können das Inventar durchsuchen. Bitte einen Administrator, wenn Sie Inhalte pflegen sollen.",
     "appearance": "Erscheinungsbild",
     "appearanceHelp": "Farbschema für Ihr Konto auf diesem Gerät.",
     "security": "Sicherheit",
@@ -404,6 +431,7 @@
     "userActivated": "Benutzer aktiviert.",
     "userDeactivated": "Benutzer deaktiviert.",
     "userCreated": "Benutzer angelegt.",
+    "userGroupsUpdated": "Gruppenmitgliedschaft aktualisiert.",
     "inviteCreated": "Einladung erstellt.",
     "locationSaved": "Standort gespeichert.",
     "locationCreated": "Standort angelegt.",
@@ -615,6 +643,7 @@
   },
   "adminLayout": {
     "tabUsers": "Benutzerverwaltung",
+    "tabGroups": "Berechtigungsgruppen",
     "tabSettings": "Anwendungseinstellungen",
     "tabLabelGenerator": "Label-Generator",
     "tabTemplates": "Vorlagen",

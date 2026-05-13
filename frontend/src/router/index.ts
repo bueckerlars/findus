@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useCreateModals } from "../composables/useCreateModals";
-import { useSession } from "../session";
+import { canAccessAnyPermission, useSession } from "../session";
+import { PERM_ITEMS_WRITE, PERM_LABELS_WRITE, PERM_LOCATIONS_WRITE } from "../permissions";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +17,7 @@ const router = createRouter({
         { path: "locations", component: () => import("../views/LocationsListView.vue") },
         {
           path: "locations/new",
-          meta: { requiresAdmin: true },
+          meta: { requiresAnyPermission: [PERM_LOCATIONS_WRITE] },
           redirect: (to) => {
             const { setPending } = useCreateModals();
             const pid = to.query.parent_id;
@@ -28,11 +29,11 @@ const router = createRouter({
           },
         },
         { path: "locations/:id", component: () => import("../views/LocationDetailView.vue") },
-        { path: "locations/:id/edit", component: () => import("../views/LocationFormView.vue"), meta: { requiresAdmin: true } },
+        { path: "locations/:id/edit", component: () => import("../views/LocationFormView.vue"), meta: { requiresAnyPermission: [PERM_LOCATIONS_WRITE] } },
         { path: "items", component: () => import("../views/ItemsListView.vue") },
         {
           path: "items/new",
-          meta: { requiresAdmin: true },
+          meta: { requiresAnyPermission: [PERM_ITEMS_WRITE] },
           redirect: (to) => {
             const { setPending } = useCreateModals();
             const loc = to.query.location_id;
@@ -46,7 +47,7 @@ const router = createRouter({
         { path: "items/:id", component: () => import("../views/ItemDetailView.vue") },
         {
           path: "items/:id/edit",
-          meta: { requiresAdmin: true },
+          meta: { requiresAnyPermission: [PERM_ITEMS_WRITE] },
           redirect: (to) => ({
             path: `/items/${String(to.params.id)}`,
             query: { ...to.query, edit: "1" },
@@ -56,14 +57,14 @@ const router = createRouter({
         { path: "labels", component: () => import("../views/LabelsListView.vue") },
         {
           path: "labels/new",
-          meta: { requiresAdmin: true },
+          meta: { requiresAnyPermission: [PERM_LABELS_WRITE] },
           redirect: () => {
             const { setPending } = useCreateModals();
             setPending({ kind: "label" });
             return { path: "/labels", replace: true };
           },
         },
-        { path: "labels/:id/edit", component: () => import("../views/LabelFormView.vue"), meta: { requiresAdmin: true } },
+        { path: "labels/:id/edit", component: () => import("../views/LabelFormView.vue"), meta: { requiresAnyPermission: [PERM_LABELS_WRITE] } },
         {
           path: "admin",
           component: () => import("../views/AdminLayout.vue"),
@@ -71,6 +72,9 @@ const router = createRouter({
           redirect: "/admin/users",
           children: [
             { path: "users", component: () => import("../views/AdminUsersView.vue") },
+            { path: "groups", component: () => import("../views/AdminGroupsView.vue") },
+            { path: "groups/new", component: () => import("../views/AdminGroupFormView.vue") },
+            { path: "groups/:id/edit", component: () => import("../views/AdminGroupFormView.vue") },
             { path: "settings", component: () => import("../views/AdminSettingsView.vue") },
             { path: "label-generator", component: () => import("../views/AdminLabelGeneratorView.vue") },
             { path: "templates", component: () => import("../views/AdminTemplatesView.vue") },
@@ -93,6 +97,14 @@ router.beforeEach(async (to) => {
     return { path: "/login", query: { next: to.fullPath } };
   }
   if (to.matched.some((r) => r.meta.requiresAdmin) && user.value?.role !== "admin") {
+    return { path: "/" };
+  }
+  if (
+    to.matched.some((r) => {
+      const req = r.meta.requiresAnyPermission as string[] | undefined;
+      return !!req?.length && !canAccessAnyPermission(req);
+    })
+  ) {
     return { path: "/" };
   }
   if (to.meta.guestOnly && user.value) {

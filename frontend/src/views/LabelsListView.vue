@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { api } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
+import { PERM_LABELS_WRITE } from "../permissions";
 import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 import FxButton from "../components/primitives/FxButton.vue";
 import FxEmptyState from "../components/primitives/FxEmptyState.vue";
@@ -14,7 +15,8 @@ type Row = { label: Label; chip_href: string; default_template_title?: string };
 
 const rows = ref<Row[]>([]);
 const loading = ref(true);
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canManageLabels = computed(() => isAdmin.value || can(PERM_LABELS_WRITE));
 const { openCreateLabel } = useCreateModals();
 
 onMounted(async () => {
@@ -31,7 +33,7 @@ onMounted(async () => {
   <div class="max-w-3xl space-y-5">
     <FxPageHeader :title="$t('labels.title')" :subtitle="$t('labels.subtitle')">
       <template #actions>
-        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLabel()">{{ $t("labels.newLabel") }}</FxButton>
+        <FxButton v-if="canManageLabels" variant="primary" size="sm" icon-left="plus" @click="openCreateLabel()">{{ $t("labels.newLabel") }}</FxButton>
       </template>
     </FxPageHeader>
 
@@ -47,8 +49,7 @@ onMounted(async () => {
         <div class="flex shrink-0 items-center gap-3">
           <span v-if="row.default_template_title" class="text-xs text-zinc-500">{{ $t("labels.defaultLine", { name: row.default_template_title }) }}</span>
           <RouterLink
-            v-if="isAdmin"
-            :to="'/labels/' + row.label.ID + '/edit'"
+            v-if="canManageLabels"
             class="text-xs font-semibold text-sky-700 hover:text-sky-800"
             >{{ $t("labels.edit") }}</RouterLink
           >
@@ -56,7 +57,7 @@ onMounted(async () => {
       </li>
     </ul>
     <FxEmptyState v-else icon="tag" :title="$t('labels.noLabels')">
-      <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLabel()">{{ $t("labels.createFirst") }}</FxButton>
+      <FxButton v-if="canManageLabels" variant="primary" size="sm" icon-left="plus" @click="openCreateLabel()">{{ $t("labels.createFirst") }}</FxButton>
     </FxEmptyState>
   </div>
 </template>

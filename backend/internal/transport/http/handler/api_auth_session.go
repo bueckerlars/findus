@@ -20,6 +20,7 @@ type apiUser struct {
 	AvatarPath *string   `json:"avatar_path,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	GroupIDs   []string  `json:"group_ids,omitempty"`
 }
 
 func apiUserFrom(u *domain.User) apiUser {
@@ -38,15 +39,38 @@ func apiUserFrom(u *domain.User) apiUser {
 
 // APIMe returns the current session user or 401.
 func (s *Server) APIMe(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.User(r.Context())
+	ctx := r.Context()
+	u, ok := middleware.User(ctx)
 	if !ok {
 		s.writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	if fresh, err := s.Users.GetByID(r.Context(), u.ID); err == nil {
+	if fresh, err := s.Users.GetByID(ctx, u.ID); err == nil {
 		u = fresh
 	}
-	s.writeJSON(w, http.StatusOK, map[string]any{"user": apiUserFrom(u)})
+	permStrs := make([]string, 0)
+	apiGroups := make([]map[string]string, 0)
+	if u.Role.IsAdmin() {
+		for _, p := range domain.AllPermissions() {
+			permStrs = append(permStrs, string(p))
+		}
+	} else if s.Groups != nil {
+		if perms, err := s.Groups.EffectivePermissions(ctx, u.ID); err == nil {
+			for _, p := range perms {
+				permStrs = append(permStrs, string(p))
+			}
+		}
+		if gs, err := s.Groups.ListGroupsForUser(ctx, u.ID); err == nil {
+			for _, g := range gs {
+				apiGroups = append(apiGroups, map[string]string{"id": g.ID, "name": g.Name})
+			}
+		}
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"user":        apiUserFrom(u),
+		"permissions": permStrs,
+		"groups":      apiGroups,
+	})
 }
 
 type apiBootstrap struct {

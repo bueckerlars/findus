@@ -11,7 +11,7 @@ import { useI18n } from "vue-i18n";
 import { buildContextCommands } from "./commandPaletteContext";
 import { allLocalesSearchBlob } from "../utils/commandPaletteAllLocaleKeywords";
 import { confirmAlert } from "../composables/useAlertDialog";
-import { toast } from "../composables/useToast";
+import { PERM_ITEMS_WRITE, PERM_LABELS_WRITE, PERM_LOCATIONS_WRITE } from "../permissions";
 
 /** Static palette rows: match query against every loaded UI language (labels stay current locale). */
 const GO_TO_CMD_KW = {
@@ -30,7 +30,10 @@ const GO_TO_CMD_KW = {
 const router = useRouter();
 const route = useRoute();
 const { t, locale } = useI18n();
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canEditItems = computed(() => can(PERM_ITEMS_WRITE));
+const canEditLocations = computed(() => can(PERM_LOCATIONS_WRITE));
+const canEditLabels = computed(() => can(PERM_LABELS_WRITE));
 const { openCreateItem, openCreateLocation, openCreateLabel } = useCreateModals();
 const itemDetailHandlers = useItemDetailCommandHandlers();
 const locationDetailHandlers = useLocationDetailCommandHandlers();
@@ -180,7 +183,7 @@ function toggleItemSearchActionsMenu() {
 
 function runSearchHitEdit() {
   const id = itemSearchActionsTarget.value?.id;
-  if (!id || !isAdmin.value) return;
+  if (!id || !canEditItems.value) return;
   closeItemSearchActionsMenu();
   goHref(`/items/${id}?edit=1`);
 }
@@ -232,7 +235,7 @@ function waitForCommandDialogClosed(): Promise<void> {
 
 async function runSearchHitDelete() {
   const id = itemSearchActionsTarget.value?.id;
-  if (!id || !isAdmin.value) return;
+  if (!id || !canEditItems.value) return;
   await waitForCommandDialogClosed();
   const ok = await confirmAlert({
     title: t("itemDetail.deleteTitle"),
@@ -757,6 +760,9 @@ const contextCommands = computed(() => {
     route,
     {
       isAdmin: isAdmin.value,
+      canEditItems: canEditItems.value,
+      canEditLocations: canEditLocations.value,
+      canEditLabels: canEditLabels.value,
       itemDetail: itemDetailHandlers.value,
       locationDetail: locationDetailHandlers.value,
     },
@@ -798,10 +804,17 @@ const createCommandOrder = computed((): CreateKind[] => {
 });
 
 const createCommands = computed(() =>
-  createCommandOrder.value.map((kind) => ({
-    kind,
-    ...createKindMeta.value[kind],
-  })),
+  createCommandOrder.value
+    .map((kind) => ({
+      kind,
+      ...createKindMeta.value[kind],
+    }))
+    .filter((row) => {
+      if (row.kind === "item") return canEditItems.value;
+      if (row.kind === "location") return canEditLocations.value;
+      if (row.kind === "label") return canEditLabels.value;
+      return false;
+    }),
 );
 
 const footerHintsLine = computed(() =>
@@ -873,7 +886,7 @@ const footerHintsLine = computed(() =>
             </button>
           </div>
         </div>
-        <div v-if="isAdmin" data-fx-cmd-group="create" :class="['mb-2', contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
+        <div v-if="createCommands.length" data-fx-cmd-group="create" :class="['mb-2', contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
           <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.create") }}</p>
           <div class="space-y-px" role="listbox" :aria-label="$t('cpUi.createAria')">
             <button
@@ -893,7 +906,7 @@ const footerHintsLine = computed(() =>
             </button>
           </div>
         </div>
-        <div data-fx-cmd-group="go" :class="['mb-2', isAdmin || contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
+        <div data-fx-cmd-group="go" :class="['mb-2', isAdmin || createCommands.length || contextCommands.length ? 'border-t border-zinc-400/15 pt-2' : '']">
           <p class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{{ $t("cpUi.goTo") }}</p>
           <div class="space-y-px" role="listbox" :aria-label="$t('cpUi.pagesAria')">
             <button
@@ -1115,11 +1128,7 @@ const footerHintsLine = computed(() =>
       @keydown="onSearchHitActionsMenuKeydown"
     >
       <button
-        v-if="isAdmin"
-        type="button"
-        role="menuitem"
-        class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-zinc-900 outline-none hover:bg-zinc-100 focus-visible:bg-zinc-100"
-        @click="runSearchHitEdit"
+        v-if="canEditItems"
       >
         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100/90 text-zinc-500"
           ><FxSvg name="pencilSquare" class="h-3.5 w-3.5 shrink-0"
@@ -1149,7 +1158,7 @@ const footerHintsLine = computed(() =>
         <span>{{ $t("cp.ctx_item_copy_link_l") }}</span>
       </button>
       <button
-        v-if="isAdmin"
+        v-if="canEditItems"
         type="button"
         role="menuitem"
         class="fx-cmd-search-hit-menu-item flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] font-medium text-red-700 outline-none hover:bg-red-50 focus-visible:bg-red-50"

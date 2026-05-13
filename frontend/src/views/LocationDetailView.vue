@@ -8,6 +8,7 @@ import { toast } from "../composables/useToast";
 import { useCreateModals } from "../composables/useCreateModals";
 import { setLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
 import { useSession } from "../session";
+import { PERM_ITEMS_WRITE, PERM_LOCATIONS_WRITE } from "../permissions";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
@@ -26,7 +27,9 @@ type Crumb = { ID: string; Name: string };
 
 const route = useRoute();
 const router = useRouter();
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canManageLocations = computed(() => isAdmin.value || can(PERM_LOCATIONS_WRITE));
+const canCreateItemsHere = computed(() => isAdmin.value || can(PERM_ITEMS_WRITE));
 const { openCreateItem, openCreateLocation } = useCreateModals();
 const { t, locale } = useI18n();
 
@@ -93,7 +96,7 @@ async function copyLocationPageLink() {
 }
 
 watch(
-  () => ({ l: loc.value, ad: isAdmin.value }),
+  () => ({ l: loc.value, ad: canManageLocations.value }),
   () => {
     if (!loc.value) {
       setLocationDetailCommandHandlers(null);
@@ -103,7 +106,7 @@ watch(
       downloadQrPng: downloadLocationQrPng,
       copyPageLink: copyLocationPageLink,
     };
-    if (isAdmin.value) {
+    if (canManageLocations.value) {
       setLocationDetailCommandHandlers({
         ...shared,
         deleteLocation: () => del(),
@@ -172,7 +175,7 @@ async function del() {
             :download-name="loc.Name"
             :hint="$t('locationDetail.qrHint')"
           />
-          <template v-if="isAdmin">
+          <template v-if="canManageLocations">
             <RouterLink :to="'/locations/' + loc.ID + '/edit'" class="fx-icon-btn" :aria-label="$t('locationDetail.editLocation')" :title="$t('locationDetail.edit')">
               <FxSvg name="pencilSquare" />
             </RouterLink>
@@ -188,10 +191,7 @@ async function del() {
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-base font-semibold text-zinc-900">{{ $t("locationDetail.inside") }}</h2>
         <button
-          v-if="isAdmin"
-          type="button"
-          class="text-sm font-medium text-sky-600 hover:text-sky-700"
-          @click="openCreateLocation({ parentId: loc.ID })"
+          v-if="canManageLocations"
         >
           {{ $t("locationDetail.addSub") }}
         </button>
@@ -216,10 +216,7 @@ async function del() {
           <div class="flex flex-wrap items-center gap-2">
             <ItemsViewModeToolbar />
             <button
-              v-if="isAdmin"
-              type="button"
-              class="text-sm font-medium text-sky-600 hover:text-sky-700"
-              @click="openCreateItem({ locationId: loc.ID })"
+              v-if="canCreateItemsHere"
             >
               {{ $t("locationDetail.addItem") }}
             </button>

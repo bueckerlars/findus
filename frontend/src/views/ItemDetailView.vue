@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { api, patchJson, postJson } from "../api";
 import { useSession } from "../session";
+import { PERM_ITEMS_WRITE } from "../permissions";
 import FxSvg, { type FxIconName } from "../components/FxSvg.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 import { confirmAlert } from "../composables/useAlertDialog";
@@ -46,7 +47,8 @@ type ItemAttachment = {
 
 const route = useRoute();
 const router = useRouter();
-const { isAdmin } = useSession();
+const { isAdmin, can } = useSession();
+const canEditItems = computed(() => isAdmin.value || can(PERM_ITEMS_WRITE));
 const { t } = useI18n();
 
 const item = ref<Item | null>(null);
@@ -196,7 +198,7 @@ function isDirty() {
 }
 
 async function enterEditMode() {
-  if (!isAdmin.value || !item.value) return;
+  if (!canEditItems.value || !item.value) return;
   saveErr.value = "";
   editLoading.value = true;
   try {
@@ -212,7 +214,7 @@ async function enterEditMode() {
 
 /** Deep-link / command palette: `/items/:id?edit=1` (same component instance when only query changes). */
 async function applyRouteEditIntent() {
-  if (route.query.edit !== "1" || !isAdmin.value || !item.value) return;
+  if (route.query.edit !== "1" || !canEditItems.value || !item.value) return;
   await router.replace({ path: "/items/" + id.value, query: {} });
   if (editMode.value) return;
   await enterEditMode();
@@ -286,7 +288,7 @@ onUnmounted(() => {
 });
 
 watch(
-  () => ({ it: item.value, ed: editMode.value, ad: isAdmin.value }),
+  () => ({ it: item.value, ed: editMode.value, ad: canEditItems.value }),
   () => {
     if (!item.value) {
       setItemDetailCommandHandlers(null);
@@ -296,7 +298,7 @@ watch(
       downloadQrPng,
       copyPageLink: copyItemPageLink,
     };
-    if (!isAdmin.value) {
+    if (!canEditItems.value) {
       setItemDetailCommandHandlers(shared);
       return;
     }
@@ -513,7 +515,7 @@ async function uploadAttachment(file: File) {
 }
 
 async function onAttachmentTitleBlur(a: ItemAttachment, ev: Event) {
-  if (!item.value || !isAdmin.value || !editMode.value || attachmentBusy.value) return;
+  if (!item.value || !canEditItems.value || !editMode.value || attachmentBusy.value) return;
   const el = ev.target as HTMLInputElement;
   const next = el.value.trim();
   const prev = attachmentRowTitle(a);
@@ -699,7 +701,7 @@ async function deleteAttachment(a: ItemAttachment) {
                 :hint="$t('itemDetail.qrHint')"
                 @open="labelAddMenuOpen = false"
               />
-              <template v-if="isAdmin">
+              <template v-if="canEditItems">
                 <template v-if="!editMode">
                   <button
                     type="button"
@@ -825,7 +827,7 @@ async function deleteAttachment(a: ItemAttachment) {
         <p class="mt-1 text-xs text-zinc-500">{{ $t("itemDetail.documentsHint") }}</p>
       </div>
       <div
-        v-if="isAdmin && editMode"
+        v-if="canEditItems && editMode"
         class="border-b border-zinc-100 px-5 py-4 sm:px-6"
         @dragover.prevent
         @drop.prevent="onAttachmentDrop"
@@ -873,7 +875,7 @@ async function deleteAttachment(a: ItemAttachment) {
             <FxSvg :name="attachmentMimeIcon(a.MimeType)" class="h-5 w-5" aria-hidden="true" />
           </span>
           <div class="min-w-0 flex-1">
-            <template v-if="isAdmin && editMode">
+            <template v-if="canEditItems && editMode">
               <label class="sr-only" :for="'att-title-' + a.ID">{{ $t("itemDetail.documentTitlePh") }}</label>
               <input
                 :id="'att-title-' + a.ID"
@@ -907,7 +909,7 @@ async function deleteAttachment(a: ItemAttachment) {
               <FxSvg name="arrowDownTray" />
             </a>
             <button
-              v-if="isAdmin && editMode"
+              v-if="canEditItems && editMode"
               type="button"
               class="fx-icon-btn-danger"
               :disabled="attachmentBusy"
