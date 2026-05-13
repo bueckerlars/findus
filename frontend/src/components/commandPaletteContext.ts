@@ -1,5 +1,6 @@
 import type { RouteLocationNormalizedLoaded } from "vue-router";
 import type { ComposerTranslation } from "vue-i18n";
+import { allLocalesSearchBlob } from "../utils/commandPaletteAllLocaleKeywords";
 import type { FxIconName } from "./FxSvg.vue";
 import type { ItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
 import type { LocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
@@ -33,6 +34,12 @@ function ctxCmd(t: ComposerTranslation, id: string, part: "l" | "k"): string {
   return t("cp." + suffix);
 }
 
+function ctxCmdKeywords(t: ComposerTranslation, id: string): string {
+  const suffix = id.replace(/-/g, "_");
+  const keys = [`cp.${suffix}_k`, `cp.${suffix}_l`] as const;
+  return [ctxCmd(t, id, "k"), allLocalesSearchBlob(keys)].filter(Boolean).join(" ");
+}
+
 export function buildContextCommands(
   route: RouteLocationNormalizedLoaded,
   d: ContextPaletteDeps,
@@ -50,14 +57,14 @@ export function buildContextCommands(
         {
           id: "ctx-item-save",
           label: ctxCmd(t, "ctx-item-save", "l"),
-          keywords: ctxCmd(t, "ctx-item-save", "k"),
+          keywords: ctxCmdKeywords(t, "ctx-item-save"),
           icon: "check",
           action: "item-detail:save",
         },
         {
           id: "ctx-item-cancel-edit",
           label: ctxCmd(t, "ctx-item-cancel-edit", "l"),
-          keywords: ctxCmd(t, "ctx-item-cancel-edit", "k"),
+          keywords: ctxCmdKeywords(t, "ctx-item-cancel-edit"),
           icon: "eye",
           action: "item-detail:cancel",
         },
@@ -66,7 +73,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-item-edit",
         label: ctxCmd(t, "ctx-item-edit", "l"),
-        keywords: ctxCmd(t, "ctx-item-edit", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-edit"),
         icon: "pencilSquare",
         href: `/items/${id}?edit=1`,
       });
@@ -75,7 +82,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-item-qr-dl",
         label: ctxCmd(t, "ctx-item-qr-dl", "l"),
-        keywords: ctxCmd(t, "ctx-item-qr-dl", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-qr-dl"),
         icon: "qr",
         action: "item-detail:download-qr",
       });
@@ -84,7 +91,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-item-copy-link",
         label: ctxCmd(t, "ctx-item-copy-link", "l"),
-        keywords: ctxCmd(t, "ctx-item-copy-link", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-copy-link"),
         icon: "cube",
         action: "item-detail:copy-link",
       });
@@ -93,7 +100,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-item-delete",
         label: ctxCmd(t, "ctx-item-delete", "l"),
-        keywords: ctxCmd(t, "ctx-item-delete", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-delete"),
         icon: "trash",
         action: "item-detail:delete",
       });
@@ -102,21 +109,21 @@ export function buildContextCommands(
       {
         id: "ctx-item-photo-tab",
         label: ctxCmd(t, "ctx-item-photo-tab", "l"),
-        keywords: ctxCmd(t, "ctx-item-photo-tab", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-photo-tab"),
         icon: "photo",
         action: `tab:/items/${id}/photo`,
       },
       {
         id: "ctx-item-all",
         label: ctxCmd(t, "ctx-item-all", "l"),
-        keywords: ctxCmd(t, "ctx-item-all", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-all"),
         icon: "cube",
         href: "/items",
       },
       {
         id: "ctx-item-search",
         label: ctxCmd(t, "ctx-item-search", "l"),
-        keywords: ctxCmd(t, "ctx-item-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-item-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
@@ -132,21 +139,21 @@ export function buildContextCommands(
         {
           id: "ctx-loc-edit",
           label: ctxCmd(t, "ctx-loc-edit", "l"),
-          keywords: ctxCmd(t, "ctx-loc-edit", "k"),
+          keywords: ctxCmdKeywords(t, "ctx-loc-edit"),
           icon: "pencilSquare",
           href: `/locations/${id}/edit`,
         },
         {
           id: "ctx-loc-subloc",
           label: ctxCmd(t, "ctx-loc-subloc", "l"),
-          keywords: ctxCmd(t, "ctx-loc-subloc", "k"),
+          keywords: ctxCmdKeywords(t, "ctx-loc-subloc"),
           icon: "plus",
           href: `/locations/new?parent_id=${encodeURIComponent(id)}`,
         },
         {
           id: "ctx-loc-add-item",
           label: ctxCmd(t, "ctx-loc-add-item", "l"),
-          keywords: ctxCmd(t, "ctx-loc-add-item", "k"),
+          keywords: ctxCmdKeywords(t, "ctx-loc-add-item"),
           icon: "cube",
           createPreset: { kind: "item", locationId: id },
         },
@@ -156,7 +163,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-loc-qr-dl",
         label: ctxCmd(t, "ctx-loc-qr-dl", "l"),
-        keywords: ctxCmd(t, "ctx-loc-qr-dl", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-qr-dl"),
         icon: "qr",
         action: "loc-detail:download-qr",
       });
@@ -165,7 +172,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-loc-copy-link",
         label: ctxCmd(t, "ctx-loc-copy-link", "l"),
-        keywords: ctxCmd(t, "ctx-loc-copy-link", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-copy-link"),
         icon: "cube",
         action: "loc-detail:copy-link",
       });
@@ -174,7 +181,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-loc-delete",
         label: ctxCmd(t, "ctx-loc-delete", "l"),
-        keywords: ctxCmd(t, "ctx-loc-delete", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-delete"),
         icon: "trash",
         action: "loc-detail:delete",
       });
@@ -182,7 +189,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-loc-all",
       label: ctxCmd(t, "ctx-loc-all", "l"),
-      keywords: ctxCmd(t, "ctx-loc-all", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-loc-all"),
       icon: "mapPin",
       href: "/locations",
     });
@@ -195,7 +202,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-loc-view",
       label: ctxCmd(t, "ctx-loc-view", "l"),
-      keywords: ctxCmd(t, "ctx-loc-view", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-loc-view"),
       icon: "eye",
       href: `/locations/${id}`,
     });
@@ -208,7 +215,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-loc-parent",
         label: ctxCmd(t, "ctx-loc-parent", "l"),
-        keywords: ctxCmd(t, "ctx-loc-parent", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-parent"),
         icon: "mapPin",
         href: `/locations/${pid.trim()}`,
       });
@@ -216,7 +223,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-loc-new-all",
       label: ctxCmd(t, "ctx-loc-new-all", "l"),
-      keywords: ctxCmd(t, "ctx-loc-new-all", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-loc-new-all"),
       icon: "mapPin",
       href: "/locations",
     });
@@ -228,21 +235,21 @@ export function buildContextCommands(
       {
         id: "ctx-loc-list-search",
         label: ctxCmd(t, "ctx-loc-list-search", "l"),
-        keywords: ctxCmd(t, "ctx-loc-list-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-list-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
       {
         id: "ctx-loc-list-items",
         label: ctxCmd(t, "ctx-loc-list-items", "l"),
-        keywords: ctxCmd(t, "ctx-loc-list-items", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-list-items"),
         icon: "cube",
         href: "/items",
       },
       {
         id: "ctx-loc-list-home",
         label: ctxCmd(t, "ctx-loc-list-home", "l"),
-        keywords: ctxCmd(t, "ctx-loc-list-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-loc-list-home"),
         icon: "home",
         href: "/",
       },
@@ -255,14 +262,14 @@ export function buildContextCommands(
       {
         id: "ctx-items-search",
         label: ctxCmd(t, "ctx-items-search", "l"),
-        keywords: ctxCmd(t, "ctx-items-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-items-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
       {
         id: "ctx-items-locations",
         label: ctxCmd(t, "ctx-items-locations", "l"),
-        keywords: ctxCmd(t, "ctx-items-locations", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-items-locations"),
         icon: "mapPin",
         href: "/locations",
       },
@@ -275,28 +282,28 @@ export function buildContextCommands(
       {
         id: "ctx-home-search",
         label: ctxCmd(t, "ctx-home-search", "l"),
-        keywords: ctxCmd(t, "ctx-home-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-home-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
       {
         id: "ctx-home-items",
         label: ctxCmd(t, "ctx-home-items", "l"),
-        keywords: ctxCmd(t, "ctx-home-items", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-home-items"),
         icon: "cube",
         href: "/items",
       },
       {
         id: "ctx-home-locations",
         label: ctxCmd(t, "ctx-home-locations", "l"),
-        keywords: ctxCmd(t, "ctx-home-locations", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-home-locations"),
         icon: "mapPin",
         href: "/locations",
       },
       {
         id: "ctx-home-labels",
         label: ctxCmd(t, "ctx-home-labels", "l"),
-        keywords: ctxCmd(t, "ctx-home-labels", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-home-labels"),
         icon: "tag",
         href: "/labels",
       },
@@ -309,21 +316,21 @@ export function buildContextCommands(
       {
         id: "ctx-search-focus",
         label: ctxCmd(t, "ctx-search-focus", "l"),
-        keywords: ctxCmd(t, "ctx-search-focus", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-search-focus"),
         icon: "magnifyingGlass",
         action: "focus:#q",
       },
       {
         id: "ctx-search-home",
         label: ctxCmd(t, "ctx-search-home", "l"),
-        keywords: ctxCmd(t, "ctx-search-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-search-home"),
         icon: "home",
         href: "/",
       },
       {
         id: "ctx-search-items",
         label: ctxCmd(t, "ctx-search-items", "l"),
-        keywords: ctxCmd(t, "ctx-search-items", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-search-items"),
         icon: "cube",
         href: "/items",
       },
@@ -336,7 +343,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-labels-new",
         label: ctxCmd(t, "ctx-labels-new", "l"),
-        keywords: ctxCmd(t, "ctx-labels-new", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labels-new"),
         icon: "plus",
         href: "/labels/new",
       });
@@ -345,14 +352,14 @@ export function buildContextCommands(
       {
         id: "ctx-labels-search",
         label: ctxCmd(t, "ctx-labels-search", "l"),
-        keywords: ctxCmd(t, "ctx-labels-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labels-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
       {
         id: "ctx-labels-home",
         label: ctxCmd(t, "ctx-labels-home", "l"),
-        keywords: ctxCmd(t, "ctx-labels-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labels-home"),
         icon: "home",
         href: "/",
       },
@@ -366,14 +373,14 @@ export function buildContextCommands(
       {
         id: "ctx-label-all",
         label: ctxCmd(t, "ctx-label-all", "l"),
-        keywords: ctxCmd(t, "ctx-label-all", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-label-all"),
         icon: "tag",
         href: "/labels",
       },
       {
         id: "ctx-label-search",
         label: ctxCmd(t, "ctx-label-search", "l"),
-        keywords: ctxCmd(t, "ctx-label-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-label-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
@@ -382,7 +389,7 @@ export function buildContextCommands(
       out.push({
         id: "ctx-label-new2",
         label: ctxCmd(t, "ctx-label-new2", "l"),
-        keywords: ctxCmd(t, "ctx-label-new2", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-label-new2"),
         icon: "plus",
         href: "/labels/new",
       });
@@ -395,14 +402,14 @@ export function buildContextCommands(
       {
         id: "ctx-label-new-all",
         label: ctxCmd(t, "ctx-label-new-all", "l"),
-        keywords: ctxCmd(t, "ctx-label-new-all", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-label-new-all"),
         icon: "tag",
         href: "/labels",
       },
       {
         id: "ctx-label-new-search",
         label: ctxCmd(t, "ctx-label-new-search", "l"),
-        keywords: ctxCmd(t, "ctx-label-new-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-label-new-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
@@ -415,35 +422,35 @@ export function buildContextCommands(
       {
         id: "ctx-admin-settings",
         label: ctxCmd(t, "ctx-admin-settings", "l"),
-        keywords: ctxCmd(t, "ctx-admin-settings", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-admin-settings"),
         icon: "gear",
         href: "/admin/settings",
       },
       {
         id: "ctx-admin-backup",
         label: ctxCmd(t, "ctx-admin-backup", "l"),
-        keywords: ctxCmd(t, "ctx-admin-backup", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-admin-backup"),
         icon: "gear",
         externalHref: "/admin/backup.zip",
       },
       {
         id: "ctx-admin-tpl",
         label: ctxCmd(t, "ctx-admin-tpl", "l"),
-        keywords: ctxCmd(t, "ctx-admin-tpl", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-admin-tpl"),
         icon: "gear",
         href: "/admin/templates",
       },
       {
         id: "ctx-admin-label-gen",
         label: ctxCmd(t, "ctx-admin-label-gen", "l"),
-        keywords: ctxCmd(t, "ctx-admin-label-gen", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-admin-label-gen"),
         icon: "qr",
         href: "/admin/label-generator",
       },
       {
         id: "ctx-admin-home",
         label: ctxCmd(t, "ctx-admin-home", "l"),
-        keywords: ctxCmd(t, "ctx-admin-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-admin-home"),
         icon: "home",
         href: "/",
       },
@@ -456,35 +463,35 @@ export function buildContextCommands(
       {
         id: "ctx-settings-users",
         label: ctxCmd(t, "ctx-settings-users", "l"),
-        keywords: ctxCmd(t, "ctx-settings-users", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-settings-users"),
         icon: "users",
         href: "/admin/users",
       },
       {
         id: "ctx-settings-backup",
         label: ctxCmd(t, "ctx-settings-backup", "l"),
-        keywords: ctxCmd(t, "ctx-settings-backup", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-settings-backup"),
         icon: "gear",
         externalHref: "/admin/backup.zip",
       },
       {
         id: "ctx-settings-tpl",
         label: ctxCmd(t, "ctx-settings-tpl", "l"),
-        keywords: ctxCmd(t, "ctx-settings-tpl", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-settings-tpl"),
         icon: "gear",
         href: "/admin/templates",
       },
       {
         id: "ctx-settings-label-gen",
         label: ctxCmd(t, "ctx-settings-label-gen", "l"),
-        keywords: ctxCmd(t, "ctx-settings-label-gen", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-settings-label-gen"),
         icon: "qr",
         href: "/admin/label-generator",
       },
       {
         id: "ctx-settings-home",
         label: ctxCmd(t, "ctx-settings-home", "l"),
-        keywords: ctxCmd(t, "ctx-settings-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-settings-home"),
         icon: "home",
         href: "/",
       },
@@ -497,35 +504,35 @@ export function buildContextCommands(
       {
         id: "ctx-tpl-settings",
         label: ctxCmd(t, "ctx-tpl-settings", "l"),
-        keywords: ctxCmd(t, "ctx-tpl-settings", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-tpl-settings"),
         icon: "gear",
         href: "/admin/settings",
       },
       {
         id: "ctx-tpl-users",
         label: ctxCmd(t, "ctx-tpl-users", "l"),
-        keywords: ctxCmd(t, "ctx-tpl-users", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-tpl-users"),
         icon: "users",
         href: "/admin/users",
       },
       {
         id: "ctx-tpl-new",
         label: ctxCmd(t, "ctx-tpl-new", "l"),
-        keywords: ctxCmd(t, "ctx-tpl-new", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-tpl-new"),
         icon: "plus",
         href: "/admin/templates/new",
       },
       {
         id: "ctx-tpl-label-gen",
         label: ctxCmd(t, "ctx-tpl-label-gen", "l"),
-        keywords: ctxCmd(t, "ctx-tpl-label-gen", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-tpl-label-gen"),
         icon: "qr",
         href: "/admin/label-generator",
       },
       {
         id: "ctx-tpl-home",
         label: ctxCmd(t, "ctx-tpl-home", "l"),
-        keywords: ctxCmd(t, "ctx-tpl-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-tpl-home"),
         icon: "home",
         href: "/",
       },
@@ -537,7 +544,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-tpl-new-list",
       label: ctxCmd(t, "ctx-tpl-new-list", "l"),
-      keywords: ctxCmd(t, "ctx-tpl-new-list", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-tpl-new-list"),
       icon: "gear",
       href: "/admin/templates",
     });
@@ -549,21 +556,21 @@ export function buildContextCommands(
       {
         id: "ctx-labelgen-settings",
         label: ctxCmd(t, "ctx-labelgen-settings", "l"),
-        keywords: ctxCmd(t, "ctx-labelgen-settings", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labelgen-settings"),
         icon: "gear",
         href: "/admin/settings",
       },
       {
         id: "ctx-labelgen-users",
         label: ctxCmd(t, "ctx-labelgen-users", "l"),
-        keywords: ctxCmd(t, "ctx-labelgen-users", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labelgen-users"),
         icon: "users",
         href: "/admin/users",
       },
       {
         id: "ctx-labelgen-tpl",
         label: ctxCmd(t, "ctx-labelgen-tpl", "l"),
-        keywords: ctxCmd(t, "ctx-labelgen-tpl", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-labelgen-tpl"),
         icon: "gear",
         href: "/admin/templates",
       },
@@ -576,7 +583,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-tpl-edit-list",
       label: ctxCmd(t, "ctx-tpl-edit-list", "l"),
-      keywords: ctxCmd(t, "ctx-tpl-edit-list", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-tpl-edit-list"),
       icon: "gear",
       href: "/admin/templates",
     });
@@ -587,7 +594,7 @@ export function buildContextCommands(
     out.push({
       id: "ctx-itemform-items",
       label: ctxCmd(t, "ctx-itemform-items", "l"),
-      keywords: ctxCmd(t, "ctx-itemform-items", "k"),
+      keywords: ctxCmdKeywords(t, "ctx-itemform-items"),
       icon: "cube",
       href: "/items",
     });
@@ -599,35 +606,35 @@ export function buildContextCommands(
       {
         id: "ctx-profile-home",
         label: ctxCmd(t, "ctx-profile-home", "l"),
-        keywords: ctxCmd(t, "ctx-profile-home", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-profile-home"),
         icon: "home",
         href: "/",
       },
       {
         id: "ctx-profile-search",
         label: ctxCmd(t, "ctx-profile-search", "l"),
-        keywords: ctxCmd(t, "ctx-profile-search", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-profile-search"),
         icon: "magnifyingGlass",
         href: "/search",
       },
       {
         id: "ctx-profile-user",
         label: ctxCmd(t, "ctx-profile-user", "l"),
-        keywords: ctxCmd(t, "ctx-profile-user", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-profile-user"),
         icon: "users",
         action: "focus:#pu",
       },
       {
         id: "ctx-profile-email",
         label: ctxCmd(t, "ctx-profile-email", "l"),
-        keywords: ctxCmd(t, "ctx-profile-email", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-profile-email"),
         icon: "users",
         action: "focus:#pe",
       },
       {
         id: "ctx-profile-avatar",
         label: ctxCmd(t, "ctx-profile-avatar", "l"),
-        keywords: ctxCmd(t, "ctx-profile-avatar", "k"),
+        keywords: ctxCmdKeywords(t, "ctx-profile-avatar"),
         icon: "photo",
         action: "focus:#pav",
       },

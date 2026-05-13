@@ -9,6 +9,21 @@ import { useItemDetailCommandHandlers } from "../composables/useItemDetailComman
 import { useLocationDetailCommandHandlers } from "../composables/useLocationDetailCommandBridge";
 import { useI18n } from "vue-i18n";
 import { buildContextCommands } from "./commandPaletteContext";
+import { allLocalesSearchBlob } from "../utils/commandPaletteAllLocaleKeywords";
+
+/** Static palette rows: match query against every loaded UI language (labels stay current locale). */
+const GO_TO_CMD_KW = {
+  home: allLocalesSearchBlob(["cpUi.goHomeKw", "cpUi.goHome"]),
+  locations: allLocalesSearchBlob(["cpUi.goLocationsKw", "cpUi.goLocations"]),
+  items: allLocalesSearchBlob(["cpUi.goItemsKw", "cpUi.goItems"]),
+  labels: allLocalesSearchBlob(["cpUi.goLabelsKw", "cpUi.goLabels"]),
+  search: allLocalesSearchBlob(["cpUi.goSearchKw", "cpUi.goSearch"]),
+  adminUsers: allLocalesSearchBlob(["cpUi.goAdminUsersKw", "cpUi.goAdminUsers"]),
+  adminSettings: allLocalesSearchBlob(["cpUi.goAdminSettingsKw", "cpUi.goAdminSettings"]),
+  adminTemplates: allLocalesSearchBlob(["cpUi.goAdminTemplatesKw", "cpUi.goAdminTemplates"]),
+  adminLabelGenerator: allLocalesSearchBlob(["cpUi.goAdminLabelGeneratorKw", "cpUi.goAdminLabelGenerator"]),
+  profile: allLocalesSearchBlob(["cpUi.goProfileKw", "cpUi.goProfile"]),
+} as const;
 
 const router = useRouter();
 const route = useRoute();
@@ -503,9 +518,18 @@ const contextCommands = computed(() => {
 type CreateKind = "item" | "location" | "label";
 
 const createKindMeta = computed((): Record<CreateKind, { label: string; keywords: string }> => ({
-  item: { label: t("cpUi.newItem"), keywords: t("cpUi.newItemKw") },
-  location: { label: t("cpUi.newLocation"), keywords: t("cpUi.newLocationKw") },
-  label: { label: t("cpUi.newLabel"), keywords: t("cpUi.newLabelKw") },
+  item: {
+    label: t("cpUi.newItem"),
+    keywords: allLocalesSearchBlob(["cpUi.newItemKw", "cpUi.newItem"]),
+  },
+  location: {
+    label: t("cpUi.newLocation"),
+    keywords: allLocalesSearchBlob(["cpUi.newLocationKw", "cpUi.newLocation"]),
+  },
+  label: {
+    label: t("cpUi.newLabel"),
+    keywords: allLocalesSearchBlob(["cpUi.newLabelKw", "cpUi.newLabel"]),
+  },
 }));
 
 const DEFAULT_CREATE_ORDER: CreateKind[] = ["item", "location", "label"];
@@ -623,7 +647,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/"
-              :data-keywords="$t('cpUi.goHomeKw')"
+              :data-keywords="GO_TO_CMD_KW.home"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -636,7 +660,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/locations"
-              :data-keywords="$t('cpUi.goLocationsKw')"
+              :data-keywords="GO_TO_CMD_KW.locations"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -649,7 +673,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/items"
-              :data-keywords="$t('cpUi.goItemsKw')"
+              :data-keywords="GO_TO_CMD_KW.items"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -662,7 +686,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/labels"
-              :data-keywords="$t('cpUi.goLabelsKw')"
+              :data-keywords="GO_TO_CMD_KW.labels"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -675,7 +699,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/search"
-              :data-keywords="$t('cpUi.goSearchKw')"
+              :data-keywords="GO_TO_CMD_KW.search"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -689,7 +713,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/admin/users"
-              :data-keywords="$t('cpUi.goAdminUsersKw')"
+              :data-keywords="GO_TO_CMD_KW.adminUsers"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -703,7 +727,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/admin/settings"
-              :data-keywords="$t('cpUi.goAdminSettingsKw')"
+              :data-keywords="GO_TO_CMD_KW.adminSettings"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -717,7 +741,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/admin/templates"
-              :data-keywords="$t('cpUi.goAdminTemplatesKw')"
+              :data-keywords="GO_TO_CMD_KW.adminTemplates"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -731,7 +755,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/admin/label-generator"
-              :data-keywords="$t('cpUi.goAdminLabelGeneratorKw')"
+              :data-keywords="GO_TO_CMD_KW.adminLabelGenerator"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
@@ -744,7 +768,7 @@ const createCommands = computed(() =>
               type="button"
               data-cmd-static
               data-href="/profile"
-              :data-keywords="$t('cpUi.goProfileKw')"
+              :data-keywords="GO_TO_CMD_KW.profile"
               class="fx-command-item group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] leading-snug outline-none transition hover:bg-zinc-200/35 focus-visible:bg-zinc-200/35 focus-visible:ring-2 focus-visible:ring-zinc-400/25"
             >
               <span
