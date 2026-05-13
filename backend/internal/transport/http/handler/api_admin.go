@@ -255,8 +255,9 @@ func (s *Server) APIAdminLabelsGenerate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	gen := service.LabelPDFGenerator{
-		QR:       s.QR,
-		MaxBatch: service.DefaultLabelBatchLimit,
+		QR:           s.QR,
+		MaxBatch:     service.DefaultLabelBatchLimit,
+		Reservations: s.ItemQRTokens,
 	}
 	out, err := gen.Generate(ctx, service.LabelPDFInput{
 		From:   int64(req.From),

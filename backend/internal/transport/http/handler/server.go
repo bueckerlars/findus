@@ -28,13 +28,14 @@ type Server struct {
 
 	DB *sql.DB
 
-	Users     *sqlite.UserRepo
-	Locs      *sqlite.LocationRepo
-	Items     *sqlite.ItemRepo
-	Labels    *sqlite.LabelRepo
-	Templates *sqlite.ItemTemplateRepo
-	Invites   *sqlite.InviteRepo
-	Settings  *sqlite.SettingsRepo
+	Users        *sqlite.UserRepo
+	Locs         *sqlite.LocationRepo
+	Items        *sqlite.ItemRepo
+	ItemQRTokens *sqlite.ItemQRTokenReservationRepo
+	Labels       *sqlite.LabelRepo
+	Templates    *sqlite.ItemTemplateRepo
+	Invites      *sqlite.InviteRepo
+	Settings     *sqlite.SettingsRepo
 
 	Auth      *service.Auth
 	Admin     *service.Admin
@@ -147,6 +148,15 @@ func (s *Server) QRedirect(w http.ResponseWriter, r *http.Request) {
 	if it, err := s.Items.GetByQRToken(ctx, token); err == nil {
 		http.Redirect(w, r, "/items/"+it.ID, http.StatusFound)
 		return
+	}
+	if s.ItemQRTokens != nil {
+		itemID, ok, err := s.ItemQRTokens.GetItemIDByToken(ctx, token)
+		if err == nil && ok {
+			if it, itemErr := s.Items.GetByID(ctx, itemID); itemErr == nil {
+				http.Redirect(w, r, "/items/"+it.ID, http.StatusFound)
+				return
+			}
+		}
 	}
 	http.NotFound(w, r)
 }

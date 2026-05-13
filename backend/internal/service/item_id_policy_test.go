@@ -20,6 +20,7 @@ func TestInventoryCreateItemUsesSequentialPolicy(t *testing.T) {
 
 	settings := sqlite.NewSettingsRepo(db)
 	items := sqlite.NewItemRepo(db)
+	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	templates := sqlite.NewItemTemplateRepo(db)
 
@@ -33,10 +34,11 @@ func TestInventoryCreateItemUsesSequentialPolicy(t *testing.T) {
 	require.NoError(t, settings.Set(ctx, domain.SettingItemIDPolicy, string(raw)))
 
 	inv := &service.Inventory{
-		Locations: locs,
-		Items:     items,
-		Templates: templates,
-		Settings:  settings,
+		Locations:    locs,
+		Items:        items,
+		ItemQRTokens: itemQRTokens,
+		Templates:    templates,
+		Settings:     settings,
 	}
 	it, err := inv.CreateItem(ctx, "one", "", locID, domain.TemplateType("standard"), []byte(`{}`), []byte(`{}`), nil)
 	require.NoError(t, err)
@@ -56,6 +58,7 @@ func TestInventorySetItemIDPolicyMigrates(t *testing.T) {
 
 	settings := sqlite.NewSettingsRepo(db)
 	items := sqlite.NewItemRepo(db)
+	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	templates := sqlite.NewItemTemplateRepo(db)
 
@@ -64,10 +67,11 @@ func TestInventorySetItemIDPolicyMigrates(t *testing.T) {
 	require.NoError(t, err)
 
 	inv := &service.Inventory{
-		Locations: locs,
-		Items:     items,
-		Templates: templates,
-		Settings:  settings,
+		Locations:    locs,
+		Items:        items,
+		ItemQRTokens: itemQRTokens,
+		Templates:    templates,
+		Settings:     settings,
 	}
 	_, err = inv.CreateItem(ctx, "a", "", locID, domain.TemplateType("standard"), []byte(`{}`), []byte(`{}`), nil)
 	require.NoError(t, err)
@@ -97,6 +101,7 @@ func TestInventorySetItemIDPolicyRemapsWhenIDsDoNotMatchPolicy(t *testing.T) {
 
 	settings := sqlite.NewSettingsRepo(db)
 	items := sqlite.NewItemRepo(db)
+	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
 	locs := sqlite.NewLocationRepo(db)
 	templates := sqlite.NewItemTemplateRepo(db)
 
@@ -118,10 +123,11 @@ func TestInventorySetItemIDPolicyRemapsWhenIDsDoNotMatchPolicy(t *testing.T) {
 	require.NoError(t, settings.Set(ctx, domain.SettingItemIDPolicy, string(raw)))
 
 	inv := &service.Inventory{
-		Locations: locs,
-		Items:     items,
-		Templates: templates,
-		Settings:  settings,
+		Locations:    locs,
+		Items:        items,
+		ItemQRTokens: itemQRTokens,
+		Templates:    templates,
+		Settings:     settings,
 	}
 	want := domain.ItemIDPolicy{Kind: domain.ItemIDKindSequential, Prefix: "item", Width: 4, NextSeq: 1}
 	require.NoError(t, inv.SetItemIDPolicy(ctx, dir, want))
@@ -129,4 +135,40 @@ func TestInventorySetItemIDPolicyRemapsWhenIDsDoNotMatchPolicy(t *testing.T) {
 	got, err := items.GetByID(ctx, "item_0001")
 	require.NoError(t, err)
 	require.Equal(t, "legacy", got.Name)
+}
+
+func TestInventoryCreateItemUsesReservedQRToken(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	db, err := sqlite.OpenDB(ctx, dir)
+	require.NoError(t, err)
+	defer db.Close()
+
+	settings := sqlite.NewSettingsRepo(db)
+	items := sqlite.NewItemRepo(db)
+	itemQRTokens := sqlite.NewItemQRTokenReservationRepo(db)
+	locs := sqlite.NewLocationRepo(db)
+	templates := sqlite.NewItemTemplateRepo(db)
+
+	var locID string
+	err = db.QueryRowContext(ctx, `SELECT id FROM locations LIMIT 1`).Scan(&locID)
+	require.NoError(t, err)
+
+	pol := domain.ItemIDPolicy{Kind: domain.ItemIDKindSequential, Prefix: "item", Width: 4, NextSeq: 1}
+	raw, err := domain.ItemIDPolicyJSON(pol)
+	require.NoError(t, err)
+	require.NoError(t, settings.Set(ctx, domain.SettingItemIDPolicy, string(raw)))
+	require.NoError(t, itemQRTokens.Reserve(ctx, "item_0001", "tok_reserved_item_1"))
+
+	inv := &service.Inventory{
+		Locations:    locs,
+		Items:        items,
+		ItemQRTokens: itemQRTokens,
+		Templates:    templates,
+		Settings:     settings,
+	}
+	it, err := inv.CreateItem(ctx, "one", "", locID, domain.TemplateType("standard"), []byte(`{}`), []byte(`{}`), nil)
+	require.NoError(t, err)
+	require.Equal(t, "item_0001", it.ID)
+	require.Equal(t, "tok_reserved_item_1", it.QRToken)
 }

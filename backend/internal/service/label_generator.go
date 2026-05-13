@@ -3,8 +3,6 @@ package service
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,13 +10,15 @@ import (
 	"github.com/jung-kurt/gofpdf"
 
 	"findus/backend/internal/domain"
+	"findus/backend/internal/repository"
 )
 
 const DefaultLabelBatchLimit = 400
 
 type LabelPDFGenerator struct {
-	QR       *QR
-	MaxBatch int64
+	QR           *QR
+	MaxBatch     int64
+	Reservations repository.ItemQRTokenReservationRepository
 }
 
 type LabelPDFInput struct {
@@ -33,7 +33,6 @@ type LabelPDFOutput struct {
 }
 
 func (g *LabelPDFGenerator) Generate(ctx context.Context, in LabelPDFInput) (LabelPDFOutput, error) {
-	_ = ctx
 	pol := in.Policy.Normalize()
 	if pol.Kind != domain.ItemIDKindSequential {
 		return LabelPDFOutput{}, fmt.Errorf("%w: kind", domain.ErrValidation)
@@ -63,7 +62,10 @@ func (g *LabelPDFGenerator) Generate(ctx context.Context, in LabelPDFInput) (Lab
 	rows := make([]labelRow, 0, count)
 	for seq := in.From; seq <= in.To; seq++ {
 		itemID := domain.FormatSequentialID(pol.Prefix, pol.Width, seq)
-		token := deterministicLabelToken(itemID)
+		token, err := g.reserveOrLoadToken(ctx, itemID)
+		if err != nil {
+			return LabelPDFOutput{}, err
+		}
 		png, err := g.QR.PNG(token)
 		if err != nil {
 			return LabelPDFOutput{}, err
@@ -138,7 +140,31 @@ func (g *LabelPDFGenerator) Generate(ctx context.Context, in LabelPDFInput) (Lab
 	}, nil
 }
 
-func deterministicLabelToken(itemID string) string {
-	sum := sha1.Sum([]byte("findus-label:" + itemID))
-	return "lbl_" + hex.EncodeToString(sum[:12])
+func (g *LabelPDFGenerator) reserveOrLoadToken(ctx context.Context, itemID string) (string, error) {
+	if g.Reservations == nil {
+		return "", fmt.Errorf("%w: qr reservations", domain.ErrValidation)
+	}
+	token, ok, err := g.Reservations.GetTokenByItemID(ctx, itemID)
+	if err != nil {
+		return "", err
+	}
+	if ok {
+		return token, nil
+	}
+	for attempt := 0; attempt < 12; attempt++ {
+		candidate := newID()
+		if err := g.Reservations.Reserve(ctx, itemID, candidate); err == nil {
+			return candidate, nil
+		} else if !isSQLiteUniqueViolation(err) {
+			return "", err
+		}
+		token, ok, err = g.Reservations.GetTokenByItemID(ctx, itemID)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			return token, nil
+		}
+	}
+	return "", fmt.Errorf("%w: qr token reserve", domain.ErrValidation)
 }

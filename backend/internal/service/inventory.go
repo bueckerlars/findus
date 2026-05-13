@@ -13,11 +13,12 @@ import (
 )
 
 type Inventory struct {
-	Locations repository.LocationRepository
-	Items     repository.ItemRepository
-	Labels    repository.LabelRepository
-	Templates repository.ItemTemplateRepository
-	Settings  repository.SettingsRepository
+	Locations    repository.LocationRepository
+	Items        repository.ItemRepository
+	ItemQRTokens repository.ItemQRTokenReservationRepository
+	Labels       repository.LabelRepository
+	Templates    repository.ItemTemplateRepository
+	Settings     repository.SettingsRepository
 
 	// ItemAttachments is optional for tests; when nil, attachment APIs should not be registered.
 	ItemAttachments repository.ItemAttachmentRepository
@@ -179,6 +180,15 @@ func (s *Inventory) CreateItem(ctx context.Context, name, description, locationI
 			QRToken:        newID(),
 			CreatedAt:      now,
 			UpdatedAt:      now,
+		}
+		if s.ItemQRTokens != nil {
+			reservedToken, ok, err := s.ItemQRTokens.GetTokenByItemID(ctx, itemID)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				cand.QRToken = reservedToken
+			}
 		}
 		createErr = s.Items.Create(ctx, cand)
 		if createErr == nil {

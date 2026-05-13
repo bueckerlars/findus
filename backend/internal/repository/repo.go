@@ -56,6 +56,12 @@ type ItemRepository interface {
 	MigrateItemPrimaryKeys(ctx context.Context, rows []domain.ItemIDMigration) error
 }
 
+type ItemQRTokenReservationRepository interface {
+	Reserve(ctx context.Context, itemID, token string) error
+	GetTokenByItemID(ctx context.Context, itemID string) (string, bool, error)
+	GetItemIDByToken(ctx context.Context, token string) (string, bool, error)
+}
+
 // ItemAttachmentRepository stores per-item file attachments (metadata + relative storage path).
 type ItemAttachmentRepository interface {
 	ListByItemID(ctx context.Context, itemID string) ([]domain.ItemAttachment, error)
