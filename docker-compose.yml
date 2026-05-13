@@ -10,10 +10,7 @@ services:
     restart: "no"
 
   findus:
-    depends_on:
-      findus-data-init:
-        condition: service_completed_successfully
-    image: ghcr.io/bueckerlars/findus:latest
+    image: ghcr.io/${FINDUS_GHCR_IMAGE:?Set FINDUS_GHCR_IMAGE in .env (owner/repo lowercase). See .env.example}:${FINDUS_IMAGE_TAG:-latest}
     ports:
       - "8080:8080"
     environment:

@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
 import { api } from "../api";
 import { useCreateModals } from "../composables/useCreateModals";
 import { useSession } from "../session";
 import LocationTreeRow, { type LocationTreeNode } from "../components/LocationTreeRow.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import FxEmptyState from "../components/primitives/FxEmptyState.vue";
+import FxSkeletonList from "../components/primitives/FxSkeletonList.vue";
 
 const tree = ref<LocationTreeNode[]>([]);
+const loading = ref(true);
 const expandedIds = ref(new Set<string>());
 const { isAdmin } = useSession();
 const { openCreateLocation } = useCreateModals();
@@ -23,31 +27,27 @@ function toggle(id: string) {
 }
 
 onMounted(async () => {
-  const r = await api<{ tree: LocationTreeNode[] }>("/api/locations");
-  tree.value = r.tree;
+  try {
+    const r = await api<{ tree: LocationTreeNode[] }>("/api/locations");
+    tree.value = r.tree;
+  } finally {
+    loading.value = false;
+  }
 });
 </script>
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("locations.title") }}</h1>
-        <p class="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">
-          {{ $t("locations.subtitle") }}
-        </p>
-      </div>
-      <button
-        v-if="isAdmin"
-        type="button"
-        class="fx-btn-primary shrink-0 self-start text-sm shadow-md sm:self-center"
-        @click="openCreateLocation()"
-      >
-        {{ $t("locations.newLocation") }}
-      </button>
-    </div>
+    <FxPageHeader :title="$t('locations.title')" :subtitle="$t('locations.subtitle')">
+      <template #actions>
+        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.newLocation") }}</FxButton>
+      </template>
+    </FxPageHeader>
 
-    <ul v-if="tree.length" class="fx-card divide-y divide-zinc-100 overflow-visible p-0" role="list">
+    <div v-if="loading" class="fx-card overflow-hidden p-0">
+      <FxSkeletonList :rows="6" :aria-label="$t('common.loadingAria')" />
+    </div>
+    <ul v-else-if="tree.length" class="fx-card divide-y divide-zinc-100 overflow-visible p-0" role="list">
       <LocationTreeRow
         v-for="node in tree"
         :key="node.ID"
@@ -57,11 +57,8 @@ onMounted(async () => {
         :is-admin="isAdmin"
       />
     </ul>
-    <div v-else class="fx-card px-5 py-14 text-center">
-      <p class="text-zinc-500">{{ $t("locations.noLocations") }}</p>
-      <button v-if="isAdmin" type="button" class="mt-5 inline-flex fx-btn-primary" @click="openCreateLocation()">
-        {{ $t("locations.createFirst") }}
-      </button>
-    </div>
+    <FxEmptyState v-else icon="mapPin" :title="$t('locations.noLocations')">
+      <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("locations.createFirst") }}</FxButton>
+    </FxEmptyState>
   </div>
 </template>

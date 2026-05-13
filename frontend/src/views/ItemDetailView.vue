@@ -9,6 +9,8 @@ import FxQrMenuButton from "../components/FxQrMenuButton.vue";
 import { confirmAlert } from "../composables/useAlertDialog";
 import { toast } from "../composables/useToast";
 import { setItemDetailCommandHandlers } from "../composables/useItemDetailCommandBridge";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxSkeleton from "../components/primitives/FxSkeleton.vue";
 
 type Item = {
   ID: string;
@@ -553,7 +555,20 @@ async function deleteAttachment(a: ItemAttachment) {
 </script>
 
 <template>
-  <div v-if="!item" class="text-zinc-500">{{ $t("common.loading") }}</div>
+  <div v-if="!item" class="mx-auto max-w-4xl space-y-5" :aria-label="$t('common.loadingAria')" aria-busy="true">
+    <FxSkeleton width="6rem" height="0.75rem" />
+    <div class="fx-card p-5">
+      <div class="grid gap-4 sm:grid-cols-[minmax(0,11.25rem)_1fr]">
+        <FxSkeleton width="100%" height="11.25rem" />
+        <div class="space-y-2">
+          <FxSkeleton width="16rem" height="1.5rem" />
+          <FxSkeleton width="100%" height="0.75rem" />
+          <FxSkeleton width="80%" height="0.75rem" />
+          <FxSkeleton width="60%" height="0.75rem" />
+        </div>
+      </div>
+    </div>
+  </div>
   <div v-else class="mx-auto max-w-4xl space-y-6">
     <RouterLink to="/items" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">{{ $t("itemDetail.backItems") }}</RouterLink>
 
@@ -563,7 +578,7 @@ async function deleteAttachment(a: ItemAttachment) {
       <span class="truncate font-medium text-zinc-800">{{ breadcrumbTitle }}</span>
     </nav>
 
-    <p v-if="saveErr" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ saveErr }}</p>
+    <FxAlert v-if="saveErr">{{ saveErr }}</FxAlert>
 
     <div class="fx-card overflow-visible">
       <div class="grid gap-6 p-5 sm:grid-cols-[minmax(0,11.25rem)_1fr] sm:items-start sm:gap-8 sm:p-7 lg:p-8">

@@ -5,6 +5,9 @@ import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
+import FxAlert from "./primitives/FxAlert.vue";
+import FxButton from "./primitives/FxButton.vue";
+import FxColorInput from "./primitives/FxColorInput.vue";
 
 const { t } = useI18n();
 
@@ -72,7 +75,7 @@ async function save() {
     :title="t('createLabel.title')"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <p v-if="err" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+    <FxAlert v-if="err" class="mb-4">{{ err }}</FxAlert>
     <form id="fx-create-label-form" class="space-y-4" @submit.prevent="save">
       <div>
         <label class="fx-label" for="fx-create-label-name">{{ $t("labelForm.name") }}</label>
@@ -80,7 +83,9 @@ async function save() {
       </div>
       <div>
         <label class="fx-label" for="fx-create-label-color">{{ $t("labelForm.color") }}</label>
-        <input id="fx-create-label-color" v-model="color" type="color" class="h-10 w-20 cursor-pointer rounded border border-zinc-200" />
+        <div class="mt-1">
+          <FxColorInput v-model="color" input-id="fx-create-label-color" :aria-label="$t('labelForm.color')" />
+        </div>
       </div>
       <div>
         <label class="fx-label" for="fx-create-label-tpl">{{ $t("labelForm.defaultTemplate") }}</label>
@@ -93,8 +98,8 @@ async function save() {
 
     <template #footer>
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="fx-btn-secondary w-full sm:w-auto" :disabled="busy" @click="close">{{ $t("common.cancel") }}</button>
-        <button type="submit" form="fx-create-label-form" class="fx-btn-primary w-full sm:w-auto" :disabled="busy">
+        <FxButton type="button" variant="secondary" :disabled="busy" @click="close">{{ $t("common.cancel") }}</FxButton>
+        <button type="submit" form="fx-create-label-form" class="fx-btn-primary w-full sm:w-auto" :disabled="busy" :aria-busy="busy || undefined">
           {{ $t("common.save") }}
         </button>
       </div>

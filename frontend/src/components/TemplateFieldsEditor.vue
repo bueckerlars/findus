@@ -2,6 +2,9 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import FxSvg from "./FxSvg.vue";
+import FxToggle from "./primitives/FxToggle.vue";
+import FxAlert from "./primitives/FxAlert.vue";
+import FxEmptyState from "./primitives/FxEmptyState.vue";
 import type { ParseFieldsIssue, TemplateField, TemplateWidget } from "../types/templateFields";
 import {
   emptyTemplateField,
@@ -142,13 +145,9 @@ function maxLenInput(f: TemplateField, raw: string) {
 
 <template>
   <div class="space-y-3">
-    <p v-if="parseErrorText" class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-      {{ parseErrorText }}
-    </p>
+    <FxAlert v-if="parseErrorText" tone="warning">{{ parseErrorText }}</FxAlert>
     <div class="space-y-3">
-      <div v-if="!rows.length" class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-8 text-center text-sm text-zinc-500">
-        {{ $t("templateEditor.empty") }}
-      </div>
+      <FxEmptyState v-if="!rows.length" :title="$t('templateEditor.empty')" />
 
       <div v-for="(f, i) in rows" :key="i" class="rounded-xl border border-zinc-200/90 bg-white p-4 shadow-sm">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -205,10 +204,7 @@ function maxLenInput(f: TemplateField, raw: string) {
             </select>
           </div>
           <div class="flex items-end pb-1">
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
-              <input v-model="f.required" type="checkbox" class="rounded border-zinc-300" />
-              {{ $t("common.required") }}
-            </label>
+            <FxToggle v-model="f.required" :label="$t('common.required')" :input-id="`tfreq-${i}`" />
           </div>
         </div>
 

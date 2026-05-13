@@ -5,6 +5,10 @@ import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { confirmAlert } from "../composables/useAlertDialog";
 import { toast } from "../composables/useToast";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import FxColorInput from "../components/primitives/FxColorInput.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const { t } = useI18n();
 
@@ -63,9 +67,9 @@ async function del() {
 </script>
 
 <template>
-  <div class="max-w-lg space-y-6">
-    <h1 class="text-2xl font-semibold text-zinc-900">{{ $t("labelForm.editTitle") }}</h1>
-    <p v-if="err" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+  <div class="max-w-lg space-y-5">
+    <FxPageHeader :title="$t('labelForm.editTitle')" />
+    <FxAlert v-if="err">{{ err }}</FxAlert>
     <form class="space-y-4" @submit.prevent="save">
       <div>
         <label class="fx-label" for="ln">{{ $t("labelForm.name") }}</label>
@@ -73,7 +77,9 @@ async function del() {
       </div>
       <div>
         <label class="fx-label" for="lc">{{ $t("labelForm.color") }}</label>
-        <input id="lc" v-model="color" type="color" class="h-10 w-20 cursor-pointer rounded border border-zinc-200" />
+        <div class="mt-1">
+          <FxColorInput v-model="color" input-id="lc" :aria-label="$t('labelForm.color')" />
+        </div>
       </div>
       <div>
         <label class="fx-label" for="lt">{{ $t("labelForm.defaultTemplate") }}</label>
@@ -83,8 +89,8 @@ async function del() {
         </select>
       </div>
       <div class="flex gap-2">
-        <button type="submit" class="fx-btn-primary">{{ $t("labelForm.save") }}</button>
-        <button type="button" class="rounded-xl border border-red-200 px-4 py-2 text-sm text-red-700" @click="del">{{ $t("labelForm.delete") }}</button>
+        <FxButton type="submit">{{ $t("labelForm.save") }}</FxButton>
+        <FxButton type="button" variant="danger" size="sm" @click="del">{{ $t("labelForm.delete") }}</FxButton>
       </div>
     </form>
   </div>

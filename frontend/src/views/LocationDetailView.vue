@@ -13,6 +13,12 @@ import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
 import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
 import FxQrMenuButton from "../components/FxQrMenuButton.vue";
+import FxSkeleton from "../components/primitives/FxSkeleton.vue";
+import FxSkeletonList from "../components/primitives/FxSkeletonList.vue";
+import FxEmptyState from "../components/primitives/FxEmptyState.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import ItemListRow from "../components/ItemListRow.vue";
+import ItemGalleryCard from "../components/ItemGalleryCard.vue";
 
 type Location = { ID: string; Name: string; Description: string; ParentID?: string | null };
 type Item = { ID: string; Name: string; Description: string; PhotoPath?: string | null };
@@ -132,7 +138,17 @@ async function del() {
 </script>
 
 <template>
-  <div v-if="!loc" class="text-zinc-500">{{ $t("common.loading") }}</div>
+  <div v-if="!loc" class="mx-auto max-w-3xl space-y-5" :aria-label="$t('common.loadingAria')" aria-busy="true">
+    <FxSkeleton width="6rem" height="0.75rem" />
+    <div class="fx-card p-5 space-y-3">
+      <FxSkeleton width="14rem" height="1.5rem" />
+      <FxSkeleton width="80%" height="0.75rem" />
+      <FxSkeleton width="60%" height="0.75rem" />
+    </div>
+    <div class="fx-card overflow-hidden p-0">
+      <FxSkeletonList :rows="4" />
+    </div>
+  </div>
   <div v-else class="mx-auto max-w-3xl">
     <RouterLink :to="backHref" class="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-700">{{ displayBackLabel }}</RouterLink>
 
@@ -187,11 +203,8 @@ async function del() {
             <span class="text-zinc-400" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
           </RouterLink>
         </li>
-        <li
-          v-if="!children.length"
-          class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500"
-        >
-          {{ $t("locationDetail.noSub") }}
+        <li v-if="!children.length">
+          <FxEmptyState icon="mapPin" :title="$t('locationDetail.noSub')" />
         </li>
       </ul>
     </section>
@@ -215,47 +228,22 @@ async function del() {
       </template>
 
       <div v-if="items.length" class="mt-4">
-        <ul class="items-view-list-only space-y-2">
+        <ul class="items-view-list-only divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]">
           <li v-for="it in items" :key="it.ID">
-            <RouterLink :to="'/items/' + it.ID" class="group fx-item-row relative fx-list-row">
-              <span class="fx-item-row-accent" aria-hidden="true"></span>
-              <div class="relative z-[1] min-w-0 flex-1">
-                <span class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-              </div>
-              <span class="fx-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon" /></span>
-            </RouterLink>
+            <ItemListRow :id="it.ID" :name="it.Name" />
           </li>
         </ul>
         <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-          <RouterLink
+          <ItemGalleryCard
             v-for="it in items"
             :key="it.ID + '-g'"
-            :to="'/items/' + it.ID"
-            class="group fx-item-gallery flex flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]"
-          >
-            <div class="fx-item-gallery-media aspect-square bg-gradient-to-br from-zinc-50 to-zinc-100 ring-1 ring-zinc-100/80">
-              <img
-                v-if="it.PhotoPath"
-                :src="'/items/' + it.ID + '/photo'"
-                alt=""
-                class="fx-item-gallery-photo"
-                @error="($event.target as HTMLImageElement).style.display = 'none'"
-              />
-              <div v-else class="fx-item-gallery-placeholder">
-                <ItemPhotoPlaceholder :item-id="it.ID" />
-              </div>
-              <div class="fx-item-gallery-shade" aria-hidden="true"></div>
-              <span class="fx-item-gallery-fab" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
-            </div>
-            <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1.5 border-t border-zinc-100/90 p-3">
-              <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-            </div>
-          </RouterLink>
+            :id="it.ID"
+            :name="it.Name"
+            :photo-path="it.PhotoPath"
+          />
         </div>
       </div>
-      <p v-else class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-        {{ $t("locationDetail.emptyItemsHere") }}
-      </p>
+      <FxEmptyState v-else class="mt-4" icon="cube" :title="$t('locationDetail.emptyItemsHere')" />
     </ItemsViewToggle>
   </div>
 </template>

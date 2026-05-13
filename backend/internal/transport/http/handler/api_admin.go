@@ -291,7 +291,12 @@ func (s *Server) APIAdminTemplates(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := make([]apiTemplateListRow, 0, len(list))
 	for _, t := range list {
-		n, _ := s.Items.CountByTemplateType(ctx, t.ID)
+		n, err := s.Items.CountByTemplateType(ctx, t.ID)
+		if err != nil {
+			s.Log.Error("admin templates: count by template", "template_id", t.ID, "err", err)
+			s.writeJSONError(w, http.StatusInternalServerError, "server error")
+			return
+		}
 		_, fdn, ok := service.ReassignTargetForDelete(list, t.ID)
 		rows = append(rows, apiTemplateListRow{Template: t, Count: n, HasAlternate: ok, FallbackDisplay: fdn})
 	}

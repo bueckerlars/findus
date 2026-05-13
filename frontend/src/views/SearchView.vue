@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { api } from "../api";
 import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
-import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
+import ItemListRow from "../components/ItemListRow.vue";
+import ItemGalleryCard from "../components/ItemGalleryCard.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxEmptyState from "../components/primitives/FxEmptyState.vue";
+import FxSkeletonList from "../components/primitives/FxSkeletonList.vue";
+import FxSkeletonGallery from "../components/primitives/FxSkeletonGallery.vue";
 
 const { t } = useI18n();
 
@@ -81,24 +87,22 @@ onUnmounted(() => {
 <template>
   <ItemsViewToggle storage-key="page_search" class="mx-auto max-w-2xl">
     <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold tracking-tight">{{ $t("search.title") }}</h1>
-        <ItemsViewModeToolbar />
-      </div>
-      <p class="mt-1 text-sm text-zinc-500">{{ $t("search.liveHint") }}</p>
-      <div class="mt-6">
+      <FxPageHeader :title="$t('search.title')" :subtitle="$t('search.liveHint')">
+        <template #actions><ItemsViewModeToolbar /></template>
+      </FxPageHeader>
+      <div>
         <label class="sr-only" for="q">{{ $t("search.queryLabel") }}</label>
         <div class="relative">
-          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden="true"
-            ><FxSvg name="magnifyingGlass" class="fx-icon h-5 w-5"
-          /></span>
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" aria-hidden="true">
+            <FxSvg name="magnifyingGlass" class="h-4 w-4" />
+          </span>
           <input
             id="q"
             ref="searchInputRef"
             v-model="q"
             type="search"
             :placeholder="$t('search.placeholderShort')"
-            class="fx-input !mt-0 border-zinc-200 pl-11 text-base shadow-sm"
+            class="fx-input !mt-0 fx-input--lg border-zinc-200 pl-10 shadow-sm"
             autocomplete="off"
             :aria-busy="searchLoading && hasQuery()"
           />
@@ -106,111 +110,54 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div class="mt-6">
-      <div class="items-view-list-only space-y-2" role="region" :aria-label="$t('search.resultsAria')" :aria-busy="searchLoading && hasQuery()">
-        <template v-if="searchLoading && hasQuery()">
-          <div
-            v-for="n in 3"
-            :key="'sk-list-' + n"
-            class="fx-item-row fx-list-row animate-pulse border border-zinc-100/90 bg-zinc-50/90"
-            aria-hidden="true"
-          >
-            <div class="relative z-[1] min-w-0 flex-1 space-y-2 py-0.5">
-              <div class="h-4 w-48 max-w-[70%] rounded-md bg-zinc-200/90"></div>
-              <div class="h-3 w-36 max-w-[55%] rounded-md bg-zinc-200/70"></div>
-            </div>
-          </div>
-        </template>
+    <div class="mt-5">
+      <FxAlert v-if="hasQuery() && searchError" tone="warning" class="mb-3">{{ searchError }}</FxAlert>
+
+      <div
+        class="items-view-list-only"
+        role="region"
+        :aria-label="$t('search.resultsAria')"
+        :aria-busy="searchLoading && hasQuery()"
+      >
+        <FxSkeletonList v-if="searchLoading && hasQuery()" :rows="3" :aria-label="$t('common.loadingAria')" />
         <template v-else-if="results.length">
-          <RouterLink
-            v-for="it in results"
-            :key="it.ID"
-            :to="'/items/' + it.ID"
-            class="group fx-item-row relative fx-list-row"
-          >
-            <span class="fx-item-row-accent" aria-hidden="true"></span>
-            <div class="relative z-[1] min-w-0 flex-1">
-              <div class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</div>
-              <p
-                class="mt-1 flex min-w-0 items-center gap-1.5 text-sm font-medium text-zinc-700 transition-colors duration-200 group-hover:text-zinc-800"
-              >
-                <FxSvg name="mapPin" class="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
-                <span class="truncate">{{ it.location_name }}</span>
-              </p>
-            </div>
-            <span class="fx-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon" /></span>
-          </RouterLink>
-        </template>
-        <div
-          v-else-if="hasQuery() && searchError"
-          class="rounded-xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-8 text-center text-sm text-amber-900"
-        >
-          {{ searchError }}
-        </div>
-        <div v-else-if="hasQuery()" class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-          {{ $t("search.noMatchesTry") }}
-        </div>
-        <div v-else class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
-          {{ $t("search.typeToFind") }}
-        </div>
-      </div>
-      <div class="items-view-gallery-only grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" role="region" :aria-label="$t('search.resultsAria')" :aria-busy="searchLoading && hasQuery()">
-        <template v-if="searchLoading && hasQuery()">
-          <div
-            v-for="n in 6"
-            :key="'sk-gal-' + n"
-            class="flex flex-col overflow-hidden rounded-xl border border-zinc-100/90 bg-zinc-50/90 shadow-sm ring-1 ring-zinc-950/[0.03]"
-            aria-hidden="true"
-          >
-            <div class="aspect-square animate-pulse bg-gradient-to-br from-zinc-100 to-zinc-200/90"></div>
-            <div class="space-y-2 border-t border-zinc-100/90 p-3">
-              <div class="h-4 w-full rounded-md bg-zinc-200/90"></div>
-              <div class="h-3 w-[80%] max-w-[12rem] rounded-md bg-zinc-200/70"></div>
-            </div>
-          </div>
-        </template>
-        <template v-else-if="results.length">
-          <RouterLink
-            v-for="it in results"
-            :key="it.ID + '-g'"
-            :to="'/items/' + it.ID"
-            class="group fx-item-gallery flex flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]"
-          >
-            <div class="fx-item-gallery-media aspect-square bg-gradient-to-br from-zinc-50 to-zinc-100 ring-1 ring-zinc-100/80">
-              <img
-                v-if="it.PhotoPath"
-                :src="'/items/' + it.ID + '/photo'"
-                alt=""
-                class="fx-item-gallery-photo"
-                @error="($event.target as HTMLImageElement).style.display = 'none'"
+          <div class="overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]">
+            <div class="divide-y divide-zinc-100">
+              <ItemListRow
+                v-for="it in results"
+                :key="it.ID"
+                :id="it.ID"
+                :name="it.Name"
+                :location-name="it.location_name"
               />
-              <div v-else class="fx-item-gallery-placeholder">
-                <ItemPhotoPlaceholder :item-id="it.ID" />
-              </div>
-              <div class="fx-item-gallery-shade" aria-hidden="true"></div>
-              <span class="fx-item-gallery-fab" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
             </div>
-            <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1.5 border-t border-zinc-100/90 p-3">
-              <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{ it.Name }}</span>
-              <p class="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-zinc-700 transition-colors group-hover:text-zinc-800">
-                <FxSvg name="mapPin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
-                <span class="line-clamp-2 min-w-0">{{ it.location_name }}</span>
-              </p>
-            </div>
-          </RouterLink>
+          </div>
         </template>
-        <div
-          v-else-if="hasQuery() && searchError"
-          class="col-span-full rounded-xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-8 text-center text-sm text-amber-900"
-        >
-          {{ searchError }}
-        </div>
-        <div v-else-if="hasQuery()" class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-          {{ $t("search.noMatchesTry") }}
-        </div>
-        <div v-else class="col-span-full rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500">
-          {{ $t("search.typeToFind") }}
-        </div>
+        <FxEmptyState v-else-if="hasQuery()" icon="magnifyingGlass" :title="$t('search.noMatchesTry')" />
+        <FxEmptyState v-else icon="magnifyingGlass" :title="$t('search.typeToFind')" />
+      </div>
+
+      <div
+        class="items-view-gallery-only"
+        role="region"
+        :aria-label="$t('search.resultsAria')"
+        :aria-busy="searchLoading && hasQuery()"
+      >
+        <FxSkeletonGallery v-if="searchLoading && hasQuery()" :tiles="6" :aria-label="$t('common.loadingAria')" />
+        <template v-else-if="results.length">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            <ItemGalleryCard
+              v-for="it in results"
+              :key="it.ID + '-g'"
+              :id="it.ID"
+              :name="it.Name"
+              :location-name="it.location_name"
+              :photo-path="it.PhotoPath"
+            />
+          </div>
+        </template>
+        <FxEmptyState v-else-if="hasQuery()" icon="magnifyingGlass" :title="$t('search.noMatchesTry')" />
+        <FxEmptyState v-else icon="magnifyingGlass" :title="$t('search.typeToFind')" />
       </div>
     </div>
   </ItemsViewToggle>

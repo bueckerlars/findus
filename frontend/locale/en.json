@@ -5,6 +5,11 @@
   },
   "common": {
     "loading": "Loading…",
+    "loadingAria": "Loading content",
+    "dismiss": "Dismiss",
+    "toggleOn": "On",
+    "toggleOff": "Off",
+    "openMenu": "Open menu",
     "emDash": "—",
     "findus": "Findus",
     "delete": "Delete",
@@ -76,6 +81,8 @@
     "newLabel": "New label"
   },
   "auth": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "login": {
       "title": "Welcome back",
       "subtitle": "Sign in to manage your inventory",
@@ -83,7 +90,11 @@
       "password": "Password",
       "passwordMask": "••••••••",
       "usernamePlaceholder": "Your username",
-      "submit": "Sign in"
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "invalidCredentials": "That username and password do not match our records. Check your spelling and try again.",
+      "footerPrompt": "New to Findus?",
+      "footerLink": "Create an account"
     },
     "register": {
       "title": "Create account",
@@ -91,13 +102,25 @@
       "email": "Email",
       "password": "Password",
       "usernamePlaceholder": "Choose a username",
-      "emailPlaceholder": "you@example.com",
+      "emailPlaceholder": "you{'@'}example.com",
       "passwordPlaceholder": "At least 10 characters",
       "submit": "Create account",
       "helpFirstAdmin": "You are creating the first admin account.",
       "helpInvite": "Register using your invite link.",
       "helpOpen": "Open registration is enabled.",
-      "helpDefault": "Create your Findus account."
+      "helpDefault": "Create your Findus account.",
+      "submitting": "Creating account…",
+      "footerPrompt": "Already have an account?",
+      "footerLink": "Sign in",
+      "inviteNotice": "You're registering with an invitation link.",
+      "passwordHint": "Use at least 10 characters for a secure password.",
+      "validationUsernameLength": "Username must be 2–64 characters.",
+      "validationUsernameRequired": "Enter a username.",
+      "validationUsernameTaken": "This username is already taken.",
+      "validationEmailInvalid": "Enter a valid email address.",
+      "validationPasswordLength": "Password must be at least 10 characters.",
+      "usernameAvailable": "This username is available.",
+      "checkingUsername": "Checking username…"
     }
   },
   "home": {

@@ -361,6 +361,14 @@ html[data-fx-scheme="dark"] .fx-btn-secondary:hover {
   color: rgb(244 244 245);
 }
 
+html[data-fx-scheme="dark"] .fx-btn-ghost {
+  color: rgb(212 212 216);
+}
+html[data-fx-scheme="dark"] .fx-btn-ghost:hover {
+  background-color: rgb(63 63 70 / 0.7);
+  color: rgb(244 244 245);
+}
+
 html[data-fx-scheme="dark"] .fx-icon-btn {
   background-color: rgb(24 24 27);
   border-color: rgb(63 63 70 / 0.95);
@@ -450,9 +458,24 @@ html[data-fx-scheme="dark"] .fx-command-panel {
 }
 
 html[data-fx-scheme="dark"] .fx-auth-card {
-  background-color: rgb(24 24 27);
-  border-color: rgb(63 63 70 / 0.9);
-  --tw-ring-color: rgb(255 255 255 / 0.06);
+  background-color: rgb(24 24 27 / 0.88);
+  border-color: rgb(var(--fx-accent-muted-rgb) / 0.45);
+  --tw-ring-color: rgb(var(--fx-accent-rgb) / 0.28);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.45),
+    0 16px 40px rgb(0 0 0 / 0.4),
+    0 32px 96px rgb(var(--fx-accent-rgb) / 0.28);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-title {
+  color: rgb(250 250 250);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-title::after {
+  box-shadow: 0 2px 18px rgb(var(--fx-accent-rgb) / 0.45);
 }
 
 html[data-fx-scheme="dark"] .fx-item-gallery-badge {
@@ -475,14 +498,67 @@ html[data-fx-scheme="dark"] .fx-profile-theme-tile:hover {
   background-color: rgb(39 39 42 / 0.85);
 }
 
-/* ---- Guest auth shell ---- */
-html[data-fx-scheme="dark"] .fx-auth-shell {
-  background-image: linear-gradient(
-    to bottom,
-    rgb(39 39 42),
-    rgb(24 24 27),
-    rgb(30 41 59 / 0.35)
-  );
+/* ---- Guest auth (backdrop uses theme tokens; tune glass + noise for dark) ---- */
+html[data-fx-scheme="dark"] .fx-guest-nav {
+  border-bottom-color: rgb(var(--fx-accent-muted-rgb) / 0.4);
+  background-color: rgb(24 24 27 / 0.82);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 8px 28px rgb(var(--fx-accent-rgb) / 0.18),
+    0 20px 50px rgb(0 0 0 / 0.35);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-bg__grain {
+  opacity: 0.1;
+  mix-blend-mode: soft-light;
+}
+
+html[data-fx-scheme="dark"] .fx-auth-bg__vignette {
+  background: radial-gradient(ellipse 82% 74% at 50% 46%, transparent 28%, rgb(0 0 0 / 0.42) 100%);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-bg__orb {
+  opacity: 0.48;
+}
+
+html[data-fx-scheme="dark"] .fx-auth-bg__sweep {
+  opacity: 0.75;
+}
+
+html[data-fx-scheme="dark"] .fx-auth-input-shell--invalid .fx-input {
+  border-color: rgb(248 113 113 / 0.65);
+  --tw-ring-color: rgb(127 29 29 / 0.35);
+}
+html[data-fx-scheme="dark"] .fx-auth-field-error {
+  color: rgb(252 165 165 / 1);
+}
+
+html[data-fx-scheme="dark"] .fx-auth-alert {
+  border-color: rgb(127 29 29 / 0.55);
+  background-color: rgb(69 10 10 / 0.42);
+  color: rgb(254 202 202 / 1);
+}
+html[data-fx-scheme="dark"] .fx-auth-alert__icon {
+  color: rgb(248 113 113 / 1);
+}
+html[data-fx-scheme="dark"] .fx-auth-password-toggle {
+  color: rgb(161 161 170 / 1);
+}
+html[data-fx-scheme="dark"] .fx-auth-password-toggle:hover {
+  background-color: rgb(39 39 42 / 1);
+  color: rgb(250 250 250 / 1);
+}
+html[data-fx-scheme="dark"] .fx-auth-help-skeleton {
+  background-color: rgb(63 63 70 / 0.65);
+}
+html[data-fx-scheme="dark"] .fx-auth-card-divider {
+  border-color: rgb(63 63 70 / 0.85);
+}
+html[data-fx-scheme="dark"] .fx-auth-invite-banner {
+  border-color: rgb(var(--fx-accent-muted-rgb) / 0.35);
+  background-color: rgb(var(--fx-accent-soft-rgb) / 0.22);
+  color: rgb(var(--fx-accent-text-rgb) / 0.95);
 }
 
 /* ---- fx-* rows / command glass (still use light gradients in CSS) ---- */
@@ -572,4 +648,120 @@ html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover {
 html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover .fx-command-trigger-icon,
 html[data-fx-scheme="dark"] .fx-command-trigger.fx-command-glass:hover .fx-command-kbd {
   color: rgb(255 255 255);
+}
+
+/* ---- Density-refresh primitives (FxAlert, FxBadge, FxEmptyState, FxToggle, FxMenu, FxSection) ---- */
+
+html[data-fx-scheme="dark"] .fx-alert--danger {
+  background-color: rgb(69 10 10 / 0.45);
+  border-color: rgb(220 38 38 / 0.45);
+  color: rgb(254 202 202);
+}
+html[data-fx-scheme="dark"] .fx-alert--danger .fx-alert__icon {
+  color: rgb(252 165 165);
+}
+html[data-fx-scheme="dark"] .fx-alert--warning {
+  background-color: rgb(69 26 3 / 0.5);
+  border-color: rgb(180 83 9 / 0.5);
+  color: rgb(254 243 199);
+}
+html[data-fx-scheme="dark"] .fx-alert--warning .fx-alert__icon {
+  color: rgb(252 211 77);
+}
+html[data-fx-scheme="dark"] .fx-alert--success {
+  background-color: rgb(6 78 59 / 0.45);
+  border-color: rgb(5 150 105 / 0.45);
+  color: rgb(167 243 208);
+}
+html[data-fx-scheme="dark"] .fx-alert--success .fx-alert__icon {
+  color: rgb(110 231 183);
+}
+
+html[data-fx-scheme="dark"] .fx-badge--neutral {
+  background-color: rgb(63 63 70);
+  color: rgb(228 228 231);
+}
+html[data-fx-scheme="dark"] .fx-badge--success {
+  background-color: rgb(6 78 59 / 0.55);
+  color: rgb(167 243 208);
+}
+html[data-fx-scheme="dark"] .fx-badge--warning {
+  background-color: rgb(69 26 3 / 0.55);
+  color: rgb(253 230 138);
+}
+html[data-fx-scheme="dark"] .fx-badge--danger {
+  background-color: rgb(69 10 10 / 0.55);
+  color: rgb(254 202 202);
+}
+
+html[data-fx-scheme="dark"] .fx-empty-state {
+  background-color: rgb(24 24 27 / 0.4);
+  border-color: rgb(63 63 70 / 0.85);
+}
+html[data-fx-scheme="dark"] .fx-empty-state__icon {
+  background-color: rgb(63 63 70);
+  color: rgb(161 161 170);
+}
+html[data-fx-scheme="dark"] .fx-empty-state__title {
+  color: rgb(244 244 245);
+}
+html[data-fx-scheme="dark"] .fx-empty-state__body {
+  color: rgb(161 161 170);
+}
+
+html[data-fx-scheme="dark"] .fx-toggle {
+  background-color: rgb(63 63 70);
+  border-color: rgb(82 82 91);
+}
+html[data-fx-scheme="dark"] .fx-toggle__thumb {
+  background-color: rgb(228 228 231);
+}
+
+html[data-fx-scheme="dark"] .fx-menu {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.9);
+  --tw-ring-color: rgb(255 255 255 / 0.06);
+  box-shadow: 0 12px 24px -8px rgb(0 0 0 / 0.7), 0 4px 12px -2px rgb(0 0 0 / 0.45);
+}
+html[data-fx-scheme="dark"] .fx-menu-item {
+  color: rgb(228 228 231);
+}
+html[data-fx-scheme="dark"] .fx-menu-item--danger {
+  color: rgb(252 165 165);
+}
+html[data-fx-scheme="dark"] .fx-menu-item--danger[data-highlighted],
+html[data-fx-scheme="dark"] .fx-menu-item--danger:hover {
+  background-color: rgb(69 10 10 / 0.45);
+  color: rgb(254 202 202);
+}
+html[data-fx-scheme="dark"] .fx-menu-separator {
+  background-color: rgb(63 63 70);
+}
+
+html[data-fx-scheme="dark"] .fx-section__title {
+  color: rgb(161 161 170);
+}
+html[data-fx-scheme="dark"] .fx-section__header {
+  border-color: rgb(39 39 42);
+}
+
+html[data-fx-scheme="dark"] .fx-page-header__title {
+  color: rgb(244 244 245);
+}
+html[data-fx-scheme="dark"] .fx-page-header__subtitle {
+  color: rgb(161 161 170);
+}
+
+html[data-fx-scheme="dark"] .fx-skeleton {
+  background-color: rgb(63 63 70 / 0.7);
+}
+html[data-fx-scheme="dark"] .fx-skeleton-row,
+html[data-fx-scheme="dark"] .fx-skeleton-tile {
+  background-color: rgb(24 24 27);
+  border-color: rgb(63 63 70 / 0.9);
+  --tw-ring-color: rgb(255 255 255 / 0.04);
+}
+
+html[data-fx-scheme="dark"] .fx-toggle-label {
+  color: rgb(212 212 216);
 }

@@ -71,6 +71,30 @@ func (s *Server) APIBootstrap(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, out)
 }
 
+// APIAuthUsernameAvailable returns whether a username is free (public; for register form UX).
+func (s *Server) APIAuthUsernameAvailable(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	u := strings.TrimSpace(r.URL.Query().Get("username"))
+	if u == "" {
+		s.writeJSON(w, http.StatusOK, map[string]any{"available": false, "reason": "invalid_length"})
+		return
+	}
+	ok, reason, err := s.Auth.UsernameAvailable(r.Context(), u)
+	if err != nil {
+		s.Log.Error("username-available", "err", err)
+		s.writeJSONError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+	out := map[string]any{"available": ok}
+	if !ok && reason != "" {
+		out["reason"] = reason
+	}
+	s.writeJSON(w, http.StatusOK, out)
+}
+
 type apiLoginReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -160,6 +184,16 @@ func (s *Server) APIAuthRegister(w http.ResponseWriter, r *http.Request) {
 			s.writeJSONError(w, http.StatusForbidden, "Registration is closed.")
 		case errors.Is(err, domain.ErrInvalidInvite):
 			s.writeJSONError(w, http.StatusForbidden, "Invalid or expired invite.")
+		case errors.Is(err, domain.ErrConflict):
+			msg := err.Error()
+			switch {
+			case strings.Contains(msg, "username"):
+				s.writeJSONError(w, http.StatusConflict, "That username is already taken.")
+			case strings.Contains(msg, "email"):
+				s.writeJSONError(w, http.StatusConflict, "That email is already registered.")
+			default:
+				s.writeJSONError(w, http.StatusConflict, "That username or email is already in use.")
+			}
 		default:
 			if errors.Is(err, domain.ErrValidation) {
 				s.writeJSONError(w, http.StatusBadRequest, err.Error())

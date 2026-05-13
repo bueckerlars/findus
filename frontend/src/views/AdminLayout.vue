@@ -18,7 +18,7 @@ function tabClass(active: boolean) {
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-8">
+  <div class="mx-auto w-full max-w-6xl space-y-8">
     <div class="border-b border-zinc-200/90">
       <nav class="-mb-px flex flex-wrap gap-1" :aria-label="t('adminLayout.navAria')">
         <RouterLink

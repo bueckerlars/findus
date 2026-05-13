@@ -6,6 +6,7 @@ import { api } from "../api";
 import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
 import FxSvg from "./FxSvg.vue";
+import FxAlert from "./primitives/FxAlert.vue";
 
 const { t } = useI18n();
 
@@ -291,11 +292,9 @@ async function submit() {
     max-width-class="max-w-2xl"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <p v-if="noLocations" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      {{ $t("createItem.needLocationFirst") }}
-    </p>
+    <FxAlert v-if="noLocations" tone="warning">{{ $t("createItem.needLocationFirst") }}</FxAlert>
     <template v-else>
-      <p v-if="err" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+      <FxAlert v-if="err" class="mb-4">{{ err }}</FxAlert>
       <form id="fx-create-item-form" class="space-y-4" @submit.prevent="submit">
         <div>
           <label class="fx-label" for="fx-create-item-name">{{ $t("labelForm.name") }}</label>

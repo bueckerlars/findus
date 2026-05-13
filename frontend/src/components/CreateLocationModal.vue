@@ -5,6 +5,8 @@ import { useI18n } from "vue-i18n";
 import { api, postJson } from "../api";
 import { toast } from "../composables/useToast";
 import FxModal from "./FxModal.vue";
+import FxAlert from "./primitives/FxAlert.vue";
+import FxButton from "./primitives/FxButton.vue";
 
 const { t } = useI18n();
 
@@ -83,7 +85,7 @@ async function save() {
     :title="t('createLocation.title')"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <p v-if="err" class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{{ err }}</p>
+    <FxAlert v-if="err" class="mb-4">{{ err }}</FxAlert>
     <form id="fx-create-location-form" class="space-y-4" @submit.prevent="save">
       <div>
         <label class="fx-label" for="fx-create-loc-name">{{ $t("labelForm.name") }}</label>
@@ -103,8 +105,8 @@ async function save() {
 
     <template #footer>
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button type="button" class="fx-btn-secondary w-full sm:w-auto" :disabled="busy" @click="close">{{ $t("common.cancel") }}</button>
-        <button type="submit" form="fx-create-location-form" class="fx-btn-primary w-full sm:w-auto" :disabled="busy">
+        <FxButton type="button" variant="secondary" :disabled="busy" @click="close">{{ $t("common.cancel") }}</FxButton>
+        <button type="submit" form="fx-create-location-form" class="fx-btn-primary w-full sm:w-auto" :disabled="busy" :aria-busy="busy || undefined">
           {{ $t("common.save") }}
         </button>
       </div>

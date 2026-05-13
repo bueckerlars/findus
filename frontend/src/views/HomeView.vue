@@ -11,6 +11,14 @@ import ItemsViewToggle from "../components/ItemsViewToggle.vue";
 import ItemsViewModeToolbar from "../components/ItemsViewModeToolbar.vue";
 import FxSvg from "../components/FxSvg.vue";
 import ItemPhotoPlaceholder from "../components/ItemPhotoPlaceholder.vue";
+import FxSkeleton from "../components/primitives/FxSkeleton.vue";
+import FxSkeletonList from "../components/primitives/FxSkeletonList.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
+import FxEmptyState from "../components/primitives/FxEmptyState.vue";
+import FxButton from "../components/primitives/FxButton.vue";
+import ItemListRow from "../components/ItemListRow.vue";
+import ItemGalleryCard from "../components/ItemGalleryCard.vue";
+import LocationListRow from "../components/LocationListRow.vue";
 import { formatItemUpdatedAt } from "../utils/datetime";
 
 type Item = {
@@ -60,14 +68,28 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="!data" class="text-zinc-500">{{ $t("common.loading") }}</div>
-  <div v-else class="mx-auto max-w-5xl space-y-6">
-    <div class="mb-8">
-      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("home.greeting", { name: data.user.username }) }}</h1>
-      <p class="mt-2 max-w-xl text-zinc-500">{{ $t("home.tagline") }}</p>
+  <div v-if="!data" class="mx-auto max-w-5xl space-y-6" :aria-label="$t('common.loadingAria')" aria-busy="true">
+    <div class="space-y-2">
+      <FxSkeleton width="14rem" height="1.5rem" />
+      <FxSkeleton width="20rem" height="0.75rem" />
     </div>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+      <div v-for="n in 3" :key="n" class="fx-card flex items-center gap-3 px-4 py-3">
+        <FxSkeleton shape="circle" width="2.5rem" height="2.5rem" />
+        <span class="flex flex-1 flex-col gap-1.5">
+          <FxSkeleton width="4rem" height="0.5rem" />
+          <FxSkeleton width="3rem" height="1.1rem" />
+        </span>
+      </div>
+    </div>
+    <div class="fx-card overflow-hidden p-0">
+      <FxSkeletonList :rows="4" />
+    </div>
+  </div>
+  <div v-else class="mx-auto max-w-5xl space-y-6">
+    <FxPageHeader :title="$t('home.greeting', { name: data.user.username })" :subtitle="$t('home.tagline')" />
 
-    <section class="fx-home-stats mb-8" :aria-label="$t('home.statsAria')">
+    <section class="fx-home-stats mb-6" :aria-label="$t('home.statsAria')">
       <div class="fx-card fx-home-stat">
         <span class="fx-home-stat-icon" aria-hidden="true"><FxSvg name="cube" class="fx-icon" /></span>
         <div class="min-w-0">
@@ -105,94 +127,33 @@ onMounted(async () => {
       <template v-if="data.recent_items.length">
         <ul class="items-view-list-only divide-y divide-zinc-100">
           <li v-for="row in data.recent_items" :key="row.item.ID">
-            <RouterLink
-              :to="'/items/' + row.item.ID"
-              class="group fx-home-item-row flex items-start gap-3 px-5 py-3.5"
-            >
-              <span class="fx-item-row-accent" aria-hidden="true"></span>
-              <div class="relative z-[1] min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="font-medium text-zinc-900 transition-colors duration-200 group-hover:text-sky-900">{{ row.item.Name }}</span>
-                  <span
-                    v-if="row.recently_added"
-                    class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
-                    >{{ $t("home.new") }}</span
-                  >
-                  <span
-                    v-else
-                    class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
-                    >{{ $t("home.updated") }}</span
-                  >
-                </div>
-                <p
-                  class="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm font-medium text-zinc-700 transition-colors group-hover:text-zinc-800"
-                >
-                  <FxSvg name="mapPin" class="h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
-                  <span class="truncate">{{ row.location_name }}</span>
-                </p>
-              </div>
-              <div class="relative z-[1] flex shrink-0 items-start gap-1.5 pt-0.5">
-                <time
-                  class="text-right text-xs tabular-nums text-zinc-400 transition-colors group-hover:text-zinc-500"
-                  :datetime="row.item.UpdatedAt"
-                  >{{ fmtItemTime(row.item.UpdatedAt) }}</time
-                >
-                <span class="fx-home-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
-              </div>
-            </RouterLink>
+            <ItemListRow
+              :id="row.item.ID"
+              :name="row.item.Name"
+              :location-name="row.location_name"
+              :timestamp="fmtItemTime(row.item.UpdatedAt)"
+              :timestamp-iso="row.item.UpdatedAt"
+              :badge-label="row.recently_added ? $t('home.new') : $t('home.updated')"
+              :badge-tone="row.recently_added ? 'success' : 'warning'"
+            />
           </li>
         </ul>
         <div class="items-view-gallery-only grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          <RouterLink
+          <ItemGalleryCard
             v-for="row in data.recent_items"
             :key="row.item.ID + '-g'"
-            :to="'/items/' + row.item.ID"
-            class="group fx-item-gallery flex flex-col overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-zinc-950/[0.03]"
-          >
-            <div class="fx-item-gallery-media aspect-square bg-gradient-to-br from-zinc-50 to-zinc-100 ring-1 ring-zinc-100/80">
-              <img
-                v-if="row.item.PhotoPath"
-                :src="'/items/' + row.item.ID + '/photo'"
-                alt=""
-                class="fx-item-gallery-photo"
-                @error="($event.target as HTMLImageElement).style.display = 'none'"
-              />
-              <div v-else class="fx-item-gallery-placeholder">
-                <ItemPhotoPlaceholder :item-id="row.item.ID" />
-              </div>
-              <div class="fx-item-gallery-shade" aria-hidden="true"></div>
-              <span class="fx-item-gallery-fab" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
-            </div>
-            <div class="relative z-[1] flex min-h-0 flex-1 flex-col gap-1.5 border-t border-zinc-100/90 p-3">
-              <span class="line-clamp-2 font-medium leading-snug text-zinc-900 transition-colors duration-200 group-hover:text-sky-950">{{
-                row.item.Name
-              }}</span>
-              <p class="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-snug text-zinc-700 transition-colors group-hover:text-zinc-800">
-                <FxSvg name="mapPin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-600" aria-hidden="true" />
-                <span class="line-clamp-2 min-w-0">{{ row.location_name }}</span>
-              </p>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span
-                  v-if="row.recently_added"
-                  class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-105"
-                  >{{ $t("home.new") }}</span
-                >
-                <span
-                  v-else
-                  class="inline-flex rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-105"
-                  >{{ $t("home.updated") }}</span
-                >
-              </div>
-            </div>
-          </RouterLink>
+            :id="row.item.ID"
+            :name="row.item.Name"
+            :location-name="row.location_name"
+            :photo-path="row.item.PhotoPath"
+            :badge-label="row.recently_added ? $t('home.new') : $t('home.updated')"
+            :badge-tone="row.recently_added ? 'success' : 'warning'"
+          />
         </div>
       </template>
-      <div v-else class="px-5 py-10 text-center">
-        <p class="text-sm text-zinc-500">{{ $t("home.noItems") }}</p>
-        <button v-if="isAdmin" type="button" class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700" @click="openCreateItem()">
-          {{ $t("home.addItem") }}
-        </button>
-      </div>
+      <FxEmptyState v-else icon="cube" :title="$t('home.noItems')">
+        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateItem()">{{ $t("home.addItem") }}</FxButton>
+      </FxEmptyState>
     </ItemsViewToggle>
 
     <section class="fx-card overflow-hidden p-0" aria-labelledby="home-locations">
@@ -202,50 +163,19 @@ onMounted(async () => {
       </div>
       <ul v-if="data.home_locations.length" class="divide-y divide-zinc-100" role="list">
         <li v-for="row in data.home_locations" :key="row.location.ID">
-          <RouterLink :to="'/locations/' + row.location.ID" class="group fx-home-loc-row flex items-center gap-3 px-5 py-3.5">
-            <span class="fx-home-loc-icon" aria-hidden="true"><FxSvg name="mapPin" class="fx-icon" /></span>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-base font-semibold leading-snug text-zinc-900 transition-colors group-hover:text-sky-950">{{
-                  row.location.Name
-                }}</span>
-                <span
-                  v-if="row.recently_added"
-                  class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 transition-transform duration-200 group-hover:scale-[1.02]"
-                  >{{ $t("home.new") }}</span
-                >
-                <span
-                  v-else
-                  class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-transform duration-200 group-hover:scale-[1.02]"
-                  >{{ $t("home.updated") }}</span
-                >
-              </div>
-            </div>
-            <div class="flex shrink-0 items-center gap-2">
-              <span
-                v-if="row.sub_location_count > 0"
-                class="fx-home-loc-count-badge"
-                :aria-label="
-                  row.sub_location_count === 1 ? $t('home.subLocationOne') : $t('home.subLocationMany', { n: row.sub_location_count })
-                "
-                >{{ row.sub_location_count }}</span
-              >
-              <span class="fx-home-item-row-chevron" aria-hidden="true"><FxSvg name="chevronRight" class="fx-icon h-4 w-4" /></span>
-            </div>
-          </RouterLink>
+          <LocationListRow
+            :id="row.location.ID"
+            :name="row.location.Name"
+            :sub-count="row.sub_location_count"
+            :sub-count-aria="row.sub_location_count === 1 ? $t('home.subLocationOne') : $t('home.subLocationMany', { n: row.sub_location_count })"
+            :badge-label="row.recently_added ? $t('home.new') : $t('home.updated')"
+            :badge-tone="row.recently_added ? 'success' : 'warning'"
+          />
         </li>
       </ul>
-      <div v-else class="px-5 py-10 text-center">
-        <p class="text-sm text-zinc-500">{{ $t("home.noLocations") }}</p>
-        <button
-          v-if="isAdmin"
-          type="button"
-          class="mt-3 inline-flex text-sm font-semibold text-sky-600 hover:text-sky-700"
-          @click="openCreateLocation()"
-        >
-          {{ $t("home.createLocation") }}
-        </button>
-      </div>
+      <FxEmptyState v-else icon="mapPin" :title="$t('home.noLocations')">
+        <FxButton v-if="isAdmin" variant="primary" size="sm" icon-left="plus" @click="openCreateLocation()">{{ $t("home.createLocation") }}</FxButton>
+      </FxEmptyState>
     </section>
 
     <section class="fx-card overflow-hidden p-0" aria-labelledby="home-labels-heading">

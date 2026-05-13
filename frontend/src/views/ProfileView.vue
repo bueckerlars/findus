@@ -15,6 +15,10 @@ import {
 } from "../locale/constants";
 import { usernameInitial } from "../utils/initial";
 import FxSvg from "../components/FxSvg.vue";
+import FxToggle from "../components/primitives/FxToggle.vue";
+import FxAlert from "../components/primitives/FxAlert.vue";
+import FxSkeleton from "../components/primitives/FxSkeleton.vue";
+import FxPageHeader from "../components/primitives/FxPageHeader.vue";
 
 const u = ref<User | null>(null);
 const username = ref("");
@@ -178,20 +182,30 @@ async function save() {
 </script>
 
 <template>
-  <div v-if="!u" class="mx-auto max-w-4xl text-zinc-500">{{ $t("common.loading") }}</div>
-  <div v-else class="mx-auto max-w-4xl space-y-8">
-    <header class="mb-2">
-      <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">{{ $t("profile.title") }}</h1>
-      <p class="mt-2 max-w-2xl text-zinc-500">{{ $t("profile.subtitle") }}</p>
-    </header>
+  <div v-if="!u" class="mx-auto max-w-4xl space-y-6" :aria-label="$t('common.loadingAria')" aria-busy="true">
+    <div class="space-y-2">
+      <FxSkeleton width="10rem" height="1.5rem" />
+      <FxSkeleton width="20rem" height="0.75rem" />
+    </div>
+    <div class="fx-card p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <FxSkeleton shape="circle" width="7rem" height="7rem" />
+        <div class="flex-1 space-y-3">
+          <FxSkeleton width="12rem" height="1.25rem" />
+          <FxSkeleton width="80%" height="0.75rem" />
+          <FxSkeleton width="50%" height="0.75rem" />
+        </div>
+      </div>
+    </div>
+    <div class="fx-card p-5 space-y-3">
+      <FxSkeleton width="100%" height="2.25rem" />
+      <FxSkeleton width="100%" height="2.25rem" />
+    </div>
+  </div>
+  <div v-else class="mx-auto max-w-4xl space-y-6">
+    <FxPageHeader :title="$t('profile.title')" :subtitle="$t('profile.subtitle')" />
 
-    <p
-      v-if="err"
-      class="rounded-2xl border border-red-200/90 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-sm ring-1 ring-red-900/5"
-      role="alert"
-    >
-      {{ err }}
-    </p>
+    <FxAlert v-if="err" size="lg">{{ err }}</FxAlert>
 
     <form class="space-y-6" @submit.prevent="save">
       <!-- Identity hero -->
@@ -255,16 +269,16 @@ async function save() {
               >
                 {{ $t("profile.clearNewPhoto") }}
               </button>
-              <label
+              <div
                 v-if="u.avatar_path || avatarPreviewUrl"
-                class="flex w-full cursor-pointer items-start gap-2 rounded-xl border border-zinc-200/80 bg-white/70 px-2 py-2 text-left shadow-sm ring-1 ring-zinc-950/[0.02] transition hover:bg-white"
+                class="flex w-full items-start gap-2 rounded-xl border border-zinc-200/80 bg-white/70 px-2.5 py-2 text-left shadow-sm ring-1 ring-zinc-950/[0.02]"
               >
-                <input v-model="removeAvatar" type="checkbox" class="mt-0.5 shrink-0 rounded border-zinc-300 text-sky-600 focus:ring-sky-500" />
+                <FxToggle v-model="removeAvatar" class="mt-0.5" :aria-label="$t('profile.removePhoto')" />
                 <span class="min-w-0 text-xs leading-snug text-zinc-600">
-                  <span class="font-medium text-zinc-800">{{ $t("profile.removePhoto") }}</span>
+                  <span class="block font-medium text-zinc-800">{{ $t("profile.removePhoto") }}</span>
                   <span class="mt-0.5 block text-[11px] text-zinc-500">{{ $t("profile.removePhotoHelp") }}</span>
                 </span>
-              </label>
+              </div>
             </div>
           </div>
           <div class="min-w-0 flex-1 text-center sm:text-left">

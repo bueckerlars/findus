@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -71,8 +72,21 @@ func (a *Admin) ListInvites(ctx context.Context) ([]domain.Invite, error) {
 
 func (a *Admin) CreateUser(ctx context.Context, username, email, password string, role domain.Role) (*domain.User, error) {
 	username = strings.TrimSpace(username)
-	email = strings.TrimSpace(strings.ToLower(email))
-	if err := validateUserCreds(username, email, password); err != nil {
+	emailNorm, err := normalizeRegistrationEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateUserCreds(username, emailNorm, password); err != nil {
+		return nil, err
+	}
+	if _, err := a.Users.GetByUsername(ctx, username); err == nil {
+		return nil, fmt.Errorf("username already taken: %w", domain.ErrConflict)
+	} else if !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
+	if _, err := a.Users.GetByEmail(ctx, emailNorm); err == nil {
+		return nil, fmt.Errorf("email already registered: %w", domain.ErrConflict)
+	} else if !errors.Is(err, domain.ErrNotFound) {
 		return nil, err
 	}
 	if role != domain.RoleAdmin && role != domain.RoleUser {
@@ -86,7 +100,7 @@ func (a *Admin) CreateUser(ctx context.Context, username, email, password string
 	u := &domain.User{
 		ID:           newID(),
 		Username:     username,
-		Email:        email,
+		Email:        emailNorm,
 		PasswordHash: string(hash),
 		Role:         role,
 		IsActive:     true,
