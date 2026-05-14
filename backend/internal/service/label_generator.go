@@ -1,13 +1,10 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/jung-kurt/gofpdf"
 
 	"findus/backend/internal/domain"
 	"findus/backend/internal/repository"
@@ -25,6 +22,8 @@ type LabelPDFInput struct {
 	From   int64
 	To     int64
 	Policy domain.ItemIDPolicy
+	Cols   int // 0 = default (2)
+	Rows   int // 0 = auto-fit rows for A4
 }
 
 type LabelPDFOutput struct {
@@ -55,11 +54,7 @@ func (g *LabelPDFGenerator) Generate(ctx context.Context, in LabelPDFInput) (Lab
 	}
 	defer os.RemoveAll(tmpDir)
 
-	type labelRow struct {
-		ItemID string
-		QRPath string
-	}
-	rows := make([]labelRow, 0, count)
+	contents := make([]labelContent, 0, count)
 	for seq := in.From; seq <= in.To; seq++ {
 		itemID := domain.FormatSequentialID(pol.Prefix, pol.Width, seq)
 		token, err := g.reserveOrLoadToken(ctx, itemID)
@@ -74,69 +69,17 @@ func (g *LabelPDFGenerator) Generate(ctx context.Context, in LabelPDFInput) (Lab
 		if err := os.WriteFile(qrPath, png, 0o644); err != nil {
 			return LabelPDFOutput{}, err
 		}
-		rows = append(rows, labelRow{ItemID: itemID, QRPath: qrPath})
+		contents = append(contents, labelContent{QRPath: qrPath, PrimaryText: itemID})
 	}
 
-	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.SetMargins(10, 10, 10)
-	pdf.SetAutoPageBreak(false, 10)
-	pdf.SetLineWidth(0.2)
-	pdf.SetDrawColor(80, 80, 80)
-	pdf.SetTextColor(20, 20, 20)
-
-	const (
-		labelW      = 95.0
-		labelH      = 38.0
-		leftRatio   = 0.46
-		topMargin   = 10.0
-		leftMargin  = 10.0
-		qrSize      = 24.0
-		qrTopPad    = 4.0
-		lineRight   = 6.0
-		lineTopPad  = 8.0
-		lineSpacing = 8.0
-	)
-	usableHeight := 297.0 - 20.0
-	rowsPerPage := int(usableHeight / labelH)
-	labelsPerPage := rowsPerPage * 2
-
-	for i, row := range rows {
-		if i%labelsPerPage == 0 {
-			pdf.AddPage()
-		}
-		pageIdx := i % labelsPerPage
-		col := pageIdx % 2
-		rw := pageIdx / 2
-		x := leftMargin + float64(col)*labelW
-		y := topMargin + float64(rw)*labelH
-		leftW := labelW * leftRatio
-
-		pdf.Rect(x, y, labelW, labelH, "")
-		pdf.Line(x+leftW, y, x+leftW, y+labelH)
-
-		qrX := x + (leftW-qrSize)/2
-		qrY := y + qrTopPad
-		pdf.ImageOptions(row.QRPath, qrX, qrY, qrSize, qrSize, false, gofpdf.ImageOptions{ImageType: "png"}, 0, "")
-
-		pdf.SetFont("Helvetica", "", 10)
-		pdf.SetXY(x+2, y+qrTopPad+qrSize+2)
-		pdf.CellFormat(leftW-4, 5, row.ItemID, "", 0, "C", false, 0, "")
-
-		lineStartX := x + leftW + 5
-		lineEndX := x + labelW - lineRight
-		for li := 0; li < 3; li++ {
-			ly := y + lineTopPad + float64(li)*lineSpacing
-			pdf.Line(lineStartX, ly, lineEndX, ly)
-		}
-	}
-
-	var buf bytes.Buffer
-	if err := pdf.Output(&buf); err != nil {
+	layout := computeLabelLayout(in.Cols, in.Rows)
+	pdfBytes, err := renderLabelsPDF(contents, layout)
+	if err != nil {
 		return LabelPDFOutput{}, err
 	}
 	return LabelPDFOutput{
 		Filename: fmt.Sprintf("labels-%d-%d.pdf", in.From, in.To),
-		PDF:      buf.Bytes(),
+		PDF:      pdfBytes,
 	}, nil
 }
 

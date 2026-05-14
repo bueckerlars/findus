@@ -363,7 +363,24 @@
     "rangeInteger": "From and To must be whole numbers.",
     "rangePositive": "From and To must be positive numbers.",
     "rangeOrder": "From must be less than or equal to To.",
-    "rangeTooLarge": "Range too large (maximum {n} labels)."
+    "rangeTooLarge": "Range too large (maximum {n} labels).",
+    "layoutTitle": "Page layout",
+    "cols": "Columns",
+    "rows": "Rows",
+    "rowsHint": "(0 = auto)",
+    "itemTitle": "Item labels"
+  },
+  "adminLocationLabelGenerator": {
+    "title": "Location labels",
+    "help": "Generate printable A4 labels for selected locations. Each label shows the location name and its QR code.",
+    "generate": "Generate PDF",
+    "generated": "Location label PDF generated.",
+    "generateFailed": "Failed to generate location label PDF.",
+    "selected": "{n} selected",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "loading": "Loading locations…",
+    "empty": "No locations found."
   },
   "adminTemplates": {
     "title": "Item templates",
