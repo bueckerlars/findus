@@ -1,53 +1,116 @@
 # Architecture
 
-Findus is a single Go binary that serves a **Vue 3 + Vite** single-page application (embedded `frontend/dist`), a JSON API under `/api/*`, and authenticated binary endpoints (QR PNGs, photos, backup ZIP). Tailwind is applied at **client build time** via Vite; the running server does not invoke Node.
+Findus is a **single Go binary** that embeds the Vue 3 SPA at compile time. The same process handles the JSON API, static file serving, binary endpoints (photos, QR codes, backup), and database access. There are no external runtime dependencies — no separate process, message queue, or cache service.
 
-## High-level flow
+---
 
-```mermaid
-flowchart LR
-  HTTP[HTTP handlers and middleware] --> Services[Services]
-  Services --> Domain[Domain model]
-  Services --> Repos[Repository interfaces]
-  Repos --> SQLite[SQLite implementation]
-  Services --> Ports[QR, images, backup ZIP]
+## High-level request flow
+
+```
+Browser / QR scanner
+       │
+       ▼
+ ┌─────────────────────────────────────────────────────────┐
+ │  HTTP server  (net/http, Go 1.22+ patterns)             │
+ │                                                         │
+ │  Middleware chain:                                       │
+ │    logger → recovery → CORS → CSRF → auth (JWT)        │
+ │                                                         │
+ │  Route groups:                                          │
+ │    /api/*        JSON handlers                          │
+ │    /q/{token}    QR resolver (redirect)                 │
+ │    /assets/*     Hashed JS/CSS from embedded dist/      │
+ │    /{path...}    SPA shell (index.html fallthrough)     │
+ └────────────────────────┬────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │       Services        │
+              │  inventory · auth     │
+              │  admin · QR · backup  │
+              └──────────┬────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+     Repository      QR library    Image pipeline
+     interfaces      (go-qrcode)   (imaging + WebP)
+          │
+          ▼
+     SQLite (modernc.org/sqlite, CGO-free)
+     + goose migrations (SQL, embedded)
 ```
 
-- **Transport** (`backend/internal/transport/http`): routing, middleware (logging, recovery, auth, CSRF), JSON API handlers, and SPA/static mounting.
-- **Services** (`backend/internal/service`): application use cases (inventory, auth, admin, QR, backup).
-- **Domain** (`backend/internal/domain`): core types and validation-oriented structures.
-- **Repositories** (`backend/internal/repository`): persistence interfaces; **SQLite** implementations live under `backend/internal/repository/sqlite`.
-- **Supporting packages**: JWT helpers (`backend/internal/authjwt`, `backend/internal/secrets`), configuration (`backend/internal/config`), logging (`backend/internal/platform/logger`).
+---
 
-## Stack
+## Package layout
 
-| Layer | Choice |
-|-------|--------|
-| Language | Go 1.23 |
-| HTTP | `net/http` with Go 1.22+ route patterns |
-| Database | SQLite via `modernc.org/sqlite` (CGO-free); item search uses **FTS5** where available with a **LIKE** fallback |
-| Migrations | [goose](https://github.com/pressly/goose) SQL, embedded under `backend/internal/repository/sqlite/migrations` |
-| UI | Vue 3, Vue Router, Tailwind CSS (Vite build, embedded `dist/`) |
-| Images | Resize/compress pipeline; WebP storage under the data directory |
+| Package | Path | Responsibility |
+|---|---|---|
+| **config** | `backend/internal/config` | Reads environment variables into a typed struct |
+| **domain** | `backend/internal/domain` | Core types, validation structures — no I/O |
+| **repository** | `backend/internal/repository` | Persistence interfaces |
+| **repository/sqlite** | `backend/internal/repository/sqlite` | SQLite implementations; migrations in `migrations/` |
+| **search** | `backend/internal/search` | FTS5 full-text search with LIKE fallback |
+| **service** | `backend/internal/service` | Application use-cases (inventory, auth, admin, QR, backup) |
+| **transport/http** | `backend/internal/transport/http` | HTTP server, route registration, middleware, JSON handlers |
+| **authjwt** | `backend/internal/authjwt` | JWT creation, parsing, cookie helpers |
+| **secrets** | `backend/internal/secrets` | JWT secret bootstrap (env var or auto-generated file) |
+| **platform/logger** | `backend/internal/platform/logger` | Structured logger (text/JSON) |
+| **frontend** | `frontend/embed.go` | `go:embed all:dist` — bundles the Vite build into the binary |
+| **main** | `backend/app/main.go` | Composition root: load config → open DB → wire services → start server |
 
-## Data on disk
+---
 
-Under `FINDUS_DATA_DIR` (default `./data`, `/data` in the official container):
+## Storage
 
-- SQLite database file(s) for users, locations, items, settings, invites, etc.
-- `images/` for processed uploads (WebP).
+All data lives under `FINDUS_DATA_DIR` (default `./data`, `/data` inside the official container):
 
-The JWT signing secret may be persisted as a dotfile under the data directory when `FINDUS_JWT_SECRET` is not set (see [Configuration](configuration.md)).
+```
+$FINDUS_DATA_DIR/
+├── findus.db          SQLite database
+├── findus.db-wal      Write-ahead log (auto-managed)
+├── findus.db-shm      Shared memory (auto-managed)
+├── images/            Uploaded photos, stored as WebP
+└── .jwt_secret        Auto-generated JWT signing key (only when FINDUS_JWT_SECRET is unset)
+```
 
-## Security-related behavior (summary)
+The database is opened with WAL mode enabled. All schema changes go through goose migrations embedded in the binary — no manual schema management is needed on startup or upgrade.
 
-- **Authentication**: JWT stored in an HTTP-only cookie after login/register.
-- **CSRF**: Double-submit cookie pattern plus `X-CSRF-Token` header for mutating requests (JSON bodies are not parsed for form tokens; the header is required).
-- **Roles**: First registered user is `admin`; RBAC distinguishes admin capabilities (full CRUD, users, settings, backup) from read-oriented `user` access to inventory views and QR/photo reads.
-- **Registration modes** (admin-configurable): `admin_only`, `invite`, `open`.
+---
 
-For exact route groups and admin surfaces, see [Routes](routes.md).
+## Frontend
 
-## Composition root
+The Vue 3 SPA is built with Vite and bundled into `frontend/dist/`. The Go binary embeds the entire `dist/` tree via `go:embed`. Tailwind is applied at build time — the running server has no Node.js dependency.
 
-`backend/app/main.go` loads configuration, opens the database, wires repositories into services, and starts the HTTP server. The HTTP stack embeds the built SPA from `frontend/dist` via `frontend/embed.go`. This is the only entrypoint for the application binary.
+At runtime, the HTTP server:
+1. Serves hashed assets from `/assets/*` (cache-safe).
+2. Falls through all unmatched GET requests to `dist/index.html` so Vue Router handles client-side navigation.
+
+---
+
+## Authentication & security
+
+### Authentication
+
+Users authenticate with a username and password. On success, the server issues a **JWT** stored in an **HTTP-only cookie** (`findus_session`). The cookie is `SameSite=Lax`; set `FINDUS_COOKIE_SECURE=true` under HTTPS.
+
+The JWT secret is loaded from `FINDUS_JWT_SECRET` or auto-generated and stored in `$DATA_DIR/.jwt_secret` on first run.
+
+### CSRF protection
+
+Mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`) require the **`X-CSRF-Token`** header. The server issues a CSRF token as a non-HttpOnly cookie (`findus_csrf`); the Vue app reads it and echoes it in the header. The server validates the header matches the cookie (double-submit pattern).
+
+### Roles and registration
+
+| Role | Capabilities |
+|---|---|
+| `admin` | Full CRUD on all resources, user management, settings, templates, backup |
+| `user` | Browse and search inventory, view QR codes and photos, edit own profile |
+
+The **first registered account** is automatically assigned the `admin` role. Subsequent registrations follow the mode configured in admin settings:
+
+| Mode | Behavior |
+|---|---|
+| `open` | Anyone with the URL can register |
+| `invite` | Registration requires a valid invite token generated by an admin |
+| `admin_only` | No self-service registration; admin creates accounts directly |
