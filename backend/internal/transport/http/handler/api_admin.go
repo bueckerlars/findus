@@ -242,6 +242,8 @@ func (s *Server) APIAdminSettingsItemIDsPost(w http.ResponseWriter, r *http.Requ
 type apiAdminLabelGenerateReq struct {
 	From float64 `json:"from"`
 	To   float64 `json:"to"`
+	Cols int     `json:"cols"`
+	Rows int     `json:"rows"`
 }
 
 func (s *Server) APIAdminLabelsGenerate(w http.ResponseWriter, r *http.Request) {
@@ -269,16 +271,55 @@ func (s *Server) APIAdminLabelsGenerate(w http.ResponseWriter, r *http.Request) 
 		From:   int64(req.From),
 		To:     int64(req.To),
 		Policy: pol,
+		Cols:   req.Cols,
+		Rows:   req.Rows,
 	})
 	if err != nil {
 		s.writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	s.writePDFResponse(w, out.Filename, out.PDF)
+}
+
+type apiAdminLocationLabelGenerateReq struct {
+	LocationIDs []string `json:"location_ids"`
+	Cols        int      `json:"cols"`
+	Rows        int      `json:"rows"`
+}
+
+func (s *Server) APIAdminLocationLabelsGenerate(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req apiAdminLocationLabelGenerateReq
+	if err := readJSON(r, &req); err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	if len(req.LocationIDs) == 0 {
+		s.writeJSONError(w, http.StatusBadRequest, "no locations selected")
+		return
+	}
+	gen := service.LocationLabelPDFGenerator{
+		QR:   s.QR,
+		Locs: s.Locs,
+	}
+	out, err := gen.Generate(ctx, service.LocationLabelPDFInput{
+		LocationIDs: req.LocationIDs,
+		Cols:        req.Cols,
+		Rows:        req.Rows,
+	})
+	if err != nil {
+		s.writeJSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.writePDFResponse(w, out.Filename, out.PDF)
+}
+
+func (s *Server) writePDFResponse(w http.ResponseWriter, filename string, data []byte) {
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", `inline; filename="`+out.Filename+`"`)
-	w.Header().Set("X-Filename", out.Filename)
+	w.Header().Set("Content-Disposition", `inline; filename="`+filename+`"`)
+	w.Header().Set("X-Filename", filename)
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(out.PDF)
+	_, _ = w.Write(data)
 }
 
 type apiTemplateListRow struct {
