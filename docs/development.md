@@ -1,65 +1,141 @@
 # Development
 
-This page is for contributors and anyone running Findus **without** Docker from source.
+This guide is for contributors and anyone running Findus **from source** without Docker.
+
+---
 
 ## Prerequisites
 
-- **Go** 1.23 or newer
-- **Node.js** 20+ and npm (for `frontend/` — Vite + Vue + Tailwind). A production binary embeds the built `frontend/dist` assets; you need a client build before `go build` succeeds.
+| Tool | Minimum version | Purpose |
+|---|---|---|
+| [Go](https://go.dev/dl/) | 1.23 | Backend compiler and toolchain |
+| [Node.js](https://nodejs.org/) | 20 | Frontend build (Vite + Vue + Tailwind) |
+| npm | bundled with Node | Frontend package manager |
 
-## Common commands
+> A production binary embeds the pre-built `frontend/dist/`. You must run the frontend build at least once before `go build` or `go run` will succeed.
 
-The [Makefile](../Makefile) wraps the usual tasks:
+---
 
-| Target | Purpose |
-|--------|---------|
-| `make tidy` | `go mod tidy` |
-| `make frontend-dist` | `npm install` and `npm run build` in `frontend/` (writes `frontend/dist/`) |
-| `make run` | Run the app with `go run ./backend/app` (expects `frontend/dist` to exist) |
-| `make dev` | Debug log level + [Air](https://github.com/air-verse/air) hot reload (rebuild on Go/Vue/TS/CSS/SQL changes; see `.air.toml`) |
-| `make build` | Client build then compile static binary to `./bin/findus` |
-| `make test` | `go test ./...` |
-| `make docker-build` | Build container image `findus:dev` (same tag as `docker-compose.yml.dev`) |
-| `make db-reset` | **Destructive**: remove local `findus.db*` and `images/` under `FINDUS_DATA_DIR` (default `./data`) |
-
-## First-time local setup
+## First-time setup
 
 ```bash
+git clone https://github.com/your-org/findus.git
+cd findus
+
 go mod tidy
-make frontend-dist
-go run ./backend/app
+make frontend-dist    # npm install + npm run build in frontend/
+
+go run ./backend/app  # starts on :8080 with ./data as the data directory
 ```
 
-Or: `make build` then run `./bin/findus`.
+Or build a standalone binary:
+
+```bash
+make build            # produces ./bin/findus
+./bin/findus
+```
+
+---
+
+## Makefile reference
+
+All common tasks are wrapped in the [Makefile](../Makefile):
+
+| Target | Command(s) run | Notes |
+|---|---|---|
+| `make tidy` | `go mod tidy` | Sync go.sum |
+| `make frontend-dist` | `npm install && npm run build` (in `frontend/`) | Writes `frontend/dist/` — required before any Go build |
+| `make run` | `go run ./backend/app` | Expects `frontend/dist/` to exist |
+| `make dev` | Air hot reload with `FINDUS_LOG_LEVEL=debug` | See [Hot reload](#hot-reload) below |
+| `make build` | `make frontend-dist` then `go build -o ./bin/findus` | Static binary (`CGO_ENABLED=0`) |
+| `make test` | `go test ./...` | Run all backend tests |
+| `make lint` | `go vet ./...` + golangci-lint | Static analysis |
+| `make format` | `go fmt ./...` | Format all Go sources |
+| `make docker-build` | `docker build -t findus:dev .` | Build local container image |
+| `make db-reset` | Remove `findus.db*` and `images/` from `FINDUS_DATA_DIR` | **Destructive** — deletes all local data |
+| `make hooks-install` | `lefthook install` | Install git pre-commit hooks |
+| `make hooks-run` | `lefthook run pre-commit --all-files` | Run the same checks as the pre-commit hook |
+
+---
 
 ## Hot reload
 
-`make dev` runs Air with `FINDUS_LOG_LEVEL=debug`. The config file `.air.toml` watches Go sources plus `vue` and `ts` under the repo. After changing the SPA, either let Air rebuild the Go binary (embed picks up `frontend/dist`) or run `make frontend-dist` manually if you skipped the client build.
-
-## Tests and formatting
+`make dev` starts [Air](https://github.com/air-verse/air) configured via [`.air.toml`](../.air.toml). Air watches Go sources, Vue/TS files, and SQL migrations, then rebuilds and restarts the binary automatically.
 
 ```bash
-make test
-go fmt ./...
+make dev
+# Visit http://localhost:8080 — changes to backend code trigger a rebuild in ~1s.
+# For frontend changes, run `make frontend-dist` (or `cd frontend && npm run build`) in a separate terminal.
 ```
 
-## Repository layout (short)
+Air re-embeds `frontend/dist/` on each Go rebuild, so you only need to rebuild the frontend manually when you change Vue/Tailwind sources.
 
-| Path | Role |
-|------|------|
-| `backend/app` | `main`, wiring |
-| `backend/internal/config` | Environment-based configuration |
-| `backend/internal/domain` | Domain types |
-| `backend/internal/repository` | Persistence interfaces and SQLite |
-| `backend/internal/service` | Application services |
-| `backend/internal/transport/http` | HTTP server, handlers, middleware |
-| `frontend/src` | Vue 3 SPA (Vite, Vue Router, Tailwind) |
-| `frontend/dist` | Production build output (embedded into the Go binary) |
-| `frontend/embed.go` | `go:embed all:dist` |
+---
 
-## Docker from this repo
+## Tests
 
-- **Dev stack (build):** `docker compose -f docker-compose.yml.dev up --build` — same env/volume layout as production Compose, image built locally as `findus:dev`.
-- **Released image:** use root `docker-compose.yml` with `FINDUS_GHCR_IMAGE` / `FINDUS_IMAGE_TAG` (see [Configuration](configuration.md)).
+```bash
+make test          # equivalent to go test ./...
+```
 
-See [Architecture](architecture.md) for a deeper overview.
+Tests are integration-style where practical — the SQLite layer uses an in-memory database, not mocks. Run `make lint` to catch issues before pushing.
+
+---
+
+## Git hooks
+
+Pre-commit hooks run `gofmt` and `golangci-lint` automatically:
+
+```bash
+make hooks-install    # one-time setup
+```
+
+To run the same checks manually:
+
+```bash
+make hooks-run
+```
+
+---
+
+## Docker (from this repo)
+
+For contributors testing the containerized build:
+
+```bash
+# Build a local image and start the full stack
+docker compose -f docker-compose.yml.dev up --build
+```
+
+This uses the same environment and volume layout as the production Compose file, but builds the image from `Dockerfile` in this checkout (tagged `findus:dev`).
+
+---
+
+## Repository layout
+
+```
+findus/
+├── backend/
+│   ├── app/                  main.go — composition root
+│   └── internal/
+│       ├── config/           environment config struct
+│       ├── domain/           core types (no I/O)
+│       ├── repository/       persistence interfaces
+│       │   └── sqlite/       SQLite implementations + migrations/
+│       ├── search/           FTS5 + LIKE fallback search
+│       ├── service/          application use-cases
+│       ├── transport/http/   HTTP server, handlers, middleware
+│       ├── authjwt/          JWT helpers
+│       ├── secrets/          JWT secret bootstrap
+│       └── platform/logger/  structured logger
+├── frontend/
+│   ├── src/                  Vue 3 SPA (views, components, composables)
+│   ├── dist/                 Vite build output (embedded into binary)
+│   └── embed.go              go:embed directive
+├── docs/                     technical documentation (this directory)
+├── Dockerfile
+├── docker-compose.yml        production — pulls from GHCR
+├── docker-compose.yml.dev    development — builds from Dockerfile
+├── Makefile
+└── .air.toml                 Air hot-reload config
+```
