@@ -39,3 +39,9 @@ Thumbs.db
 
 # Personal / scratch
 .todo.md
+
+
+.cursor/
+.vscode
+.claude
+

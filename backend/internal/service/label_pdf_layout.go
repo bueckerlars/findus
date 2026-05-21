@@ -26,6 +26,8 @@ type labelContent struct {
 type labelLayout struct {
 	Cols          int
 	Rows          int
+	MarginX       float64
+	MarginY       float64
 	LabelW        float64
 	LabelH        float64
 	LabelsPerPage int
@@ -39,20 +41,27 @@ type labelLayout struct {
 	LineSpacing   float64
 }
 
-func computeLabelLayout(cols, rows int) labelLayout {
+func computeLabelLayout(cols, rows int, fullPage bool) labelLayout {
+	marginX, marginY := labelMarginX, labelMarginY
+	usableW, usableH := labelUsableW, labelUsableH
+	if fullPage {
+		marginX, marginY = 0, 0
+		usableW, usableH = labelPageW, labelPageH
+	}
+
 	if cols < 1 {
 		cols = 2
 	}
-	labelW := labelUsableW / float64(cols)
+	labelW := usableW / float64(cols)
 
-	usableH := float64(labelUsableH) // avoid constant-folding to float constant
+	usableHf := float64(usableH) // avoid constant-folding to float constant
 	if rows < 1 {
-		rows = int(usableH / 38.0)
+		rows = int(usableHf / 38.0)
 		if rows < 1 {
 			rows = 1
 		}
 	}
-	labelH := usableH / float64(rows)
+	labelH := usableHf / float64(rows)
 
 	leftW := labelW * labelLeftRatio
 
@@ -104,6 +113,8 @@ func computeLabelLayout(cols, rows int) labelLayout {
 	return labelLayout{
 		Cols:          cols,
 		Rows:          rows,
+		MarginX:       marginX,
+		MarginY:       marginY,
 		LabelW:        labelW,
 		LabelH:        labelH,
 		LabelsPerPage: cols * rows,
@@ -120,8 +131,8 @@ func computeLabelLayout(cols, rows int) labelLayout {
 
 func renderLabelsPDF(contents []labelContent, layout labelLayout) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.SetMargins(labelMarginX, labelMarginY, labelMarginX)
-	pdf.SetAutoPageBreak(false, labelMarginY)
+	pdf.SetMargins(layout.MarginX, layout.MarginY, layout.MarginX)
+	pdf.SetAutoPageBreak(false, layout.MarginY)
 	pdf.SetLineWidth(0.2)
 	pdf.SetDrawColor(80, 80, 80)
 	pdf.SetTextColor(20, 20, 20)
@@ -135,8 +146,8 @@ func renderLabelsPDF(contents []labelContent, layout labelLayout) ([]byte, error
 		pageIdx := i % layout.LabelsPerPage
 		col := pageIdx % layout.Cols
 		row := pageIdx / layout.Cols
-		x := labelMarginX + float64(col)*layout.LabelW
-		y := labelMarginY + float64(row)*layout.LabelH
+		x := layout.MarginX + float64(col)*layout.LabelW
+		y := layout.MarginY + float64(row)*layout.LabelH
 
 		pdf.Rect(x, y, layout.LabelW, layout.LabelH, "")
 		pdf.Line(x+layout.LeftW, y, x+layout.LeftW, y+layout.LabelH)

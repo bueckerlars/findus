@@ -363,7 +363,14 @@
     "rangeInteger": "Von und Bis müssen ganze Zahlen sein.",
     "rangePositive": "Von und Bis müssen positive Zahlen sein.",
     "rangeOrder": "Von muss kleiner oder gleich Bis sein.",
-    "rangeTooLarge": "Bereich zu groß (maximal {n} Labels)."
+    "rangeTooLarge": "Bereich zu groß (maximal {n} Labels).",
+    "layoutTitle": "Seitenlayout",
+    "cols": "Spalten",
+    "rows": "Zeilen",
+    "rowsHint": "(0 = automatisch)",
+    "fullPage": "Volle Seite (ohne Rand)",
+    "fullPageHint": "Nutzt die gesamte A4-Seite; Labels werden gleichmäßig in die konfigurierte Anzahl Spalten und Zeilen geteilt.",
+    "itemTitle": "Artikel-Labels"
   },
   "adminTemplates": {
     "title": "Artikelvorlagen",

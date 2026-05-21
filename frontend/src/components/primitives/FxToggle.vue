@@ -48,7 +48,7 @@ function onUpdate(v: boolean) {
       <SwitchThumb class="fx-toggle__thumb" />
     </SwitchRoot>
     <span v-if="label || description" class="min-w-0 leading-tight">
-      <span v-if="label" class="block text-sm font-medium text-zinc-800">{{ label }}</span>
+      <span v-if="label" class="block w-[150px] text-sm font-medium text-zinc-800">{{ label }}</span>
       <span v-if="description" class="block text-xs text-zinc-500">{{ description }}</span>
     </span>
   </span>

@@ -23,8 +23,9 @@ type LocationLabelPDFGenerator struct {
 
 type LocationLabelPDFInput struct {
 	LocationIDs []string
-	Cols        int // 0 = default (2)
-	Rows        int // 0 = auto-fit for A4
+	Cols        int  // 0 = default (2)
+	Rows        int  // 0 = auto-fit for A4
+	FullPage    bool // use entire A4 with no margins
 }
 
 type LocationLabelPDFOutput struct {
@@ -63,7 +64,7 @@ func (g *LocationLabelPDFGenerator) Generate(ctx context.Context, in LocationLab
 		contents = append(contents, labelContent{QRPath: qrPath, PrimaryText: loc.Name})
 	}
 
-	layout := computeLabelLayout(in.Cols, in.Rows)
+	layout := computeLabelLayout(in.Cols, in.Rows, in.FullPage)
 	pdfBytes, err := renderLabelsPDF(contents, layout)
 	if err != nil {
 		return LocationLabelPDFOutput{}, err
