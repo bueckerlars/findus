@@ -368,6 +368,8 @@
     "cols": "Columns",
     "rows": "Rows",
     "rowsHint": "(0 = auto)",
+    "fullPage": "Full page (no margins)",
+    "fullPageHint": "Uses the entire A4 page; labels are divided evenly into the configured columns and rows.",
     "itemTitle": "Item labels"
   },
   "adminLocationLabelGenerator": {

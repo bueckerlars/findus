@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import { toast } from "../composables/useToast";
 import FxAlert from "../components/primitives/FxAlert.vue";
 import FxPageHeader from "../components/primitives/FxPageHeader.vue";
+import FxToggle from "../components/primitives/FxToggle.vue";
 import LocationSelectorRow from "../components/LocationSelectorRow.vue";
 
 const { t } = useI18n();
@@ -12,6 +13,7 @@ const { t } = useI18n();
 // --- Shared layout config ---
 const cols = ref(2);
 const rows = ref(0); // 0 = auto
+const fullPage = ref(false);
 
 // --- Item label generator ---
 const from = ref(1);
@@ -61,7 +63,13 @@ async function generateItems() {
       method: "POST",
       credentials: "same-origin",
       headers,
-      body: JSON.stringify({ from: from.value, to: to.value, cols: cols.value, rows: rows.value }),
+      body: JSON.stringify({
+        from: from.value,
+        to: to.value,
+        cols: cols.value,
+        rows: rows.value,
+        full_page: fullPage.value,
+      }),
     });
     if (!res.ok) {
       let text = res.statusText;
@@ -167,6 +175,7 @@ async function generateLocations() {
         location_ids: [...locSelected.value],
         cols: cols.value,
         rows: rows.value,
+        full_page: fullPage.value,
       }),
     });
     if (!res.ok) {
@@ -213,18 +222,29 @@ function triggerDownload(url: string, name: string) {
 
     <!-- Shared layout config -->
     <section class="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
-      <h2 class="mb-3 text-sm font-semibold text-zinc-700">{{ $t("adminLabelGenerator.layoutTitle") }}</h2>
-      <div class="flex flex-wrap items-end gap-4">
-        <label class="text-sm text-zinc-700">
-          {{ $t("adminLabelGenerator.cols") }}
-          <input v-model.number="cols" type="number" min="1" max="8" class="fx-input mt-1 w-24" />
+      <h2 class="mb-4 text-center text-sm font-semibold text-zinc-700">{{ $t("adminLabelGenerator.layoutTitle") }}</h2>
+      <div class="mx-auto grid max-w-xl grid-cols-1 items-end justify-items-center gap-6 sm:grid-cols-3 sm:gap-x-10">
+        <label class="flex w-full max-w-[7rem] flex-col items-center gap-1.5 text-sm text-zinc-700">
+          <span class="font-medium">{{ $t("adminLabelGenerator.cols") }}</span>
+          <input v-model.number="cols" type="number" min="1" max="8" class="fx-input w-full text-center" />
         </label>
-        <label class="text-sm text-zinc-700">
-          {{ $t("adminLabelGenerator.rows") }}
-          <input v-model.number="rows" type="number" min="0" max="20" class="fx-input mt-1 w-24" />
-          <span class="ml-1 text-xs text-zinc-400">{{ $t("adminLabelGenerator.rowsHint") }}</span>
+        <label class="flex w-full max-w-[7rem] flex-col items-center gap-1.5 text-sm text-zinc-700">
+          <span class="font-medium">{{ $t("adminLabelGenerator.rows") }}</span>
+          <input v-model.number="rows" type="number" min="0" max="20" class="fx-input w-full text-center" />
         </label>
+        <div class="flex justify-center pb-1">
+          <FxToggle
+            v-model="fullPage"
+            size="md"
+            :label="$t('adminLabelGenerator.fullPage')"
+            :aria-label="$t('adminLabelGenerator.fullPage')"
+          />
+        </div>
       </div>
+      <p class="mt-2 text-center text-xs text-zinc-400">{{ $t("adminLabelGenerator.rowsHint") }}</p>
+      <p v-if="fullPage" class="mx-auto mt-1 max-w-md text-center text-xs text-zinc-500">
+        {{ $t("adminLabelGenerator.fullPageHint") }}
+      </p>
     </section>
 
     <!-- Item label generator -->
